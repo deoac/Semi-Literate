@@ -1,0 +1,25 @@
+{
+  "auth": "zef:deoac",
+  "authors": [
+    "Shimon Bollinger"
+  ],
+  "build-depends": [
+  ],
+  "depends": [
+  ],
+  "description": "A semi-literate way to weave and tangle Raku/POD source code.",
+  "license": "Artistic-2.0",
+  "name": "Semi::Literate",
+  "perl": "6.d",
+  "provides": {
+    "Semi::Literate": "lib/Semi/Literate.rakumod"
+  },
+  "resources": [
+  ],
+  "source-url": "",
+  "tags": [
+  ],
+  "test-depends": [
+  ],
+  "version": "0.0.1"
+}
