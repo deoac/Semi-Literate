@@ -14,7 +14,7 @@ use Semi::Literate;
 
 =head1 DESCRIPTION
 
-B<Semi::Literate> is ...
+B<Semi::Literate> is based on Daniel Sockwell's Pod::Literate module
 
 =head1 AUTHOR
 

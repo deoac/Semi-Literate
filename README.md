@@ -13,7 +13,7 @@ use Semi::Literate;
 DESCRIPTION
 ===========
 
-**Semi::Literate** is ...
+**Semi::Literate** is based on Daniel Sockwell's Pod::Literate module
 
 AUTHOR
 ======
