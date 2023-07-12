@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Tue 11 Jul 2023 11:40:45 PM EDT
+# Last modified: Wed 12 Jul 2023 02:55:05 PM EDT
 # Version 0.0.1
 
 # always use the latest version of Raku
@@ -19,22 +19,43 @@ grammar Semi::Literate {
 
 
 
-    token rest-of-line { <!before ^^> \N* \n? } # end of token rest-of-line
+    token rest-of-line { \h* \N* \n? } # end of token rest-of-line
+    token begin {^^ <.ws> \= begin <.ws> pod <rest-of-line>}
+    token end   {^^ <.ws> \= end   <.ws> pod <rest-of-line>}
+    token non-pod-line {  ^^ <.ws> <![=]> <rest-of-line> }
+#    token plain-line { ^^ .*? $$ <!{ $/ ~~ / <begin> | <end>/ }>}
+    token plain-line {
+        ^^ \N* \n?   
+        <!{ 
+            $/ ~~ /
+                    | <.ws> \= begin <.ws> pod \h* \N* \n?
+                    | <.ws> \= end   <.ws> pod \h* \N* \n?
+                  /
+        }> 
+    } # end of token plain-line
 
-
-
-
-    token begin {^^ <.ws> \= begin <.ws> pod <.ws> <rest-of-line>}
-    token end   {^^ <.ws> \= end   <.ws> pod <.ws> <rest-of-line>?}
-#    token code { <after [^ | <end>]> <plain-line>+ <before [ <begin> | $ ]>}
-#    token code { ^^ \N* \n?}
-    token code { ^^ <.ws> <!before \=> \N* \n?}
-    token plain-line { ^^ \N* \n}
     regex pod {
     <begin> 
-        <plain-line>*
+       [<pod> | <plain-line>]*
     <end>   
     } # end of token pod
+    token code { <plain-line> }
+#    token code { 
+#         [ 
+#            <after [
+#                | ^ 
+#                | <end>
+#            ]> 
+#            <plain-line>+ 
+#         ] 
+#        |[
+#            <plain-line>+
+#            <before [ 
+#                | <begin> 
+#                | $ 
+#            ]>
+#         ]
+#    }
 
 
 } # end of grammar Semi::Literate

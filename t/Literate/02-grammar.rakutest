@@ -40,9 +40,9 @@ EOS
 #04
 =begin pod
 
-    =begin pod
+    =begin pod # indented
 
-    =end pod
+    =end pod # indented
 
 =end pod
 EOS
