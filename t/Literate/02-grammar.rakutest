@@ -4,12 +4,14 @@ use lib '../../lib';
 use Semi::Literate;
 
 my %pod;
-%pod.push: q:to/EOS/ =>  "Empty Pod";
-=begin pod
+%pod.push: q:to/EOS/ =>  "01. Empty Pod";
+#01
+=begin pod 01
 =end pod
 EOS
 
-%pod.push: q:to/EOS/ => "Paragraph block with long text";
+%pod.push: q:to/EOS/ => "02. Paragraph block with long text";
+#02
 =begin pod
 
 =head2
@@ -25,7 +27,8 @@ proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 =end pod
 EOS
 
-%pod.push: q:to/EOS/ => "Paragraph block";
+%pod.push: q:to/EOS/ => "03. Paragraph block";
+#03
 =begin pod
 
 test
@@ -33,7 +36,8 @@ test
 =end pod
 EOS
 
-%pod.push: q:to/EOS/ => "Nested Pod6";
+%pod.push: q:to/EOS/ => "04. Nested Pod6";
+#04
 =begin pod
 
     =begin pod
@@ -43,14 +47,16 @@ EOS
 =end pod
 EOS
 
-%pod.push: q:to/EOS/ => "Abbreviated block";
+%pod.push: q:to/EOS/ => "05. Abbreviated block";
+#05
 =begin pod
 
 =TITLE A Test
 =end pod
 EOS
 
-%pod.push: q:to/EOS/ => "Delimited Block";
+%pod.push: q:to/EOS/ => "06. Delimited Block";
+#06
 =begin pod
 
 =begin head1
@@ -60,7 +66,8 @@ A Test
 =end pod
 EOS
 
-%pod.push: q:to/EOS/ => "Abbreviated block with configuration";
+%pod.push: q:to/EOS/ => "07. Abbreviated block with configuration";
+#07
 =begin pod
 
      =for head1 :a-first-line-key<firstvalue> :another-first-line-key<xyz>
@@ -71,7 +78,8 @@ EOS
 =end pod
 EOS
 
-%pod.push: q:to/EOS/ => "=for block with :numbered defn";
+%pod.push: q:to/EOS/ => "08. =for block with :numbered defn";
+#08
 =begin pod
 
 =for defn :numbered
@@ -82,7 +90,8 @@ EOS
 =end pod
 EOS
 
-%pod.push: q:to/EOS/ => "=para block";
+%pod.push: q:to/EOS/ => "09. =para block";
+#09
 =begin pod
 
 =para 
@@ -93,7 +102,8 @@ short lines filled.
 =end pod
 EOS
 
-%pod.push: q:to/EOS/ => "=para block with abbreviated hash mark";
+%pod.push: q:to/EOS/ => "10. =para block with abbreviated hash mark";
+#10
 =begin pod
 
 =para #
@@ -104,7 +114,8 @@ Numbers
 =end pod
 EOS
 
-%pod.push: q:to/EOS/ => "Putting it all together";
+%pod.push: q:to/EOS/ => "11. Putting it all together";
+#11
 =begin pod
 
     =begin pod
@@ -146,7 +157,10 @@ EOS
 
 plan %pod.elems;
 
-is Semi::Literate.parse($_.key), $_.key, $_.value for %pod;
+for %pod.keys.sort -> $key {
+    
+    is Semi::Literate.parse($key), $key, %pod{ $key };
+} # end of for %pod.keys.sort -> $key
 
 done-testing;
 
