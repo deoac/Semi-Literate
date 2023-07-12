@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Wed 12 Jul 2023 02:55:05 PM EDT
+# Last modified: Wed 12 Jul 2023 04:31:43 PM EDT
 # Version 0.0.1
 
 # always use the latest version of Raku
@@ -14,7 +14,7 @@ use v6.*;
 
 =TITLE A grammar to parse a file into C<Pod> and C<Code> sections. 
 
-=INTRODUCTION
+=head1 INTRODUCTION
 
 I want to create a semi-literate Raku source file with the extension
 C<.sl>. Then, I will I<weave> it to generate a readable file in formats like
@@ -24,58 +24,69 @@ code without any Pod6.
 To do this, I need to divide the file into C<Pod> and C<Code> sections by parsing
 it. For this purpose, I will create a dedicated Grammar.
 
+=head1 The Grammar
+
 Our file will exclusively consist of C<Pod> or C<Code> sections, and nothing
 else. The C<TOP> token clearly indicates this.
 
-=head1 The Grammar
-
 =end pod
 
-use Grammar::Tracer;
+#use Grammar::Tracer;
 grammar Semi::Literate {
-
     token TOP {   [ <pod> | <code> ]* }
 
+=begin pod
+=head2 Convenient tokens
 
+Let's introduce a "rest of the line" token for convenience.
+=end pod
+    my token rest-of-line { \h* \N* \n? } # end of token rest-of-line
 
-    token rest-of-line { \h* \N* \n? } # end of token rest-of-line
-    token begin {^^ <.ws> \= begin <.ws> pod <rest-of-line>}
-    token end   {^^ <.ws> \= end   <.ws> pod <rest-of-line>}
-    token non-pod-line {  ^^ <.ws> <![=]> <rest-of-line> }
-#    token plain-line { ^^ .*? $$ <!{ $/ ~~ / <begin> | <end>/ }>}
-    token plain-line {
-        ^^ \N* \n?   
-        <!{ 
-            $/ ~~ /
-                    | <.ws> \= begin <.ws> pod \h* \N* \n?
-                    | <.ws> \= end   <.ws> pod \h* \N* \n?
-                  /
-        }> 
-    } # end of token plain-line
+=begin pod
+=head2 The Pod6 delimiters
 
-    regex pod {
-    <begin> 
-       [<pod> | <plain-line>]*
-    <end>   
+According to the L<documentation|https://docs.raku.org/language/pod>,
+=begin item
+    Every Pod6 document has to begin with C<=begin pod> and end with C<=end> pod. 
+=end item
+
+So let's define those tokens. We need to declare them with C<my> because we
+need to use them in a subroutine later. #TODO explain why.
+=end pod
+
+    my token begin {^^ <.ws> \= begin <.ws> pod <rest-of-line>}
+    my token end   {^^ <.ws> \= end   <.ws> pod <rest-of-line>}
+=begin pod
+
+=head2 The C<pod> token
+
+Within the delimiters, all lines are considered documentation. We will refer to
+these lines as C<plain-lines>. Additionally, it is possible to have nested
+C<pod> sections. This allows for a hierarchical organization of
+documentation, allowing for more structured and detailed explanations.
+
+It is also permissible for the block to be empty. Therefore, we will use the
+'zero-or-more' quantifier on the lines of documentation, allowing for the
+possibility of having no lines in the block.
+=end pod
+
+    token pod {
+        <begin> 
+            [<pod> | <plain-line>]*
+        <end>   
     } # end of token pod
-    token code { <plain-line> }
-#    token code { 
-#         [ 
-#            <after [
-#                | ^ 
-#                | <end>
-#            ]> 
-#            <plain-line>+ 
-#         ] 
-#        |[
-#            <plain-line>+
-#            <before [ 
-#                | <begin> 
-#                | $ 
-#            ]>
-#         ]
-#    }
 
+    token code { <plain-line>+ }
+
+
+    sub not-a-delimiter (Match $code --> Bool) {
+        return not $code ~~ / <begin> | <end> /;
+    } # end of sub not-a-delimiter (Match $code --> Bool)
+
+    token plain-line {
+        ^^ <rest-of-line>
+        <?{ &not-a-delimiter($/) }> 
+    } # end of token plain-line
 
 } # end of grammar Semi::Literate
 
@@ -102,7 +113,7 @@ This documentation refers to C<Semi-Literate> version 0.0.1
 =head1 DESCRIPTION
 
 A full description of the module and its features.
-May include numerous subsections (i.e. =head2, =head3, etc.)
+May include numerous subsections (i.e. =head2, =head2, etc.)
 
 =head1 BUGS AND LIMITATIONS
 

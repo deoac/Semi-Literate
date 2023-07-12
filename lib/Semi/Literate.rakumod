@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Wed 12 Jul 2023 02:55:05 PM EDT
+# Last modified: Wed 12 Jul 2023 04:09:44 PM EDT
 # Version 0.0.1
 
 # always use the latest version of Raku
@@ -12,51 +12,36 @@ use v6.*;
 
 
 
-use Grammar::Tracer;
+#use Grammar::Tracer;
 grammar Semi::Literate {
-
     token TOP {   [ <pod> | <code> ]* }
 
 
 
-    token rest-of-line { \h* \N* \n? } # end of token rest-of-line
-    token begin {^^ <.ws> \= begin <.ws> pod <rest-of-line>}
-    token end   {^^ <.ws> \= end   <.ws> pod <rest-of-line>}
-    token non-pod-line {  ^^ <.ws> <![=]> <rest-of-line> }
-#    token plain-line { ^^ .*? $$ <!{ $/ ~~ / <begin> | <end>/ }>}
-    token plain-line {
-        ^^ \N* \n?   
-        <!{ 
-            $/ ~~ /
-                    | <.ws> \= begin <.ws> pod \h* \N* \n?
-                    | <.ws> \= end   <.ws> pod \h* \N* \n?
-                  /
-        }> 
-    } # end of token plain-line
+    my token rest-of-line { \h* \N* \n? } # end of token rest-of-line
 
-    regex pod {
-    <begin> 
-       [<pod> | <plain-line>]*
-    <end>   
+
+
+
+    my token begin {^^ <.ws> \= begin <.ws> pod <rest-of-line>}
+    my token end   {^^ <.ws> \= end   <.ws> pod <rest-of-line>}
+    token pod {
+        <begin> 
+            [<pod> | <plain-line>]*
+        <end>   
     } # end of token pod
-    token code { <plain-line> }
-#    token code { 
-#         [ 
-#            <after [
-#                | ^ 
-#                | <end>
-#            ]> 
-#            <plain-line>+ 
-#         ] 
-#        |[
-#            <plain-line>+
-#            <before [ 
-#                | <begin> 
-#                | $ 
-#            ]>
-#         ]
-#    }
 
+    token code { <plain-line>+ }
+
+
+    sub not-a-delimiter (Match $code --> Bool) {
+        return not $code ~~ / <begin> | <end> /;
+    } # end of sub not-a-delimiter (Match $code --> Bool)
+
+    token plain-line {
+        ^^ <rest-of-line>
+        <?{ &not-a-delimiter($/) }> 
+    } # end of token plain-line
 
 } # end of grammar Semi::Literate
 

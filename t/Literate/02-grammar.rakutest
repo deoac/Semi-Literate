@@ -4,13 +4,38 @@ use lib '../../lib';
 use Semi::Literate;
 
 my %pod;
+
+%pod.push: q:to/EOS/ =>  "12. item lists";
+#12
+=begin pod 12
+Let's consider two common proverbs:
+ 
+=begin item
+I<The rain in Spain falls mainly on the plain.>
+ 
+This is a common myth and an unconscionable slur on the Spanish
+people, the majority of whom are extremely attractive.
+=end item
+ 
+=begin item
+I<The early bird gets the worm.>
+ 
+In deciding whether to become an early riser, it is worth
+considering whether you would actually enjoy annelids
+for breakfast.
+=end item
+=end pod
+ 
+As you can see, folk wisdom is often of dubious value.
+EOS
+
 %pod.push: q:to/EOS/ =>  "01. Empty Pod";
 #01
 =begin pod 01
 =end pod
 EOS
 
-%pod.push: q:to/EOS/ => "02. Paragraph block with long text";
+%pod.push: q:to/EOS/ => "03. Paragraph block with long text";
 #02
 =begin pod
 
@@ -27,7 +52,7 @@ proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 =end pod
 EOS
 
-%pod.push: q:to/EOS/ => "03. Paragraph block";
+%pod.push: q:to/EOS/ => "02. Paragraph block";
 #03
 =begin pod
 
@@ -158,7 +183,6 @@ EOS
 plan %pod.elems;
 
 for %pod.keys.sort -> $key {
-    
     is Semi::Literate.parse($key), $key, %pod{ $key };
 } # end of for %pod.keys.sort -> $key
 
