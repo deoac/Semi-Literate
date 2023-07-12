@@ -1,0 +1,152 @@
+use Test;
+use lib '../../lib';
+
+use Semi::Literate;
+
+my %pod;
+%pod.push: q:to/EOS/ =>  "Empty Pod";
+=begin pod
+=end pod
+EOS
+
+%pod.push: q:to/EOS/ => "Paragraph block with long text";
+=begin pod
+
+=head2
+Another test
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
+nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
+consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
+cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
+proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+=end pod
+EOS
+
+%pod.push: q:to/EOS/ => "Paragraph block";
+=begin pod
+
+test
+
+=end pod
+EOS
+
+%pod.push: q:to/EOS/ => "Nested Pod6";
+=begin pod
+
+    =begin pod
+
+    =end pod
+
+=end pod
+EOS
+
+%pod.push: q:to/EOS/ => "Abbreviated block";
+=begin pod
+
+=TITLE A Test
+=end pod
+EOS
+
+%pod.push: q:to/EOS/ => "Delimited Block";
+=begin pod
+
+=begin head1
+A Test
+=end head1
+
+=end pod
+EOS
+
+%pod.push: q:to/EOS/ => "Abbreviated block with configuration";
+=begin pod
+
+     =for head1 :a-first-line-key<firstvalue> :another-first-line-key<xyz>
+     =          :a-second-line-key(42)
+     = :a-third-line-key<third>
+     Content for the header block
+
+=end pod
+EOS
+
+%pod.push: q:to/EOS/ => "=for block with :numbered defn";
+=begin pod
+
+=for defn :numbered
+               We
+               Need
+               Numbers
+ 
+=end pod
+EOS
+
+%pod.push: q:to/EOS/ => "=para block";
+=begin pod
+
+=para 
+This is an ordinary paragraph.
+Its text  will   be     squeezed     and
+short lines filled.
+ 
+=end pod
+EOS
+
+%pod.push: q:to/EOS/ => "=para block with abbreviated hash mark";
+=begin pod
+
+=para #
+We
+Need
+Numbers
+ 
+=end pod
+EOS
+
+%pod.push: q:to/EOS/ => "Putting it all together";
+=begin pod
+
+    =begin pod
+        =para 
+        This is an ordinary paragraph.
+        Its text  will   be     squeezed     and
+        short lines filled.
+        
+        =for defn :numbered
+                    We
+                    Need
+                    Numbers
+        
+            =for head1 :a-first-line-key<firstvalue> :another-first-line-key<xyz>
+            =          :a-second-line-key(42)
+            = :a-third-line-key<third>
+            Content for the header block
+
+        =begin head1
+        A Test
+        =end head1
+
+        =TITLE A Test
+
+        =begin head1
+        A Test
+        =end head1
+
+    =end pod
+
+
+=para #
+We
+Need
+Numbers
+ 
+=end pod
+EOS
+
+plan %pod.elems;
+
+is Semi::Literate.parse($_.key), $_.key, $_.value for %pod;
+
+done-testing;
+
