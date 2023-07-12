@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Wed 12 Jul 2023 04:31:43 PM EDT
+# Last modified: Wed 12 Jul 2023 04:52:50 PM EDT
 # Version 0.0.1
 
 # always use the latest version of Raku
@@ -46,9 +46,9 @@ Let's introduce a "rest of the line" token for convenience.
 =head2 The Pod6 delimiters
 
 According to the L<documentation|https://docs.raku.org/language/pod>,
-=begin item
-    Every Pod6 document has to begin with C<=begin pod> and end with C<=end> pod. 
-=end item
+=begin defn
+    Every Pod6 document has to begin with =begin pod and end with =end pod. 
+=end defn
 
 So let's define those tokens. We need to declare them with C<my> because we
 need to use them in a subroutine later. #TODO explain why.
@@ -76,18 +76,49 @@ possibility of having no lines in the block.
         <end>   
     } # end of token pod
 
+=begin pod
+=head2 The C<code> token
+
+The C<code> sections are trivially defined.  They are just one or more
+C<plain-line>s.
+=end pod
+
     token code { <plain-line>+ }
 
+=begin pod
+=head2 The C<plain-line> token
+
+The C<plain-line> token is, really, any line at all... 
+=end pod
+
+    token plain-line {
+        ^^ <rest-of-line>
+
+=begin pod
+=head2 Disallowing the delimiters in a C<plain-line>.
+
+... except for one subtlety.  They it can't be one of the begin/end delimiters.
+We can specify that with a L<Regex Boolean Condition
+Check|https://docs.raku.org/language/regexes#Regex_Boolean_condition_check>.
+=end pod
+
+        <?{ &not-a-delimiter($/) }> 
+    } # end of token plain-line
+
+=begin pod
+This function simply checks whether the C<plain-line> match object matches
+either C<V< <begin> >> or C<V< <end> >>. Incidentally, this function is why we
+had to declare those tokens with the C<my> keyword.  This function wouldn't
+work otherwise.
+=end pod
 
     sub not-a-delimiter (Match $code --> Bool) {
         return not $code ~~ / <begin> | <end> /;
     } # end of sub not-a-delimiter (Match $code --> Bool)
 
-    token plain-line {
-        ^^ <rest-of-line>
-        <?{ &not-a-delimiter($/) }> 
-    } # end of token plain-line
-
+=begin pod
+And that concludes the grammar for separating C<pod> from C<code>!
+=end pod
 } # end of grammar Semi::Literate
 
 
