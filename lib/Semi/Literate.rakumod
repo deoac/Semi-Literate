@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Tue 11 Jul 2023 06:37:12 PM EDT
+# Last modified: Tue 11 Jul 2023 11:40:45 PM EDT
 # Version 0.0.1
 
 # always use the latest version of Raku
@@ -12,83 +12,34 @@ use v6.*;
 
 
 
-
+use Grammar::Tracer;
 grammar Semi::Literate {
-    token TOP {   [ <pod> |  <code> ]* }
+
+    token TOP {   [ <pod> | <code> ]* }
 
 
 
-    token rest-of-line {
-        \N* \n*
-    } # end of token rest-of-line
-
-
-
-
-    token code{
-        [
-            ^^ <.ws> $<id>=[<-[=]>] 
-            <rest-of-line>
-        ]+
-    } # end of token code
+    token rest-of-line { <!before ^^> \N* \n? } # end of token rest-of-line
 
 
 
 
+    token begin {^^ <.ws> \= begin <.ws> pod <.ws> <rest-of-line>}
+    token end   {^^ <.ws> \= end   <.ws> pod <.ws> <rest-of-line>?}
+#    token code { <after [^ | <end>]> <plain-line>+ <before [ <begin> | $ ]>}
+#    token code { ^^ \N* \n?}
+    token code { ^^ <.ws> <!before \=> \N* \n?}
+    token plain-line { ^^ \N* \n}
+    regex pod {
+    <begin> 
+        <plain-line>*
+    <end>   
+    } # end of token pod
 
 
-
-token pod-paragraph-line { '=for' *\N \n }
-
-token pod-abbreviated-block-line { '=' <!before end> }
-
-    token pod {
-        ^^ 
-           \=begin 
-          <.ws> $<identifier> = (\w+) 
-#          <rest-of-line>
-          \N* \n
-            # Here is all the Pod content
-            [
-                | $<p>=<pod> 
-                | $<ab>= <abbreviated-block> 
-                | $<pb>= <paragraph-block> 
-#                | $<bl> = <blank-line> 
-                | $<npl> = <non-pod-line> 
-            ]*
-          <.ws> \=end                                             
-          <.ws> $<identifier> 
-          \N* \n*
-#          {say " identifier =>  $<identifier>"; say '--------------'; 
-#           say " ab =>  $<ab>";                  say '--------------'; 
-#           say "pb" =>  $<pb>; say '--------------'; 
-#           say "bl" =>  $<bl>; say '--------------'; 
-#           say "npl" =>  $<npl>;  say '--------------'; 
-#       }
-    } # end of token delimited-block
-
-
-
-
-    token abbreviated-block {
-
-#            <.ws> 
-            \= <!before end>
-            <rest-of-line> 
-    } # end of token abbreviated-block
-
-
-
-
-token non-pod-line { $<what> = [ <-[=]> ] .* $$ }
-
-    token paragraph-block {
-            # first non-blank character can't be an equals sign.
-            <.ws> <-[=]>   
-#            <rest-of-line>
-            \N* \n
-    } # end of token paragraph-block
 } # end of grammar Semi::Literate
+
+
 
 
 
