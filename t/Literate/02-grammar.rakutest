@@ -24,9 +24,9 @@ In deciding whether to become an early riser, it is worth
 considering whether you would actually enjoy annelids
 for breakfast.
 =end item
-=end pod
  
 As you can see, folk wisdom is often of dubious value.
+=end pod
 EOS
 
 %pod.push: q:to/EOS/ =>  "01. Empty Pod";
@@ -180,11 +180,35 @@ Numbers
 =end pod
 EOS
 
-plan %pod.elems;
+%pod.push: q:to/EOS/ =>  "13. pod block in code (not <begin> or <end>)";
+#13
+#! raku
+use v6.d;
+=TITLE pod
+say "Hello World";
+
+EOS
+
+#TODO Create failure tests.
+
+plan %pod.elems + 1;
 
 for %pod.keys.sort -> $key {
     is Semi::Literate.parse($key), $key, %pod{ $key };
 } # end of for %pod.keys.sort -> $key
+
+my Str $file = './source/Literate.sl';
+my Str $source = $file.IO.slurp;
+
+my Match $m = Semi::Literate.parse($source);
+is $m.Str, $source, 'Checking the source code!';
+
+say $/.caps[0].key;
+say $/.caps[0].value.Str;
+say '---------';
+say $/.chunks[0].key;
+say $/.chunks[0].value.Str;
+
 
 done-testing;
 
