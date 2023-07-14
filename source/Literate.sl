@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Wed 12 Jul 2023 10:09:59 PM EDT
+# Last modified: Fri 14 Jul 2023 05:18:37 PM EDT
 # Version 0.0.1
 
 # always use the latest version of Raku
@@ -72,10 +72,25 @@ possibility of having no lines in the block.
 =end pod
 
     token pod {
-        <begin> 
-            [<pod> | <plain-line>]*
-        <end>   
+        <begin>  
+        [<pod> | <plain-line>]*
+        <end>
     } # end of token pod
+
+    method FAILGOAL($goal) { 
+        my $cleaned = $goal.trim; 
+        self.error("No closing $cleaned"); 
+    } 
+
+    method error($msg) { 
+        my $parsed = self.target.substr(0, self.pos)\ .trim-trailing; 
+        my $context = $parsed.substr($parsed.chars - 10 max 0) ~ '⏏' ~ self.target.substr($parsed.chars, 10);
+        my $line-no = $parsed.lines.elems; 
+        die "Cannot parse Pod6 block: $msg\n" ~ 
+             "at line $line-no, around "                   ~ 
+              $context.perl                                ~ 
+             "\n(error location indicated by ⏏)\n"; 
+    } 
 
 =begin pod
 =head2 The C<code> token
@@ -93,7 +108,7 @@ The C<plain-line> token is, really, any line at all...
 =end pod
 
     token plain-line {
-        ^^ <rest-of-line>
+        $<plain-line> = [^^ <rest-of-line>]
 
 =begin pod
 =head2 Disallowing the delimiters in a C<plain-line>.
@@ -103,6 +118,7 @@ We can specify that with a L<Regex Boolean Condition
 Check|https://docs.raku.org/language/regexes#Regex_Boolean_condition_check>.
 =end pod
 
+#        <!{ $<plain-line> ~~ / <begin> | <end> / }>
         <?{ &not-a-delimiter($/) }> 
     } # end of token plain-line
 
@@ -113,9 +129,9 @@ had to declare those tokens with the C<my> keyword.  This function wouldn't
 work otherwise.
 =end pod
 
-    sub not-a-delimiter (Match $code --> Bool) {
-        return not $code ~~ / <begin> | <end> /;
-    } # end of sub not-a-delimiter (Match $code --> Bool)
+    sub not-a-delimiter (Match $line --> Bool) {
+        return not $line.hash<plain-line> ~~ /<begin> | <end>/;
+    } # end of sub not-a-delimiter (Match $line --> Bool)
 
 =begin pod
 And that concludes the grammar for separating C<pod> from C<code>!

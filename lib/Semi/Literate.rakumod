@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Wed 12 Jul 2023 10:09:59 PM EDT
+# Last modified: Fri 14 Jul 2023 05:18:02 PM EDT
 # Version 0.0.1
 
 # always use the latest version of Raku
@@ -24,16 +24,31 @@ grammar Semi::Literate {
 
 
 
-    my token begin {^^ <.ws> \= begin <.ws> pod <rest-of-line>}
-    my token end   {^^ <.ws> \= end   <.ws> pod <rest-of-line>}
+    my token begin {^^ $<leading-ws>=<.ws> \= begin <.ws> pod <rest-of-line>}
+    my token end   {^^ $<leading-ws> \= end   <.ws> pod <rest-of-line>}
 
 
 
     token pod {
-        <begin> 
-            [<pod> | <plain-line>]*
-        <end>   
+        <begin>  
+        [<pod> | <plain-line>]*
+        <end>
     } # end of token pod
+
+    method FAILGOAL($goal) { 
+        my $cleaned = $goal.trim; 
+        self.error("No closing $cleaned"); 
+    } 
+
+    method error($msg) { 
+        my $parsed = self.target.substr(0, self.pos)\ .trim-trailing; 
+        my $context = $parsed.substr($parsed.chars - 10 max 0) ~ '⏏' ~ self.target.substr($parsed.chars, 10);
+        my $line-no = $parsed.lines.elems; 
+        die "Cannot parse Pod6 block: $msg\n" ~ 
+             "at line $line-no, around "                   ~ 
+              $context.perl                                ~ 
+             "\n(error location indicated by ⏏)\n"; 
+    } 
 
 
 
@@ -44,20 +59,21 @@ grammar Semi::Literate {
 
 
     token plain-line {
-        ^^ <rest-of-line>
+        $<plain-line> = [^^ <rest-of-line>]
 
 
 
 
+#        <!{ $<plain-line> ~~ / <begin> | <end> / }>
         <?{ &not-a-delimiter($/) }> 
     } # end of token plain-line
 
 
 
 
-    sub not-a-delimiter (Match $code --> Bool) {
-        return not $code ~~ / <begin> | <end> /;
-    } # end of sub not-a-delimiter (Match $code --> Bool)
+    sub not-a-delimiter (Match $line --> Bool) {
+        return not $line.hash<plain-line> ~~ /<begin> | <end>/;
+    } # end of sub not-a-delimiter (Match $line --> Bool)
 
 
 

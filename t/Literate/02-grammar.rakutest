@@ -3,9 +3,10 @@ use lib '../../lib';
 
 use Semi::Literate;
 
-my %pod;
+my %good-pod;
+my %bad-pod;
 
-%pod.push: q:to/EOS/ =>  "12. item lists";
+%good-pod.push: q:to/EOS/ =>  "12. item lists";
 #12
 =begin pod 12
 Let's consider two common proverbs:
@@ -29,13 +30,13 @@ As you can see, folk wisdom is often of dubious value.
 =end pod
 EOS
 
-%pod.push: q:to/EOS/ =>  "01. Empty Pod";
+%good-pod.push: q:to/EOS/ =>  "01. Empty Pod";
 #01
 =begin pod 01
 =end pod
 EOS
 
-%pod.push: q:to/EOS/ => "03. Paragraph block with long text";
+%good-pod.push: q:to/EOS/ => "03. Paragraph block with long text";
 #02
 =begin pod
 
@@ -52,7 +53,7 @@ proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 =end pod
 EOS
 
-%pod.push: q:to/EOS/ => "02. Paragraph block";
+%good-pod.push: q:to/EOS/ => "02. Paragraph block";
 #03
 =begin pod
 
@@ -61,7 +62,7 @@ test
 =end pod
 EOS
 
-%pod.push: q:to/EOS/ => "04. Nested Pod6";
+%good-pod.push: q:to/EOS/ => "04. Nested Pod6";
 #04
 =begin pod
 
@@ -72,7 +73,7 @@ EOS
 =end pod
 EOS
 
-%pod.push: q:to/EOS/ => "05. Abbreviated block";
+%good-pod.push: q:to/EOS/ => "05. Abbreviated block";
 #05
 =begin pod
 
@@ -80,7 +81,7 @@ EOS
 =end pod
 EOS
 
-%pod.push: q:to/EOS/ => "06. Delimited Block";
+%good-pod.push: q:to/EOS/ => "06. Delimited Block";
 #06
 =begin pod
 
@@ -91,7 +92,7 @@ A Test
 =end pod
 EOS
 
-%pod.push: q:to/EOS/ => "07. Abbreviated block with configuration";
+%good-pod.push: q:to/EOS/ => "07. Abbreviated block with configuration";
 #07
 =begin pod
 
@@ -103,7 +104,7 @@ EOS
 =end pod
 EOS
 
-%pod.push: q:to/EOS/ => "08. =for block with :numbered defn";
+%good-pod.push: q:to/EOS/ => "08. =for block with :numbered defn";
 #08
 =begin pod
 
@@ -115,7 +116,7 @@ EOS
 =end pod
 EOS
 
-%pod.push: q:to/EOS/ => "09. =para block";
+%good-pod.push: q:to/EOS/ => "09. =para block";
 #09
 =begin pod
 
@@ -127,7 +128,7 @@ short lines filled.
 =end pod
 EOS
 
-%pod.push: q:to/EOS/ => "10. =para block with abbreviated hash mark";
+%good-pod.push: q:to/EOS/ => "10. =para block with abbreviated hash mark";
 #10
 =begin pod
 
@@ -139,7 +140,7 @@ Numbers
 =end pod
 EOS
 
-%pod.push: q:to/EOS/ => "11. Putting it all together";
+%good-pod.push: q:to/EOS/ => "11. Putting it all together";
 #11
 =begin pod
 
@@ -180,7 +181,7 @@ Numbers
 =end pod
 EOS
 
-%pod.push: q:to/EOS/ =>  "13. pod block in code (not <begin> or <end>)";
+%good-pod.push: q:to/EOS/ =>  "13. pod block in code (not <begin> or <end>)";
 #13
 #! raku
 use v6.d;
@@ -189,25 +190,69 @@ say "Hello World";
 
 EOS
 
-#TODO Create failure tests.
+%bad-pod.push: q:to/EOS/ =>  "14. Missing =end pod";
+#14
+=begin pod
 
-plan %pod.elems + 1;
+Hello world
 
-for %pod.keys.sort -> $key {
-    is Semi::Literate.parse($key), $key, %pod{ $key };
-} # end of for %pod.keys.sort -> $key
+EOS
 
-my Str $file = './source/Literate.sl';
-my Str $source = $file.IO.slurp;
+%bad-pod.push: q:to/EOS/ =>  "15. Missing =begin pod";
+#15
 
-my Match $m = Semi::Literate.parse($source);
-is $m.Str, $source, 'Checking the source code!';
+Hello world
+=end pod
 
-say $/.caps[0].key;
-say $/.caps[0].value.Str;
-say '---------';
-say $/.chunks[0].key;
-say $/.chunks[0].value.Str;
+Goodby world
+EOS
+
+%bad-pod.push: q:to/EOS/ =>  "16. missing <end> delimiter";
+#16
+=begin pod
+=begin pod
+Hello world
+=end pod
+Goodby world
+EOS
+
+#TODO Check that the indentation matches
+%bad-pod.push: q:to/EOS/ =>  "18. bad indenting pod blocks";
+18
+=begin pod
+Hello world
+    =end pod
+Goodbye world
+EOS
+
+%bad-pod.push: q:to/EOS/ =>  "17. missing <begin> delimiter";
+#17
+    =begin pod
+    Hello world
+        =end pod
+    Goodbye world
+        =end pod
+EOS
+
+plan %good-pod.elems + %bad-pod.elems + 1;
+
+for %good-pod.keys.sort -> $key {
+    is Semi::Literate.parse($key), $key, %good-pod{ $key };
+} # end of for %good-pod.keys.sort -> $key
+
+for %bad-pod.keys.sort -> $key {
+    fails-like {Semi::Literate.parse($key)}, X::Syntax::Confused, %bad-pod{ $key };
+#    lives-ok {Semi::Literate.parse($key)}, %bad-pod{ $key } ~ $/.Str;
+}
+
+my Str $source = './source/Literate.sl'.IO.slurp;
+is Semi::Literate.parse($source), $source, 'Checking the source code!';
+
+#say $/.caps[0].key;
+#say $/.caps[0].value.Str;
+#say '---------';
+#say $/.chunks[0].key;
+#say $/.chunks[0].value.Str;
 
 
 done-testing;
