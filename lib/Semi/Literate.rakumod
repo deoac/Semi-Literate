@@ -2,14 +2,14 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Fri 14 Jul 2023 08:56:33 PM EDT
+# Last modified: Sat 15 Jul 2023 03:06:06 PM EDT
 # Version 0.0.1
 
 # always use the latest version of Raku
 use v6.*;
 use PrettyDump;
 use Data::Dump::Tree;
-
+$*OUT.out-buffer= 0;
 
 
 
@@ -27,6 +27,7 @@ grammar Semi::Literate {
 
     my token begin {^^ <.ws> \= begin <.ws> pod <rest-of-line>}
     my token end   {^^ <.ws> \= end   <.ws> pod <rest-of-line>}
+
 
 
 
@@ -62,7 +63,9 @@ grammar Semi::Literate {
 
 
 
+
 } # end of grammar Semi::Literate
+
 
 
 
@@ -75,22 +78,37 @@ sub tangle (
     --> Str ) {
 
 
+
     my Str $source = $input-file.slurp;
+    $source ~~ s:g/\=end (\N*)\n+/=end$0\n/;
+    $source ~~ s:g/\n+\=begin    /\n=begin/;
+
+
 
 
     my Pair @submatches = Semi::Literate.parse($source).caps;
 
 
+
+
     my Str $raku = @submatches.map( {
         when .key eq 'code' {
-            my $code = .value.subst: /^^ (\h* \n)+/;
-        } # end of when .key eq 'code'
-        when .key eq 'pod' { '' }
-        default { die 'Should never get here!' }
+            .value;
+        }
+
+        when .key eq 'pod' { 
+            .value ~~ /^ \h* \=begin <.ws> pod <.ws> (\d+)/; 
+            with $0 { "\n" x $0.Int }
+#            my Int $count = $0 // 0;
+        }
+
+        default { die 'Should never get here' }
+
 
 
     }) # end of my Str $raku = @submatches.map(
-    .join("\n");
+    .join;
+
 
 
 } # end of sub tangle (
