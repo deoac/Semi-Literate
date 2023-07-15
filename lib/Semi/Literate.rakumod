@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Sat 15 Jul 2023 04:05:08 PM EDT
+# Last modified: Sat 15 Jul 2023 04:10:08 PM EDT
 # Version 0.0.1
 
 # always use the latest version of Raku
@@ -27,7 +27,10 @@ grammar Semi::Literate {
 
     my token begin {
         ^^ <.ws> \= begin <.ws> pod 
-        <.ws> $<blank-lines>=(\d+)? 
+
+
+
+        [ <.ws> $<blank-lines>=(\d+) ]? 
         <rest-of-line>
     } # end of my token begin
 
