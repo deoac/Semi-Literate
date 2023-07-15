@@ -2,14 +2,14 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Sat 15 Jul 2023 03:06:06 PM EDT
+# Last modified: Sat 15 Jul 2023 04:05:08 PM EDT
 # Version 0.0.1
 
 # always use the latest version of Raku
 use v6.*;
 use PrettyDump;
 use Data::Dump::Tree;
-$*OUT.out-buffer= 0;
+
 
 
 
@@ -20,13 +20,21 @@ grammar Semi::Literate {
 
 
 
-    my token rest-of-line { \h* \N* \n? } # end of token rest-of-line
+    my token rest-of-line { \h* \N* \n? } 
 
 
 
 
-    my token begin {^^ <.ws> \= begin <.ws> pod <rest-of-line>}
-    my token end   {^^ <.ws> \= end   <.ws> pod <rest-of-line>}
+    my token begin {
+        ^^ <.ws> \= begin <.ws> pod 
+        <.ws> $<blank-lines>=(\d+)? 
+        <rest-of-line>
+    } # end of my token begin
+
+
+
+
+    my token end { ^^ <.ws> \= end <.ws> pod <rest-of-line> }
 
 
 
@@ -72,6 +80,7 @@ grammar Semi::Literate {
 sub tangle ( 
 
 
+
     IO::Path $input-file!,
 
 
@@ -96,11 +105,17 @@ sub tangle (
             .value;
         }
 
+
+
+
+
         when .key eq 'pod' { 
-            .value ~~ /^ \h* \=begin <.ws> pod <.ws> (\d+)/; 
-            with $0 { "\n" x $0.Int }
-#            my Int $count = $0 // 0;
+            my $blank-lines = .value.hash<begin><blank-lines>;
+            with $blank-lines { "\n" x $blank-lines }
         }
+
+
+
 
         default { die 'Should never get here' }
 
