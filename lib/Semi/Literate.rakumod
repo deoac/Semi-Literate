@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Sat 15 Jul 2023 04:10:08 PM EDT
+# Last modified: Sat 15 Jul 2023 04:35:13 PM EDT
 # Version 0.0.1
 
 # always use the latest version of Raku
@@ -30,7 +30,12 @@ grammar Semi::Literate {
 
 
 
-        [ <.ws> $<blank-lines>=(\d+) ]? 
+        [ <.ws> $<blank-lines>=(\d+) ]?  # an optional number to specify the
+                                         # number of blank lines to replace the
+                                         # C<Pod> blocks when tangling.
+
+
+
         <rest-of-line>
     } # end of my token begin
 
@@ -92,6 +97,10 @@ sub tangle (
 
 
     my Str $source = $input-file.slurp;
+
+
+
+
     $source ~~ s:g/\=end (\N*)\n+/=end$0\n/;
     $source ~~ s:g/\n+\=begin    /\n=begin/;
 
@@ -124,8 +133,8 @@ sub tangle (
 
 
 
-    }) # end of my Str $raku = @submatches.map(
-    .join;
+    } # end of my Str $raku = @submatches.map(
+    ).join;
 
 
 

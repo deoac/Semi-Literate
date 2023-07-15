@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Sat 15 Jul 2023 04:10:08 PM EDT
+# Last modified: Sat 15 Jul 2023 04:38:23 PM EDT
 # Version 0.0.1
 
 # always use the latest version of Raku
@@ -10,7 +10,7 @@ use v6.*;
 use PrettyDump;
 use Data::Dump::Tree;
 
-=begin pod 1 
+=begin pod 
 
 
 =TITLE A grammar to parse a file into C<Pod> and C<Code> sections. 
@@ -46,7 +46,7 @@ Let's introduce a "rest of the line" token for convenience.
 
     my token rest-of-line { \h* \N* \n? } 
 
-=begin pod 1
+=begin pod
     
 =head2 The Pod6 delimiters
 
@@ -61,24 +61,44 @@ According to the L<documentation|https://docs.raku.org/language/pod>,
 So let's define those tokens. We need to declare them with C<my> because we
 need to use them in a subroutine later. #TODO explain why.
 
+=head3 The C<begin> token
+
 =end pod
 
     my token begin {
         ^^ <.ws> \= begin <.ws> pod 
 =begin pod
+
+Most programming applications do not focus on the structure of the executable
+file, which is not meant to be easily read by humans.
+
+However, we can provide the option for users to specify the number of empty
+lines that should replace a C<pod> block. To do this, simply add a number at
+the end of the C<=begin> directive. For example, C<=begin pod> .
+
 =end pod
 
-        [ <.ws> $<blank-lines>=(\d+) ]? 
+        [ <.ws> $<blank-lines>=(\d+) ]?  # an optional number to specify the
+                                         # number of blank lines to replace the
+                                         # C<Pod> blocks when tangling.
+=begin pod
+The remainder of the C<begin> directive should be blank.
+=end pod
+
         <rest-of-line>
     } # end of my token begin
 
-=begin pod 1
+=begin pod
+
+=head3 The C<end> token
+
+The C<end> token is much simpler.
 
 =end pod
 
     my token end { ^^ <.ws> \= end <.ws> pod <rest-of-line> }
 
-=begin pod 1
+=begin pod
 
 =head2 The C<Pod> token
 
@@ -99,7 +119,7 @@ possibility of having no lines in the block.
         <end>
     } # end of token pod
 
-=begin pod 1
+=begin pod
 
 =head2 The C<Code> token
 
@@ -110,9 +130,9 @@ C<plain-line>s.
 
     token code { <plain-line>+ }
 
-=begin pod 1
+=begin pod
 
-=head2 The C<plain-line> token
+=head3 The C<plain-line> token
 
 The C<plain-line> token is, really, any line at all... 
 
@@ -121,9 +141,9 @@ The C<plain-line> token is, really, any line at all...
     token plain-line {
        $<plain-line> = [^^ <rest-of-line>]
 
-=begin pod 1
+=begin pod
 
-=head2 Disallowing the delimiters in a C<plain-line>.
+=head3 Disallowing the delimiters in a C<plain-line>.
 
 ... except for one subtlety.  They it can't be one of the begin/end delimiters.
 We can specify that with a L<Regex Boolean Condition
@@ -134,10 +154,10 @@ Check|https://docs.raku.org/language/regexes#Regex_Boolean_condition_check>.
         <?{ &not-a-delimiter($<plain-line>.Str) }> 
     } # end of token plain-line
 
-=begin pod 1
+=begin pod
 
 This function simply checks whether the C<plain-line> match object matches
-either C<<begin>> or C<<end>>. 
+either the C<<begin>> or C<<end>> token. 
 
 Incidentally, this function is why we had to declare those tokens with the
 C<my> keyword.  This function wouldn't work otherwise.
@@ -156,7 +176,7 @@ And that concludes the grammar for separating C<Pod> from C<Code>!
 
 } # end of grammar Semi::Literate
 
-=begin pod 2
+=begin pod
 
 =head1 The Tangle subroutine
 
@@ -184,10 +204,16 @@ First we will get the entire C<.sl> file...
 =end pod
 
     my Str $source = $input-file.slurp;
+
+=begin pod
+
+
+=end pod
+
     $source ~~ s:g/\=end (\N*)\n+/=end$0\n/;
     $source ~~ s:g/\n+\=begin    /\n=begin/;
 
-=begin pod 1
+=begin pod
 
 ...Next, we parse it using the C<Semi::Literate> grammar 
 and obtain a list of submatches (that's what the C<caps> method does) ...
@@ -195,7 +221,7 @@ and obtain a list of submatches (that's what the C<caps> method does) ...
 
     my Pair @submatches = Semi::Literate.parse($source).caps;
 
-=begin pod 1
+=begin pod
 
 ...And now begins the interesting part.  We iterate through the submatches and
 keep only the C<code> sections...
@@ -206,7 +232,7 @@ keep only the C<code> sections...
             .value;
         }
 
-=begin pod 1
+=begin pod
 
 =end pod
 
@@ -216,7 +242,7 @@ keep only the C<code> sections...
             with $blank-lines { "\n" x $blank-lines }
         }
 
-=begin pod 1
+=begin pod
 
 =end pod
 
@@ -226,8 +252,8 @@ keep only the C<code> sections...
 ... and we will join all the code sections together...
 =end pod
 
-    }) # end of my Str $raku = @submatches.map(
-    .join;
+    } # end of my Str $raku = @submatches.map(
+    ).join;
 =begin pod
 
 And that's the end of the C<tangle> subroutine!
@@ -236,7 +262,7 @@ And that's the end of the C<tangle> subroutine!
 } # end of sub tangle (
 
 
-=begin pod 2
+=begin pod
 
 =head1 NAME
 
