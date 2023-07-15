@@ -2,12 +2,13 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Fri 14 Jul 2023 05:18:37 PM EDT
+# Last modified: Fri 14 Jul 2023 08:56:53 PM EDT
 # Version 0.0.1
 
 # always use the latest version of Raku
 use v6.*;
-
+use PrettyDump;
+use Data::Dump::Tree;
 
 =begin pod
 
@@ -59,11 +60,11 @@ need to use them in a subroutine later. #TODO explain why.
     my token end   {^^ <.ws> \= end   <.ws> pod <rest-of-line>}
 =begin pod
 
-=head2 The C<pod> token
+=head2 The C<Pod> token
 
 Within the delimiters, all lines are considered documentation. We will refer to
 these lines as C<plain-lines>. Additionally, it is possible to have nested
-C<pod> sections. This allows for a hierarchical organization of
+C<Pod> sections. This allows for a hierarchical organization of
 documentation, allowing for more structured and detailed explanations.
 
 It is also permissible for the block to be empty. Therefore, we will use the
@@ -72,30 +73,15 @@ possibility of having no lines in the block.
 =end pod
 
     token pod {
-        <begin>  
-        [<pod> | <plain-line>]*
+        <begin> 
+            [<pod> | <plain-line>]*
         <end>
     } # end of token pod
 
-    method FAILGOAL($goal) { 
-        my $cleaned = $goal.trim; 
-        self.error("No closing $cleaned"); 
-    } 
-
-    method error($msg) { 
-        my $parsed = self.target.substr(0, self.pos)\ .trim-trailing; 
-        my $context = $parsed.substr($parsed.chars - 10 max 0) ~ '⏏' ~ self.target.substr($parsed.chars, 10);
-        my $line-no = $parsed.lines.elems; 
-        die "Cannot parse Pod6 block: $msg\n" ~ 
-             "at line $line-no, around "                   ~ 
-              $context.perl                                ~ 
-             "\n(error location indicated by ⏏)\n"; 
-    } 
-
 =begin pod
-=head2 The C<code> token
+=head2 The C<Code> token
 
-The C<code> sections are trivially defined.  They are just one or more
+The C<Code> sections are trivially defined.  They are just one or more
 C<plain-line>s.
 =end pod
 
@@ -108,7 +94,7 @@ The C<plain-line> token is, really, any line at all...
 =end pod
 
     token plain-line {
-        $<plain-line> = [^^ <rest-of-line>]
+       $<plain-line> = [^^ <rest-of-line>]
 
 =begin pod
 =head2 Disallowing the delimiters in a C<plain-line>.
@@ -118,26 +104,72 @@ We can specify that with a L<Regex Boolean Condition
 Check|https://docs.raku.org/language/regexes#Regex_Boolean_condition_check>.
 =end pod
 
-#        <!{ $<plain-line> ~~ / <begin> | <end> / }>
-        <?{ &not-a-delimiter($/) }> 
+        <?{ &not-a-delimiter($<plain-line>.Str) }> 
     } # end of token plain-line
 
 =begin pod
 This function simply checks whether the C<plain-line> match object matches
-either C<V< <begin> >> or C<V< <end> >>. Incidentally, this function is why we
-had to declare those tokens with the C<my> keyword.  This function wouldn't
-work otherwise.
+either C<<begin>> or C<<end>>. 
+
+Incidentally, this function is why we had to declare those tokens with the
+C<my> keyword.  This function wouldn't work otherwise.
 =end pod
 
-    sub not-a-delimiter (Match $line --> Bool) {
-        return not $line.hash<plain-line> ~~ /<begin> | <end>/;
+    sub not-a-delimiter (Str $line --> Bool) {
+        return not $line ~~ /<begin> | <end>/;
     } # end of sub not-a-delimiter (Match $line --> Bool)
 
 =begin pod
-And that concludes the grammar for separating C<pod> from C<code>!
+And that concludes the grammar for separating C<Pod> from C<Code>!
 =end pod
 } # end of grammar Semi::Literate
 
+=begin pod
+
+=head1 The Tangle subroutine
+
+This subroutine will remove all the Pod6 code from a semi-literate file
+(C<.sl>) and keep only the Raku code.
+
+=end pod
+sub tangle ( 
+=begin pod
+The subroutine has only one parameter, the input filename
+=end pod
+    IO::Path $input-file!,
+=begin pod
+The subroutine will return a C<Str>, which should be a working Raku program.
+=end pod
+    --> Str ) {
+=begin pod
+First we will get the entire C<.sl> file...
+=end pod
+    my Str $source = $input-file.slurp;
+=begin pod
+...Next, we parse it using the C<Semi::Literate> grammar 
+and obtain a list of submatches (that's what the C<caps> method does) ...
+=end pod
+    my Pair @submatches = Semi::Literate.parse($source).caps;
+=begin pod
+...And now begins the interesting part.  We iterate through the submatches and
+keep only the C<code> sections, ignoring the C<pod> sections...
+=end pod
+    my Str $raku = @submatches.map( {
+        when .key eq 'code' {
+            #TODO get rid of these spaces!
+            my $code = .value.subst: /^^ (\h* \n)+/;
+        } # end of when .key eq 'code'
+        when .key eq 'pod' { '' }
+        default { die 'Should never get here!' }
+=begin pod
+... and we will join all the code sections together...
+=end pod
+    }) # end of my Str $raku = @submatches.map(
+    .join("\n");
+=begin pod
+And that's the end of the C<tangle> subroutine!
+=end pod
+} # end of sub tangle (
 
 
 =begin pod
@@ -172,7 +204,7 @@ Patches are welcome.
 
 Shimon Bollinger  (deoac.bollinger@gmail.com)
 
-=head1 LICENCE AND COPYRIGHT
+=head1 LICENSE AND COPYRIGHT
 
 © 2023 Shimon Bollinger. All rights reserved.
 
@@ -186,7 +218,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 =end pod
 
-# NO-WEAVE
 my %*SUB-MAIN-OPTS =                                                       
   :named-anywhere,             # allow named variables at any location     
   :bundling,                   # allow bundling of named arguments         
@@ -211,4 +242,8 @@ multi MAIN(Bool :$pod!) is hidden-from-USAGE {
 multi MAIN(Bool :$doc!, Str :$format = 'Text') is hidden-from-USAGE {                           
     run $*EXECUTABLE, "--doc=$format", $*PROGRAM;                          
 } # end of multi MAIN(Bool :$man!)                                         
+
+multi MAIN(Bool :$test!) {
+    say tangle('/Users/jimbollinger/Documents/Development/raku/Projects/Semi-Literate/source/Literate.sl'.IO);
+} # end of multi MAIN(Bool :$test!)
 

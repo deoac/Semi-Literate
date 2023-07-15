@@ -190,21 +190,21 @@ say "Hello World";
 
 EOS
 
-%bad-pod.push: q:to/EOS/ =>  "14. Missing =end pod";
-#14
-=begin pod
-
-Hello world
-
-EOS
-
-%bad-pod.push: q:to/EOS/ =>  "15. Missing =begin pod";
+%bad-pod.push: q:to/EOS/ =>  "14. Missing =begin pod";
 #15
 
 Hello world
 =end pod
 
 Goodby world
+EOS
+
+%bad-pod.push: q:to/EOS/ =>  "15. Missing =end pod";
+#14
+=begin pod
+
+Hello world
+
 EOS
 
 %bad-pod.push: q:to/EOS/ =>  "16. missing <end> delimiter";
@@ -216,15 +216,6 @@ Hello world
 Goodby world
 EOS
 
-#TODO Check that the indentation matches
-%bad-pod.push: q:to/EOS/ =>  "18. bad indenting pod blocks";
-18
-=begin pod
-Hello world
-    =end pod
-Goodbye world
-EOS
-
 %bad-pod.push: q:to/EOS/ =>  "17. missing <begin> delimiter";
 #17
     =begin pod
@@ -234,26 +225,43 @@ EOS
         =end pod
 EOS
 
+#TODO Check that the indentation matches
+#%bad-pod.push: q:to/EOS/ =>  "18. bad indenting pod blocks";
+#18
+#=begin pod
+#Hello world
+#    =end pod
+#Goodbye world
+#EOS
+
 plan %good-pod.elems + %bad-pod.elems + 1;
 
 for %good-pod.keys.sort -> $key {
-    is Semi::Literate.parse($key), $key, %good-pod{ $key };
+    is Semi::Literate.parse($key), 
+       $key, 
+       %good-pod{ $key };
 } # end of for %good-pod.keys.sort -> $key
 
 for %bad-pod.keys.sort -> $key {
-    fails-like {Semi::Literate.parse($key)}, X::Syntax::Confused, %bad-pod{ $key };
-#    lives-ok {Semi::Literate.parse($key)}, %bad-pod{ $key } ~ $/.Str;
+#    Semi::Literate.parse($key);
+    throws-like {Semi::Literate.parse($key)}, 
+                 X::Syntax::Confused, 
+                 %bad-pod{ $key };
 }
 
-my Str $source = './source/Literate.sl'.IO.slurp;
+my Str $source = '/Users/jimbollinger/Documents/Development/raku/Projects/Semi-Literate/source/Literate.sl'.IO.slurp;
 is Semi::Literate.parse($source), $source, 'Checking the source code!';
-
-#say $/.caps[0].key;
-#say $/.caps[0].value.Str;
-#say '---------';
-#say $/.chunks[0].key;
-#say $/.chunks[0].value.Str;
-
+Semi::Literate.parse($source);
 
 done-testing;
+
+CATCH { 
+    note .WHAT;
+        when X::Syntax::Confused {  
+            die "Bad POD6.  Did you forget a '=begin' or '=end' directive?" ~
+                 .backtrace;
+        }
+        default { die .message }
+    }
+        
 

@@ -5,17 +5,18 @@
 [The Grammar](#the-grammar)  
 [Convenient tokens](#convenient-tokens)  
 [The Pod6 delimiters](#the-pod6-delimiters)  
-[The pod token](#the-pod-token)  
-[The code token](#the-code-token)  
+[The Pod token](#the-pod-token)  
+[The Code token](#the-code-token)  
 [The plain-line token](#the-plain-line-token)  
 [Disallowing the delimiters in a plain-line.](#disallowing-the-delimiters-in-a-plain-line)  
+[The Tangle subroutine](#the-tangle-subroutine)  
 [NAME](#name)  
 [VERSION](#version)  
 [SYNOPSIS](#synopsis)  
 [DESCRIPTION](#description)  
 [BUGS AND LIMITATIONS](#bugs-and-limitations)  
 [AUTHOR](#author)  
-[LICENCE AND COPYRIGHT](#licence-and-copyright)  
+[LICENSE AND COPYRIGHT](#license-and-copyright)  
 
 ----
 ```
@@ -65,7 +66,7 @@ Let's introduce a "rest of the line" token for convenience.
 ## The Pod6 delimiters
 According to the [documentation](https://docs.raku.org/language/pod),
 
-> **Every Pod6 document has to begin with C&lt;=begin pod&gt; and end with C&lt;=end&gt; pod.**  
+> **Every Pod6 document has to begin with =begin pod and end with =end pod.**  
 
 
 So let's define those tokens. We need to declare them with `my` because we need to use them in a subroutine later. #TODO explain why.
@@ -83,8 +84,8 @@ So let's define those tokens. We need to declare them with `my` because we need 
 
 
 
-## The `pod` token
-Within the delimiters, all lines are considered documentation. We will refer to these lines as `plain-lines`. Additionally, it is possible to have nested `pod` sections. This allows for a hierarchical organization of documentation, allowing for more structured and detailed explanations.
+## The `Pod` token
+Within the delimiters, all lines are considered documentation. We will refer to these lines as `plain-lines`. Additionally, it is possible to have nested `Pod` sections. This allows for a hierarchical organization of documentation, allowing for more structured and detailed explanations.
 
 It is also permissible for the block to be empty. Therefore, we will use the 'zero-or-more' quantifier on the lines of documentation, allowing for the possibility of having no lines in the block.
 
@@ -96,7 +97,7 @@ It is also permissible for the block to be empty. Therefore, we will use the 'ze
   7|     token pod {
   8|         <begin> 
   9|             [<pod> | <plain-line>]*
- 10|         <end>   
+ 10|         <end>
  11|     } 
 
 ```
@@ -104,8 +105,8 @@ It is also permissible for the block to be empty. Therefore, we will use the 'ze
 
 
 
-## The `code` token
-The `code` sections are trivially defined. They are just one or more `plain-line`s!
+## The `Code` token
+The `Code` sections are trivially defined. They are just one or more `plain-line`s.
 
 
 
@@ -128,7 +129,7 @@ The `plain-line` token is, really, any line at all...
 
 ```
  13|     token plain-line {
- 14|         ^^ <rest-of-line>
+ 14|        $<plain-line> = [^^ <rest-of-line>]
 
 ```
 
@@ -143,7 +144,7 @@ The `plain-line` token is, really, any line at all...
 
 
 ```
- 15|         <?{ &not-a-delimiter($/) }> 
+ 15|         <?{ &not-a-delimiter($<plain-line>.Str) }> 
  16|     } 
 
 ```
@@ -151,15 +152,17 @@ The `plain-line` token is, really, any line at all...
 
 
 
-This function simply checks whether the `plain-line` match object matches either `begin` or `end`. Incidentally, this function is why we had to declare those tokens with the `my` keyword. This function wouldn't work otherwise.
+This function simply checks whether the `plain-line` match object matches either `begin` or `end`. 
+
+Incidentally, this function is why we had to declare those tokens with the `my` keyword. This function wouldn't work otherwise.
 
 
 
 
 
 ```
- 17|     sub not-a-delimiter (Match $code --> Bool) {
- 18|         return not $code ~~ / <begin> | <end> /;
+ 17|     sub not-a-delimiter (Str $line --> Bool) {
+ 18|         return not $line ~~ /<begin> | <end>/;
  19|     } 
 
 ```
@@ -167,7 +170,7 @@ This function simply checks whether the `plain-line` match object matches either
 
 
 
-And that concludes the grammar for separating `pod` from `code`!
+And that concludes the grammar for separating `Pod` from `Code`!
 
 
 
@@ -175,6 +178,123 @@ And that concludes the grammar for separating `pod` from `code`!
 
 ```
  20| } 
+
+```
+
+
+
+
+# The Tangle subroutine
+This subroutine will remove all the Pod6 code from a semi-literate file (`.sl`) and keep only the Raku code.
+
+
+
+
+
+```
+ 21| sub tangle (
+
+```
+
+
+
+
+The subroutine has only one parameter, the input filename
+
+
+
+
+
+```
+ 22|     IO::Path $input-file!,
+
+```
+
+
+
+
+The subroutine will return a `Str`, which should be a working Raku program.
+
+
+
+
+
+```
+ 23|     --> Str ) {
+
+```
+
+
+
+
+First we will get the entire `.sl` file...
+
+
+
+
+
+```
+ 24|     my Str $source = $input-file.slurp;
+
+```
+
+
+
+
+...Next, we parse it using the `Semi::Literate` grammar and obtain a list of submatches (that's what the `caps` method does) ...
+
+
+
+
+
+```
+ 25|     my List @submatches = Semi::Literate.parse($source).caps;
+
+```
+
+
+
+
+...And now begins the interesting part. We iterate through the submatches and keep only the `code` sections, ignoring the `pod` sections...
+
+
+
+
+
+```
+ 26|     my Str $raku = @submatches.map( {
+ 27|         when .key eq 'code' {
+ 28|             .value
+ 29|         }) # end of when .key eq 'code'
+
+```
+
+
+
+
+... and we will join all the code sections together...
+
+
+
+
+
+```
+ 30|         .join("\n");
+ 31|     } # end of my Str $raku = @submatches.map(
+
+```
+
+
+
+
+And that's the end of the `tangle` subroutine!
+
+
+
+
+
+```
+ 32| } 
 
 ```
 
@@ -204,7 +324,7 @@ There are no known bugs in this module. Patches are welcome.
 # AUTHOR
 Shimon Bollinger (deoac.bollinger@gmail.com)
 
-# LICENCE AND COPYRIGHT
+# LICENSE AND COPYRIGHT
 © 2023 Shimon Bollinger. All rights reserved.
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Raku itself. See [The Artistic License 2.0](https://opensource.org/licenses/Artistic-2.0).
@@ -216,69 +336,24 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 
 ```
- 21| my %*SUB-MAIN-OPTS =                                                       
- 22|   :named-anywhere,             
- 23|   :bundling,                   
- 24|   :allow-no,                   
- 25|   :numeric-suffix-as-value,    
- 26| ;                                                                          
- 27| 
- 28| multi MAIN(Bool :$pod!) {                                                  
- 29|     for $=pod -> $pod-item {                                               
- 30|         for $pod-item.contents -> $pod-block {                             
- 31|             $pod-block.raku.say;                                           
- 32|         }                                                                  
- 33|     }                                                                      
- 34| } 
- 35| 
- 36| multi MAIN(Bool :$doc!, Str :$format = 'Text') {                           
- 37|     run $*EXECUTABLE, "--doc=$format", $*PROGRAM;                          
- 38| } # end of multi MAIN(Bool :$man!)                                         
+ 33| my %*SUB-MAIN-OPTS =                                                       
+ 34|   :named-anywhere,             
+ 35|   :bundling,                   
+ 36|   :allow-no,                   
+ 37|   :numeric-suffix-as-value,    
+ 38| ;                                                                          
  39| 
- 40| multi MAIN (:$test!) {                                                     
- 41|     use Test;                                                              
- 42| 
- 43|     my @tests = [                                                          
- 44|     ];                                                                     
- 45| 
- 46|     for @tests {                                                           
- 47|     } # end of for @tests                                                  
- 48| 
- 49|     my $test-pod = q:to/EOF/;
- 50|     =begin pod
- 51|     =TITLE Hello
- 52| 
- 53|     Paragraph Start
- 54|     Line2
- 55|     Line 3
- 56| 
- 57|     Line 4
- 58| 
- 59|     =end pod
- 60| 
- 61|     if True {
- 62|         head1 'hello';
- 63|     }
- 64| 
- 65|     my $a = 42;
- 66| 
- 67|     =begin pod
- 68| 
- 69|     =defn aoeu
- 70| 
- 71|     snthoeu
- 72| 
- 73|     =end pod
- 74| 
- 75|     EOF
- 76| 
- 77|     dd $test-pod;
- 78| 
- 79|     my $parse = Semi::Literate.parse($test-pod);
- 80| 
- 81|     say $parse.caps».keys;
- 82|     say '------------';
- 83| } # end of multi MAIN (:$test! )
+ 40| multi MAIN(Bool :$pod!) is hidden-from-USAGE {                                                  
+ 41|     for $=pod -> $pod-item {                                               
+ 42|         for $pod-item.contents -> $pod-block {                             
+ 43|             $pod-block.raku.say;                                           
+ 44|         }                                                                  
+ 45|     }                                                                      
+ 46| } 
+ 47| 
+ 48| multi MAIN(Bool :$doc!, Str :$format = 'Text') is hidden-from-USAGE {                           
+ 49|     run $*EXECUTABLE, "--doc=$format", $*PROGRAM;                          
+ 50| } # end of multi MAIN(Bool :$man!)                                         
 
 ```
 
@@ -288,4 +363,4 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 
 ----
-Rendered from  at 2023-07-12T20:49:15Z			
+Rendered from  at 2023-07-15T00:19:20Zq

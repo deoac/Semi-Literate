@@ -2,12 +2,13 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Fri 14 Jul 2023 05:18:02 PM EDT
+# Last modified: Fri 14 Jul 2023 08:56:33 PM EDT
 # Version 0.0.1
 
 # always use the latest version of Raku
 use v6.*;
-
+use PrettyDump;
+use Data::Dump::Tree;
 
 
 
@@ -24,31 +25,16 @@ grammar Semi::Literate {
 
 
 
-    my token begin {^^ $<leading-ws>=<.ws> \= begin <.ws> pod <rest-of-line>}
-    my token end   {^^ $<leading-ws> \= end   <.ws> pod <rest-of-line>}
+    my token begin {^^ <.ws> \= begin <.ws> pod <rest-of-line>}
+    my token end   {^^ <.ws> \= end   <.ws> pod <rest-of-line>}
 
 
 
     token pod {
-        <begin>  
-        [<pod> | <plain-line>]*
+        <begin> 
+            [<pod> | <plain-line>]*
         <end>
     } # end of token pod
-
-    method FAILGOAL($goal) { 
-        my $cleaned = $goal.trim; 
-        self.error("No closing $cleaned"); 
-    } 
-
-    method error($msg) { 
-        my $parsed = self.target.substr(0, self.pos)\ .trim-trailing; 
-        my $context = $parsed.substr($parsed.chars - 10 max 0) ~ '⏏' ~ self.target.substr($parsed.chars, 10);
-        my $line-no = $parsed.lines.elems; 
-        die "Cannot parse Pod6 block: $msg\n" ~ 
-             "at line $line-no, around "                   ~ 
-              $context.perl                                ~ 
-             "\n(error location indicated by ⏏)\n"; 
-    } 
 
 
 
@@ -59,20 +45,19 @@ grammar Semi::Literate {
 
 
     token plain-line {
-        $<plain-line> = [^^ <rest-of-line>]
+       $<plain-line> = [^^ <rest-of-line>]
 
 
 
 
-#        <!{ $<plain-line> ~~ / <begin> | <end> / }>
-        <?{ &not-a-delimiter($/) }> 
+        <?{ &not-a-delimiter($<plain-line>.Str) }> 
     } # end of token plain-line
 
 
 
 
-    sub not-a-delimiter (Match $line --> Bool) {
-        return not $line.hash<plain-line> ~~ /<begin> | <end>/;
+    sub not-a-delimiter (Str $line --> Bool) {
+        return not $line ~~ /<begin> | <end>/;
     } # end of sub not-a-delimiter (Match $line --> Bool)
 
 
@@ -81,10 +66,39 @@ grammar Semi::Literate {
 
 
 
+sub tangle ( 
+
+
+    IO::Path $input-file!,
+
+
+    --> Str ) {
+
+
+    my Str $source = $input-file.slurp;
+
+
+    my Pair @submatches = Semi::Literate.parse($source).caps;
+
+
+    my Str $raku = @submatches.map( {
+        when .key eq 'code' {
+            my $code = .value.subst: /^^ (\h* \n)+/;
+        } # end of when .key eq 'code'
+        when .key eq 'pod' { '' }
+        default { die 'Should never get here!' }
+
+
+    }) # end of my Str $raku = @submatches.map(
+    .join("\n");
+
+
+} # end of sub tangle (
 
 
 
-# NO-WEAVE
+
+
 my %*SUB-MAIN-OPTS =                                                       
   :named-anywhere,             # allow named variables at any location     
   :bundling,                   # allow bundling of named arguments         
@@ -109,4 +123,8 @@ multi MAIN(Bool :$pod!) is hidden-from-USAGE {
 multi MAIN(Bool :$doc!, Str :$format = 'Text') is hidden-from-USAGE {                           
     run $*EXECUTABLE, "--doc=$format", $*PROGRAM;                          
 } # end of multi MAIN(Bool :$man!)                                         
+
+multi MAIN(Bool :$test!) {
+    say tangle('/Users/jimbollinger/Documents/Development/raku/Projects/Semi-Literate/source/Literate.sl'.IO);
+} # end of multi MAIN(Bool :$test!)
 
