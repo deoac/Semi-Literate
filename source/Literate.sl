@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Sat 15 Jul 2023 04:38:23 PM EDT
+# Last modified: Sat 15 Jul 2023 08:53:38 PM EDT
 # Version 0.0.1
 
 # always use the latest version of Raku
@@ -82,7 +82,7 @@ the end of the C<=begin> directive. For example, C<=begin pod> .
                                          # number of blank lines to replace the
                                          # C<Pod> blocks when tangling.
 =begin pod
-The remainder of the C<begin> directive should be blank.
+The remainder of the C<begin> directive can only be whitespace.
 =end pod
 
         <rest-of-line>
@@ -190,7 +190,9 @@ sub tangle (
 
 =begin pod
 
-The subroutine has only one parameter, the input filename
+The subroutine has a single parameter, which is the input filename. The
+filename is required.  Typically, this parameter is obtained from the command
+line through the wrapper subroutine C<MAIN>.    
 =end pod
     IO::Path $input-file!,
 =begin pod
@@ -206,8 +208,7 @@ First we will get the entire C<.sl> file...
     my Str $source = $input-file.slurp;
 
 =begin pod
-
-
+#TODO 
 =end pod
 
     $source ~~ s:g/\=end (\N*)\n+/=end$0\n/;
@@ -233,7 +234,12 @@ keep only the C<code> sections...
         }
 
 =begin pod
+Most programming applications do not focus on the structure of the
+executable file, which is not meant to be easily read by humans.
 
+However, we can provide the option for users to specify the number of empty
+lines that should replace a C<pod> block. To do this, simply add a number
+at the end of the C<=begin> directive. For example, C<=begin pod 2> .
 =end pod
 
 
@@ -243,7 +249,7 @@ keep only the C<code> sections...
         }
 
 =begin pod
-
+#TODO 
 =end pod
 
         default { die 'Should never get here' }
@@ -261,6 +267,115 @@ And that's the end of the C<tangle> subroutine!
 
 } # end of sub tangle (
 
+=begin pod 
+
+=head1 Weave
+
+The C<Weave> subroutine will I<weave> the C<.sl> file into a readable Markdown,
+HTML, or other format.  It is a little more complicated than C<sub tangle>
+because it has to include the C<code> sections.
+
+=head2 Necessary include files
+
+=end pod
+    #TODO 
+=begin pod
+
+=end pod
+
+sub weave ( 
+
+=begin pod
+=head2 The parameters of Weave
+
+C<sub weave> will have several parameters.  
+=head3 C<$input-file>    
+
+The input filename is required. Typically,
+this parameter is obtained from the command line through a wrapper subroutine
+C<MAIN>.
+    
+=end pod
+
+    IO::Path $input-file!;
+=begin pod
+=head3 C<$output-format>
+
+The output of the weave can (currently) be Markdown, Text, or HTML.  It
+defaults to Markdown. The variable is case-insensitive, so 'markdown' also
+works.
+=end pod
+
+    Str $output-format = 'Markdown'; # Can also be 'HTML' or 'Text'
+
+=begin pod
+=head3 C<$line-numbers>
+
+It can be useful to print line numbers in the code listing.  It currently
+defaults to True.
+=end pod
+
+    Bool $line-numbers = True;
+
+
+=begin pod
+C<sub weave> returns a Str.
+=end pod
+
+--> Str ) {
+=begin pod
+#TODO 
+=end pod
+
+    my UInt $line-number = 0;
+
+=begin pod
+First we will get the entire C<.sl> file...
+=end pod
+
+    my Str $source = $input-file.slurp;
+=begin pod
+
+...Next, we parse it using the C<Semi::Literate> grammar 
+and obtain a list of submatches (that's what the C<caps> method does) ...
+=end pod
+
+    my Pair @submatches = Semi::Literate.parse($source).caps;
+
+=begin pod
+
+...And now begins the interesting part.  We iterate through the submatches and
+insert the C<code> sections into the Pod6...
+=end pod
+
+
+    my $weave = @submatches.map( {
+        note .key;
+        when .key eq 'pod' {
+            .value
+        } # end of when .key
+        when .key eq 'code' { qq:to/EOCB/; } 
+            \=begin pod          
+            \=begin code :lang<raku>
+                { .value }
+            \=end code
+            \=end pod
+            EOCB
+
+        default { die 'Should never get here.' }
+    } # end of my $weave = Semi::Literate.parse($source).caps.map
+    ).join;
+
+=begin pod
+#                { .value.lines.map: "%3s| %s".sprintf: $line-number++, $_ }
+
+#TODO Convert the POD to Markdown, etc.
+
+
+=end pod
+
+
+} # end of sub weave (
 
 =begin pod
 
@@ -333,7 +448,11 @@ multi MAIN(Bool :$doc!, Str :$format = 'Text') is hidden-from-USAGE {
     run $*EXECUTABLE, "--doc=$format", $*PROGRAM;                          
 } # end of multi MAIN(Bool :$man!)                                         
 
-multi MAIN(Bool :$test!) {
+multi MAIN(Bool :$testt!) {
     say tangle('/Users/jimbollinger/Documents/Development/raku/Projects/Semi-Literate/source/Literate.sl'.IO);
+} # end of multi MAIN(Bool :$test!)
+
+multi MAIN(Bool :$testw!) {
+    say weave('/Users/jimbollinger/Documents/Development/raku/Projects/Semi-Literate/source/Literate.sl'.IO);
 } # end of multi MAIN(Bool :$test!)
 

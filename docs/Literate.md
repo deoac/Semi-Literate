@@ -12,6 +12,11 @@
 [The plain-line token](#the-plain-line-token)  
 [Disallowing the delimiters in a plain-line.](#disallowing-the-delimiters-in-a-plain-line)  
 [The Tangle subroutine](#the-tangle-subroutine)  
+[Weave](#weave)  
+[The parameters of Weave](#the-parameters-of-weave)  
+[$input-file](#input-file)  
+[$output-format](#output-format)  
+[$line-numbers](#line-numbers)  
 [NAME](#name)  
 [VERSION](#version)  
 [SYNOPSIS](#synopsis)  
@@ -105,7 +110,7 @@ However, we can provide the option for users to specify the number of empty line
 
 
 
-The remainder of the `begin` directive should be blank.
+The remainder of the `begin` directive can only be whitespace.
 
 
 
@@ -203,7 +208,7 @@ The `plain-line` token is, really, any line at all...
 
 
 
-This function simply checks whether the `plain-line` match object matches either `begin` or `end` or token. 
+This function simply checks whether the `plain-line` match object matches either the `begin` or `end` token. 
 
 Incidentally, this function is why we had to declare those tokens with the `my` keyword. This function wouldn't work otherwise.
 
@@ -250,7 +255,7 @@ This subroutine will remove all the Pod6 code from a semi-literate file (`.sl`) 
 
 
 
-The subroutine has only one parameter, the input filename
+The subroutine has a single parameter, which is the input filename. The filename is required. Typically, this parameter is obtained from the command line through the wrapper subroutine `MAIN`. 
 
 
 
@@ -291,6 +296,10 @@ First we will get the entire `.sl` file...
 
 
 
+
+Most programming applications do not focus on the structure of the executable file, which is not meant to be easily read by humans.
+
+However, we can provide the option for users to specify the number of empty lines that should replace a `pod` block. To do this, simply add a number at the end of the `=begin` directive. For example, `=begin pod 2` .
 
 
 
@@ -336,6 +345,8 @@ First we will get the entire `.sl` file...
 
 
 
+#TODO 
+
 
 
 
@@ -350,6 +361,8 @@ First we will get the entire `.sl` file...
 
 
 
+
+#TODO 
 
 
 
@@ -392,6 +405,85 @@ And that's the end of the `tangle` subroutine!
 
 
 
+# Weave
+The `Weave` subroutine will _weave_ the `.sl` file into a readable Markdown, HTML, or other format. It is a little more complicated than `sub tangle` because it has to include the `code` sections.
+
+
+
+
+
+```
+ 46| sub weave ( 
+
+```
+
+
+
+
+## The parameters of Weave
+`sub weave` will have several parameters. 
+
+### `$input-file`
+The input filename is required. Typically, this parameter is obtained from the command line through a wrapper subroutine `MAIN`.
+
+
+
+
+
+```
+ 47|     IO::Path $input-file!;
+
+```
+
+
+
+
+### `$output-format`
+The output of the weave can (currently) be Markdown, Text, or HTML. It defaults to Markdown. The variable is case-insensitive, so 'markdown' also works.
+
+
+
+
+
+```
+ 48|     Str $output-format = 'Markdown'; # Can also be 'HTML' or 'Text'
+
+```
+
+
+
+
+### `$line-numbers`
+It can be useful to print line numbers in the code listing. It currently defaults to True.
+
+
+
+
+
+```
+ 49|     Bool $line-numbers = True;
+
+```
+
+
+
+
+`sub weave` returns a Str.
+
+
+
+
+
+```
+ 50| --> Str ) {
+ 51| 
+ 52| } 
+
+```
+
+
+
+
 # NAME
 `Semi::Literate` - Get the Pod vs Code structure from a Raku/Pod6 file.
 
@@ -427,28 +519,28 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 
 ```
- 46| my %*SUB-MAIN-OPTS =                                                       
- 47|   :named-anywhere,             
- 48|   :bundling,                   
- 49|   :allow-no,                   
- 50|   :numeric-suffix-as-value,    
- 51| ;                                                                          
- 52| 
- 53| multi MAIN(Bool :$pod!) is hidden-from-USAGE {                                                  
- 54|     for $=pod -> $pod-item {                                               
- 55|         for $pod-item.contents -> $pod-block {                             
- 56|             $pod-block.raku.say;                                           
- 57|         }                                                                  
- 58|     }                                                                      
- 59| } 
- 60| 
- 61| multi MAIN(Bool :$doc!, Str :$format = 'Text') is hidden-from-USAGE {                           
- 62|     run $*EXECUTABLE, "--doc=$format", $*PROGRAM;                          
- 63| } # end of multi MAIN(Bool :$man!)                                         
- 64| 
- 65| multi MAIN(Bool :$test!) {
- 66|     say tangle('/Users/jimbollinger/Documents/Development/raku/Projects/Semi-Literate/source/Literate.sl'.IO);
- 67| } # end of multi MAIN(Bool :$test!)
+ 53| my %*SUB-MAIN-OPTS =                                                       
+ 54|   :named-anywhere,             
+ 55|   :bundling,                   
+ 56|   :allow-no,                   
+ 57|   :numeric-suffix-as-value,    
+ 58| ;                                                                          
+ 59| 
+ 60| multi MAIN(Bool :$pod!) is hidden-from-USAGE {                                                  
+ 61|     for $=pod -> $pod-item {                                               
+ 62|         for $pod-item.contents -> $pod-block {                             
+ 63|             $pod-block.raku.say;                                           
+ 64|         }                                                                  
+ 65|     }                                                                      
+ 66| } 
+ 67| 
+ 68| multi MAIN(Bool :$doc!, Str :$format = 'Text') is hidden-from-USAGE {                           
+ 69|     run $*EXECUTABLE, "--doc=$format", $*PROGRAM;                          
+ 70| } # end of multi MAIN(Bool :$man!)                                         
+ 71| 
+ 72| multi MAIN(Bool :$test!) {
+ 73|     say tangle('/Users/jimbollinger/Documents/Development/raku/Projects/Semi-Literate/source/Literate.sl'.IO);
+ 74| } # end of multi MAIN(Bool :$test!)
 
 ```
 
@@ -458,4 +550,4 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 
 ----
-Rendered from  at 2023-07-15T20:35:35Z
+Rendered from  at 2023-07-15T23:48:43Z

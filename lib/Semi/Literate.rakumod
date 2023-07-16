@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Sat 15 Jul 2023 04:35:13 PM EDT
+# Last modified: Sat 15 Jul 2023 08:53:38 PM EDT
 # Version 0.0.1
 
 # always use the latest version of Raku
@@ -142,6 +142,73 @@ sub tangle (
 
 
 
+    #TODO 
+
+
+
+sub weave ( 
+
+
+
+
+    IO::Path $input-file!;
+
+
+
+    Str $output-format = 'Markdown'; # Can also be 'HTML' or 'Text'
+
+
+
+
+    Bool $line-numbers = True;
+
+
+
+
+
+--> Str ) {
+
+
+
+    my UInt $line-number = 0;
+
+
+
+
+    my Str $source = $input-file.slurp;
+
+
+
+    my Pair @submatches = Semi::Literate.parse($source).caps;
+
+
+
+
+
+    my $weave = @submatches.map( {
+        note .key;
+        when .key eq 'pod' {
+            .value
+        } # end of when .key
+        when .key eq 'code' { qq:to/EOCB/; } 
+            \=begin pod          
+            \=begin code :lang<raku>
+                { .value }
+            \=end code
+            \=end pod
+            EOCB
+
+        default { die 'Should never get here.' }
+    } # end of my $weave = Semi::Literate.parse($source).caps.map
+    ).join;
+
+
+
+
+
+} # end of sub weave (
+
+
 
 
 my %*SUB-MAIN-OPTS =                                                       
@@ -169,7 +236,11 @@ multi MAIN(Bool :$doc!, Str :$format = 'Text') is hidden-from-USAGE {
     run $*EXECUTABLE, "--doc=$format", $*PROGRAM;                          
 } # end of multi MAIN(Bool :$man!)                                         
 
-multi MAIN(Bool :$test!) {
+multi MAIN(Bool :$testt!) {
     say tangle('/Users/jimbollinger/Documents/Development/raku/Projects/Semi-Literate/source/Literate.sl'.IO);
+} # end of multi MAIN(Bool :$test!)
+
+multi MAIN(Bool :$testw!) {
+    say weave('/Users/jimbollinger/Documents/Development/raku/Projects/Semi-Literate/source/Literate.sl'.IO);
 } # end of multi MAIN(Bool :$test!)
 
