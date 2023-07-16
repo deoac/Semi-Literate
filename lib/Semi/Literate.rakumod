@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Sat 15 Jul 2023 08:53:38 PM EDT
+# Last modified: Sat 15 Jul 2023 09:19:54 PM EDT
 # Version 0.0.1
 
 # always use the latest version of Raku
@@ -170,12 +170,36 @@ sub weave (
 
 
 
-    my UInt $line-number = 0;
+    my UInt $line-number = 1;
 
 
 
 
     my Str $source = $input-file.slurp;
+
+
+
+
+    $source ~~ s:g/\=end (\N*)\n+/=end$0\n/;
+    $source ~~ s:g/\n+\=begin    /\n=begin/;
+
+
+
+    # delete full comment lines
+    $source ~~ s:g{ ^^ \h* '#' \N* \n} = ''; 
+
+    # remove partial comments, unless the '#' is escaped with
+    # a backslash or is in a quote. (It doesn't catch all quote
+    # constructs...)
+    # And leave the newline. 
+    $source ~~ s:g{
+#        <!after \\>              &&
+#                   <!after [\" <-[\"]>*] >  &&
+#                   <!after [\' <-[\']>*] >  &&
+                   '#' \N* } = '';
+
+
+
 
 
 
@@ -186,14 +210,21 @@ sub weave (
 
 
     my $weave = @submatches.map( {
-        note .key;
         when .key eq 'pod' {
             .value
         } # end of when .key
+
+
+
+
         when .key eq 'code' { qq:to/EOCB/; } 
             \=begin pod          
             \=begin code :lang<raku>
-                { .value }
+
+
+
+
+             {.value.lines.map({ "%3s| %s\n".sprintf($line-number++, $_)}) }
             \=end code
             \=end pod
             EOCB
