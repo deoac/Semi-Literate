@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Sat 15 Jul 2023 09:19:54 PM EDT
+# Last modified: Sun 16 Jul 2023 09:25:26 PM EDT
 # Version 0.0.1
 
 # always use the latest version of Raku
@@ -74,7 +74,7 @@ file, which is not meant to be easily read by humans.
 
 However, we can provide the option for users to specify the number of empty
 lines that should replace a C<pod> block. To do this, simply add a number at
-the end of the C<=begin> directive. For example, C<=begin pod> .
+the end of the C<begin> directive. For example, C<begin pod 2> .
 
 =end pod
 
@@ -147,7 +147,7 @@ The C<plain-line> token is, really, any line at all...
 
 ... except for one subtlety.  They it can't be one of the begin/end delimiters.
 We can specify that with a L<Regex Boolean Condition
-Check|https://docs.raku.org/language/regexes#Regex_Boolean_condition_check>.
+Check|https://docs.raku.org/language/regexes\#Regex_Boolean_condition_check>.
 
 =end pod
 
@@ -211,8 +211,8 @@ First we will get the entire C<.sl> file...
 #TODO 
 =end pod
 
-    $source ~~ s:g/\=end (\N*)\n+/=end$0\n/;
-    $source ~~ s:g/\n+\=begin    /\n=begin/;
+    $source ~~ s:g/\=end (\N*)\n+/\=end$0\n/;
+    $source ~~ s:g/\n+\=begin    /\n\=begin/;
 
 =begin pod
 
@@ -234,12 +234,13 @@ keep only the C<code> sections...
         }
 
 =begin pod
+        #TODO rewrite
 Most programming applications do not focus on the structure of the
 executable file, which is not meant to be easily read by humans.
 
 However, we can provide the option for users to specify the number of empty
 lines that should replace a C<pod> block. To do this, simply add a number
-at the end of the C<=begin> directive. For example, C<=begin pod 2> .
+at the end of the C<begin> directive. For example, C<begin pod 2> .
 =end pod
 
 
@@ -339,26 +340,54 @@ First we will get the entire C<.sl> file...
 #TODO 
 =end pod
 
-    $source ~~ s:g/\=end (\N*)\n+/=end$0\n/;
-    $source ~~ s:g/\n+\=begin    /\n=begin/;
+    $source ~~ s:g/\=end (\N*)\n+/\=end$0\n/;
+    $source ~~ s:g/\n+\=begin    /\n\=begin/;
 =begin pod
 Remove all Raku comments
 =end pod
 
     # delete full comment lines
-    $source ~~ s:g{ ^^ \h* '#' \N* \n} = ''; 
+    $source ~~ s:g{ ^^ \h* '#' \N* \n+} = ''; 
 
     # remove partial comments, unless the '#' is escaped with
     # a backslash or is in a quote. (It doesn't catch all quote
     # constructs...)
-    # And leave the newline. 
-    $source ~~ s:g{
-#        <!after \\>              &&
-#                   <!after [\" <-[\"]>*] >  &&
-#                   <!after [\' <-[\']>*] >  &&
-                   '#' \N* } = '';
+    # And leave the newline.          
+
+    #TODO Fix this!!!
+    # make a regex that matches a quoted string
+    # or match # && not match in a quoted string
 
 
+
+    for $source.split("\n") -> $line {
+        my $m = $line ~~ m{ 
+                ^^ ( \N*? )
+                <!after 
+                    ( [
+                        | \\
+                        | \" <-[\"]>* 
+                        | \' <-[\']>* 
+                        | \｢ <-[\｣]>*
+                    ] )
+                 >
+                "#" \N* $$ };
+        say "{so $m}, $line";
+    } # end of for $source.split("\n") -> $line
+#
+#            .map({ $_  ~~ m{ 
+#                ^^ ( \N*? )
+#                <!after 
+#                    [
+#                        | \\
+#                        | \" <-[\"]>* 
+#                        | \' <-[\']>* 
+#                        | \｢ <-[\｣]>*
+#                    ]
+#                 >
+#                '#' \N* $$ } ?? $0 !! $_
+#            })
+#            .join;
 
 =begin pod
 

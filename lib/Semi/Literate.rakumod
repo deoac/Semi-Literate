@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Sat 15 Jul 2023 09:19:54 PM EDT
+# Last modified: Sun 16 Jul 2023 09:10:57 PM EDT
 # Version 0.0.1
 
 # always use the latest version of Raku
@@ -101,8 +101,8 @@ sub tangle (
 
 
 
-    $source ~~ s:g/\=end (\N*)\n+/=end$0\n/;
-    $source ~~ s:g/\n+\=begin    /\n=begin/;
+    $source ~~ s:g/\=end (\N*)\n+/\=end$0\n/;
+    $source ~~ s:g/\n+\=begin    /\n\=begin/;
 
 
 
@@ -180,25 +180,48 @@ sub weave (
 
 
 
-    $source ~~ s:g/\=end (\N*)\n+/=end$0\n/;
-    $source ~~ s:g/\n+\=begin    /\n=begin/;
+    $source ~~ s:g/\=end (\N*)\n+/\=end$0\n/;
+    $source ~~ s:g/\n+\=begin    /\n\=begin/;
 
 
 
     # delete full comment lines
-    $source ~~ s:g{ ^^ \h* '#' \N* \n} = ''; 
+    $source ~~ s:g{ ^^ \h* '#' \N* \n+} = ''; 
 
-    # remove partial comments, unless the '#' is escaped with
+    # remove partial comments, unless the "#" is escaped with
     # a backslash or is in a quote. (It doesn't catch all quote
     # constructs...)
-    # And leave the newline. 
-    $source ~~ s:g{
-#        <!after \\>              &&
-#                   <!after [\" <-[\"]>*] >  &&
-#                   <!after [\' <-[\']>*] >  &&
-                   '#' \N* } = '';
+    # And leave the newline.          
 
-
+    #TODO Fix this!!!
+    for $source.split("\n") -> $line {
+        my $m = $line ~~ m{ 
+                ^^ ( \N*? )
+                <!after 
+                    [
+                        | \\
+                        | \" <-[\"]>* 
+                        | \' <-[\']>* 
+                        | \｢ <-[\｣]>*
+                    ]
+                 >
+                '#' \N* $$ };
+        say "{so $m}, $line";
+    } # end of for $source.split("\n") -> $line
+#
+#            .map({ $_  ~~ m{ 
+#                ^^ ( \N*? )
+#                <!after 
+#                    [
+#                        | \\
+#                        | \" <-[\"]>* 
+#                        | \' <-[\']>* 
+#                        | \｢ <-[\｣]>*
+#                    ]
+#                 >
+#                '#' \N* $$ } ?? $0 !! $_
+#            })
+#            .join;
 
 
 
