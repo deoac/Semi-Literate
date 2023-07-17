@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Sun 16 Jul 2023 09:10:57 PM EDT
+# Last modified: Mon 17 Jul 2023 04:19:50 PM EDT
 # Version 0.0.1
 
 # always use the latest version of Raku
@@ -188,45 +188,39 @@ sub weave (
     # delete full comment lines
     $source ~~ s:g{ ^^ \h* '#' \N* \n+} = ''; 
 
-    # remove partial comments, unless the "#" is escaped with
+    # remove partial comments, unless the '#' is escaped with
     # a backslash or is in a quote. (It doesn't catch all quote
     # constructs...)
     # And leave the newline.          
 
     #TODO Fix this!!!
+    # make a regex that matches a quoted string
+    # or match # && not match in a quoted string
+
+
+
+    my Str $cleaned-source;
     for $source.split("\n") -> $line {
         my $m = $line ~~ m{ 
-                ^^ ( \N*? )
+                ^^ 
+               $<stuff-before-the-comment> = ( \N*? )
                 <!after 
-                    [
+                    ( [
                         | \\
                         | \" <-[\"]>* 
                         | \' <-[\']>* 
                         | \｢ <-[\｣]>*
-                    ]
-                 >
-                '#' \N* $$ };
-        say "{so $m}, $line";
+                    ] )
+                >
+                "#" \N* 
+                $$ };
+        $cleaned-source ~= $m ?? $<stuff-before-the-comment> !! $line;    
+        $cleaned-source ~= "\n";
     } # end of for $source.split("\n") -> $line
-#
-#            .map({ $_  ~~ m{ 
-#                ^^ ( \N*? )
-#                <!after 
-#                    [
-#                        | \\
-#                        | \" <-[\"]>* 
-#                        | \' <-[\']>* 
-#                        | \｢ <-[\｣]>*
-#                    ]
-#                 >
-#                '#' \N* $$ } ?? $0 !! $_
-#            })
-#            .join;
 
 
 
-
-    my Pair @submatches = Semi::Literate.parse($source).caps;
+    my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
 
 
 
@@ -237,19 +231,25 @@ sub weave (
             .value
         } # end of when .key
 
+        when .key eq 'no-weave' {
+            # don't add any thing to the weave.  
+            # This is code irrelevant to the purpose of the woven document.
+            ;
+        }
+
 
 
 
         when .key eq 'code' { qq:to/EOCB/; } 
-            \=begin pod          
-            \=begin code :lang<raku>
+            \=begin  pod          
+            \=begin  code :lang<raku>
 
 
 
 
              {.value.lines.map({ "%3s| %s\n".sprintf($line-number++, $_)}) }
-            \=end code
-            \=end pod
+            \=end  code
+            \=end  pod
             EOCB
 
         default { die 'Should never get here.' }
@@ -290,11 +290,12 @@ multi MAIN(Bool :$doc!, Str :$format = 'Text') is hidden-from-USAGE {
     run $*EXECUTABLE, "--doc=$format", $*PROGRAM;                          
 } # end of multi MAIN(Bool :$man!)                                         
 
+my $semi-literate-file = '/Users/jimbollinger/Documents/Development/raku/Projects/Semi-Literate/source/Literate.sl';
 multi MAIN(Bool :$testt!) {
-    say tangle('/Users/jimbollinger/Documents/Development/raku/Projects/Semi-Literate/source/Literate.sl'.IO);
+    say tangle($semi-literate-file.IO);
 } # end of multi MAIN(Bool :$test!)
 
 multi MAIN(Bool :$testw!) {
-    say weave('/Users/jimbollinger/Documents/Development/raku/Projects/Semi-Literate/source/Literate.sl'.IO);
+    say weave($semi-literate-file.IO);
 } # end of multi MAIN(Bool :$test!)
 

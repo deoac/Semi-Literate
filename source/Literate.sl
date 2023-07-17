@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Sun 16 Jul 2023 09:25:26 PM EDT
+# Last modified: Mon 17 Jul 2023 04:19:50 PM EDT
 # Version 0.0.1
 
 # always use the latest version of Raku
@@ -74,7 +74,7 @@ file, which is not meant to be easily read by humans.
 
 However, we can provide the option for users to specify the number of empty
 lines that should replace a C<pod> block. To do this, simply add a number at
-the end of the C<begin> directive. For example, C<begin pod 2> .
+the end of the C<=begin> directive. For example, C<=begin  pod 2> .
 
 =end pod
 
@@ -240,7 +240,7 @@ executable file, which is not meant to be easily read by humans.
 
 However, we can provide the option for users to specify the number of empty
 lines that should replace a C<pod> block. To do this, simply add a number
-at the end of the C<begin> directive. For example, C<begin pod 2> .
+at the end of the C<=begin> directive. For example, C<=begin  pod 2> .
 =end pod
 
 
@@ -360,9 +360,11 @@ Remove all Raku comments
 
 
 
+    my Str $cleaned-source;
     for $source.split("\n") -> $line {
         my $m = $line ~~ m{ 
-                ^^ ( \N*? )
+                ^^ 
+               $<stuff-before-the-comment> = ( \N*? )
                 <!after 
                     ( [
                         | \\
@@ -370,32 +372,19 @@ Remove all Raku comments
                         | \' <-[\']>* 
                         | \｢ <-[\｣]>*
                     ] )
-                 >
-                "#" \N* $$ };
-        say "{so $m}, $line";
+                >
+                "#" \N* 
+                $$ };
+        $cleaned-source ~= $m ?? $<stuff-before-the-comment> !! $line;    
+        $cleaned-source ~= "\n";
     } # end of for $source.split("\n") -> $line
-#
-#            .map({ $_  ~~ m{ 
-#                ^^ ( \N*? )
-#                <!after 
-#                    [
-#                        | \\
-#                        | \" <-[\"]>* 
-#                        | \' <-[\']>* 
-#                        | \｢ <-[\｣]>*
-#                    ]
-#                 >
-#                '#' \N* $$ } ?? $0 !! $_
-#            })
-#            .join;
-
 =begin pod
 
 ...Next, we parse it using the C<Semi::Literate> grammar 
 and obtain a list of submatches (that's what the C<caps> method does) ...
 =end pod
 
-    my Pair @submatches = Semi::Literate.parse($source).caps;
+    my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
 
 =begin pod
 
@@ -409,21 +398,27 @@ insert the C<code> sections into the Pod6...
             .value
         } # end of when .key
 
+        when .key eq 'no-weave' {
+            # don't add any thing to the weave.  
+            # This is code irrelevant to the purpose of the woven document.
+            ;
+        }
+
 =begin pod
 #TODO 
 =end pod
 
         when .key eq 'code' { qq:to/EOCB/; } 
-            \=begin pod          
-            \=begin code :lang<raku>
+            \=begin  pod          
+            \=begin  code :lang<raku>
 
 =begin pod
 #TODO 
 =end pod
 
              {.value.lines.map({ "%3s| %s\n".sprintf($line-number++, $_)}) }
-            \=end code
-            \=end pod
+            \=end  code
+            \=end  pod
             EOCB
 
         default { die 'Should never get here.' }
@@ -511,11 +506,12 @@ multi MAIN(Bool :$doc!, Str :$format = 'Text') is hidden-from-USAGE {
     run $*EXECUTABLE, "--doc=$format", $*PROGRAM;                          
 } # end of multi MAIN(Bool :$man!)                                         
 
+my $semi-literate-file = '/Users/jimbollinger/Documents/Development/raku/Projects/Semi-Literate/source/Literate.sl';
 multi MAIN(Bool :$testt!) {
-    say tangle('/Users/jimbollinger/Documents/Development/raku/Projects/Semi-Literate/source/Literate.sl'.IO);
+    say tangle($semi-literate-file.IO);
 } # end of multi MAIN(Bool :$test!)
 
 multi MAIN(Bool :$testw!) {
-    say weave('/Users/jimbollinger/Documents/Development/raku/Projects/Semi-Literate/source/Literate.sl'.IO);
+    say weave($semi-literate-file.IO);
 } # end of multi MAIN(Bool :$test!)
 
