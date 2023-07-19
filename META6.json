@@ -4,7 +4,7 @@
     "Shimon Bollinger"
   ],
   "build-depends": [
-      "Temp::File",
+      "File::Temp",
       "PrettyDump",
       "Data::Dump::Tree",
       "Grammar::Tracer"
