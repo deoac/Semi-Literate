@@ -2,36 +2,28 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Wed 19 Jul 2023 01:32:10 PM EDT
+# Last modified: Wed 19 Jul 2023 06:40:53 PM EDT
 # Version 0.0.1
 
-# no-weave
 # always use the latest version of Raku
 use v6.*;
 use PrettyDump;
 use Data::Dump::Tree;
-# end-no-weave
-
 #    We need to declare them with C<my> because we
 #    need to use them in a subroutine later. #TODO explain why.
 
     my token rest-of-line {    \N* [\n | $] }
     my token blank-line   { ^^ \h* [\n | $] }
-
 #use Grammar::Tracer;
 grammar Semi::Literate is export {
     token TOP {   [ <pod> | <code> ]* }
-
     my token begin {
         ^^ \h* \= begin <.ws> pod
-
         [ \h* $<num-blank-lines>=(\d+) ]?  # an optional number to specify the
                                          # number of blank lines to replace the
                                          # C<Pod> blocks when tangling.
-
         <rest-of-line>
     } # end of my token begin
-
     my token end { ^^ \h* \= end <.ws> pod <rest-of-line> }
 
     token pod {
@@ -44,23 +36,19 @@ grammar Semi::Literate is export {
 
     token plain-line {
        $<plain-line> = [^^ <rest-of-line>]
-
         <?{ &not-a-delimiter($<plain-line>.Str) }>
     } # end of token plain-line
 
     sub not-a-delimiter (Str $line --> Bool) {
         return not $line ~~ /<begin> | <end>/;
     } # end of sub not-a-delimiter (Match $line --> Bool)
-
 } # end of grammar Semi::Literate
+
 
 #TODO multi sub to accept Str & IO::PatGh
 sub tangle (
-
     Str $input-file!,
-
         --> Str ) is export {
-
     my Str $source = $input-file.IO.slurp;
 
     $source ~~ s:g{ ^^ \h* '#' <.ws>     'no-weave' <rest-of-line> } = '';
@@ -81,30 +69,23 @@ sub tangle (
             with $num-blank-lines { "\n" x $num-blank-lines }
         }
 
-        #no-weave
         default { die 'Should never get here' }
-        #end-no-weave
-
     } # end of my Str $raku-code = @submatches.map(
     ).join;
 
     $raku-code ~~ s{\n  <blank-line>* $ } = '';
-
     return $raku-code;
 } # end of sub tangle (
 
+
 sub weave (
-
     Str $input-file!;
-
-    Str $output-format = 'Markdown'; # Can also be 'HTML' or 'Text'
-
-    Bool $line-numbers = True;
-
+    Str :f(:$format) is copy = 'markdown';
+        #= The output format for the woven file.
+    Bool :l(:$line-numbers)  = True;
+        #= Should line numbers be added to the embeded code?
         --> Str ) is export {
-
     my UInt $line-number = 1;
-
     my Str $source = $input-file.IO.slurp;
 
     my Str $cleaned-source;
@@ -159,19 +140,20 @@ sub weave (
         when .key eq 'code' { qq:to/EOCB/; }
             \=begin  pod
             \=begin  code :lang<raku>
-            #TODO make this dependent on the parameter
-             {.value
+             { my $fmt = ($line-numbers ?? "%3s| " !! '') ~ "%s\n";
+                .value
                 .lines
-                .map({"%3s| %s\n".sprintf($line-number++, $_) })
+                .map($line-numbers
+                        ?? {"%4s| %s\n".sprintf($line-number++, $_) }
+                        !! {     "%s\n".sprintf(                $_) }
+                    )
                 .chomp;
              }
             \=end  code
             \=end  pod
             EOCB
 
-        # no-weave
         default { die 'Should never get here.' }
-        # end-no-weave
     } # end of my $weave = Semi::Literate.parse($source).caps.map
     ).join;
 
@@ -183,7 +165,7 @@ sub weave (
     return $weave
 } # end of sub weave (
 
-# no-weave
+
 my %*SUB-MAIN-OPTS =
   :named-anywhere,             # allow named variables at any location
   :bundling,                   # allow bundling of named arguments
@@ -217,6 +199,3 @@ multi MAIN(Bool :$testt!) {
 multi MAIN(Bool :$testw!) {
     say weave($semi-literate-file);
 } # end of multi MAIN(Bool :$test!)
-
-#end-no-weave
-
