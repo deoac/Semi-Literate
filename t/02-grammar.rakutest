@@ -248,9 +248,10 @@ for %bad-pod.keys.sort -> $key {
                  %bad-pod{ $key };
 }
 
-my Str $source = '/Users/jimbollinger/Documents/Development/raku/Projects/Semi-Literate/source/Literate.sl'.IO.slurp;
-is Semi::Literate.parse($source), $source, 'Checking the source code!';
-Semi::Literate.parse($source);
+skip "Can't test against a local file.";
+#my Str $source = '/Users/jimbollinger/Documents/Development/raku/Projects/Semi-Literate/source/Literate.sl'.IO.slurp;
+#is Semi::Literate.parse($source), $source, 'Checking the source code!';
+#Semi::Literate.parse($source);
 
 done-testing;
 
