@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Wed 19 Jul 2023 01:32:10 PM EDT
+# Last modified: Wed 19 Jul 2023 06:40:53 PM EDT
 # Version 0.0.1
 
 # no-weave
@@ -317,14 +317,15 @@ C<MAIN>.
 
     Str $input-file!;
 =begin pod
-=head3 C<$output-format>
+=head3 C<$format>
 
 The output of the weave can (currently) be Markdown, Text, or HTML.  It
 defaults to Markdown. The variable is case-insensitive, so 'markdown' also
 works.
 =end pod
 
-    Str $output-format = 'Markdown'; # Can also be 'HTML' or 'Text'
+    Str :f(:$format) is copy = 'markdown';
+        #= The output format for the woven file.
 
 =begin pod
 =head3 C<$line-numbers>
@@ -333,7 +334,8 @@ It can be useful to print line numbers in the code listing.  It currently
 defaults to True.
 =end pod
 
-    Bool $line-numbers = True;
+    Bool :l(:$line-numbers)  = True;
+        #= Should line numbers be added to the embeded code?
 
 
 =begin pod
@@ -445,10 +447,13 @@ insert the C<code> sections into the Pod6...
         when .key eq 'code' { qq:to/EOCB/; }
             \=begin  pod
             \=begin  code :lang<raku>
-            #TODO make this dependent on the parameter
-             {.value
+             { my $fmt = ($line-numbers ?? "%3s| " !! '') ~ "%s\n";
+                .value
                 .lines
-                .map({"%3s| %s\n".sprintf($line-number++, $_) })
+                .map($line-numbers
+                        ?? {"%4s| %s\n".sprintf($line-number++, $_) }
+                        !! {     "%s\n".sprintf(                $_) }
+                    )
                 .chomp;
              }
             \=end  code
