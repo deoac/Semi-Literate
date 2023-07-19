@@ -10,22 +10,22 @@ my %bad-pod;
 #12
 =begin pod 12
 Let's consider two common proverbs:
- 
+
 =begin item
 I<The rain in Spain falls mainly on the plain.>
- 
+
 This is a common myth and an unconscionable slur on the Spanish
 people, the majority of whom are extremely attractive.
 =end item
- 
+
 =begin item
 I<The early bird gets the worm.>
- 
+
 In deciding whether to become an early riser, it is worth
 considering whether you would actually enjoy annelids
 for breakfast.
 =end item
- 
+
 As you can see, folk wisdom is often of dubious value.
 =end pod
 EOS
@@ -112,7 +112,7 @@ EOS
                We
                Need
                Numbers
- 
+
 =end pod
 EOS
 
@@ -120,11 +120,11 @@ EOS
 #09
 =begin pod
 
-=para 
+=para
 This is an ordinary paragraph.
 Its text  will   be     squeezed     and
 short lines filled.
- 
+
 =end pod
 EOS
 
@@ -136,7 +136,7 @@ EOS
 We
 Need
 Numbers
- 
+
 =end pod
 EOS
 
@@ -145,16 +145,16 @@ EOS
 =begin pod
 
     =begin pod
-        =para 
+        =para
         This is an ordinary paragraph.
         Its text  will   be     squeezed     and
         short lines filled.
-        
+
         =for defn :numbered
                     We
                     Need
                     Numbers
-        
+
             =for head1 :a-first-line-key<firstvalue> :another-first-line-key<xyz>
             =          :a-second-line-key(42)
             = :a-third-line-key<third>
@@ -177,7 +177,7 @@ EOS
 We
 Need
 Numbers
- 
+
 =end pod
 EOS
 
@@ -237,15 +237,14 @@ EOS
 plan %good-pod.elems + %bad-pod.elems + 1;
 
 for %good-pod.keys.sort -> $key {
-    is Semi::Literate.parse($key), 
-       $key, 
+    is Semi::Literate.parse($key), $key,
        %good-pod{ $key };
 } # end of for %good-pod.keys.sort -> $key
 
 for %bad-pod.keys.sort -> $key {
 #    Semi::Literate.parse($key);
-    throws-like {Semi::Literate.parse($key)}, 
-                 X::Syntax::Confused, 
+    throws-like {Semi::Literate.parse($key)},
+                 X::Syntax::Confused,
                  %bad-pod{ $key };
 }
 
@@ -255,13 +254,13 @@ Semi::Literate.parse($source);
 
 done-testing;
 
-CATCH { 
+CATCH {
     note .WHAT;
-        when X::Syntax::Confused {  
+        when X::Syntax::Confused {
             die "Bad POD6.  Did you forget a '=begin' or '=end' directive?" ~
                  .backtrace;
         }
-        default { die .message }
+        default { die .message ~ .backtrace }
     }
-        
+
 
