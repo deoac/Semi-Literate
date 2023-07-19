@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Tue 18 Jul 2023 05:13:53 PM EDT
+# Last modified: Tue 18 Jul 2023 08:55:51 PM EDT
 # Version 0.0.1
 
 # no-weave
@@ -39,7 +39,7 @@ Let's introduce a "rest of the line" token for convenience.
 
     my token rest-of-line { \N* [\n | $] }
 
-=begin pod 1
+=begin pod
 =head1 The Grammar
 
 Our file will exclusively consist of C<Pod> or C<Code> sections, and nothing
@@ -52,7 +52,7 @@ grammar Semi::Literate {
     token TOP {   [ <pod> | <code> ]* }
 
 
-=begin pod 1
+=begin pod
 
 =head2 The Pod6 delimiters
 
@@ -93,7 +93,7 @@ The remainder of the C<begin> directive can only be whitespace.
         <rest-of-line>
     } # end of my token begin
 
-=begin pod 1
+=begin pod
 
 =head3 The C<end> token
 
@@ -103,7 +103,7 @@ The C<end> token is much simpler.
 
     my token end { ^^ \h* \= end <.ws> pod <rest-of-line> }
 
-=begin pod 1
+=begin pod
 
 =head2 The C<Pod> token
 
@@ -124,7 +124,7 @@ possibility of having no lines in the block.
         <end>
     } # end of token pod
 
-=begin pod 1
+=begin pod
 
 =head2 The C<Code> token
 
@@ -135,7 +135,7 @@ C<plain-line>s.
 
     token code { <plain-line>+ }
 
-=begin pod 1
+=begin pod
 
 =head3 The C<plain-line> token
 
@@ -159,7 +159,7 @@ Check|https://docs.raku.org/language/regexes\#Regex_Boolean_condition_check>.
         <?{ &not-a-delimiter($<plain-line>.Str) }>
     } # end of token plain-line
 
-=begin pod 1
+=begin pod
 
 This function simply checks whether the C<plain-line> match object matches
 either the C<<begin>> or C<<end>> token.
@@ -181,7 +181,7 @@ And that concludes the grammar for separating C<Pod> from C<Code>!
 
 } # end of grammar Semi::Literate
 
-=begin pod 2
+=begin pod
 
 =head1 The Tangle subroutine
 
@@ -212,14 +212,14 @@ First we will get the entire C<.sl> file...
 
     my Str $source = $input-file.slurp;
 
-=begin pod 1
+=begin pod
 Remove the #no-weave delimiters
 =end pod
 
     $source ~~ s:g{ ^^ \h* '#' <.ws>     'no-weave' <rest-of-line> } = '';
     $source ~~ s:g{ ^^ \h* '#' <.ws> 'end-no-weave' <rest-of-line> } = '';
 
-=begin pod 1
+=begin pod
 #TODO
 =end pod
 
@@ -281,7 +281,7 @@ And that's the end of the C<tangle> subroutine!
 
 } # end of sub tangle (
 
-=begin pod 2
+=begin pod
 
 =head1 The Weave subroutine
 
@@ -343,14 +343,14 @@ First we will get the entire C<.sl> file...
 
     my Str $source = $input-file.slurp;
 
-=begin pod 1
+=begin pod
 Remove blank lines at the beginning and end of the code sections.
 #TODO
 =end pod
 
     my Str $cleaned-source;
 
-=begin pod 1
+=begin pod
 =head2 Clean the source of items we don't want to see in the woven document.
 
 =head3 remove code marked as 'no-weave'
@@ -382,7 +382,7 @@ Remove blank lines at the beginning and end of the code sections.
     # constructs...(that's a TODO))
     # And leave the newline.
 
-=begin pod 1
+=begin pod
 head3 Remove EOL comments
     #TODO
 =end pod
@@ -424,7 +424,7 @@ and obtain a list of submatches (that's what the C<caps> method does) ...
 
     my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
 
-=begin pod 1
+=begin pod
 
 ...And now begins the interesting part.  We iterate through the submatches and
 insert the C<code> sections into the Pod6...
@@ -435,7 +435,7 @@ insert the C<code> sections into the Pod6...
         when .key eq 'pod' {
             .value
         } # end of when .key
-=begin pod 1
+=begin pod
 #TODO
 =end pod
 
@@ -559,18 +559,12 @@ multi MAIN(Bool :$testw!) {
 
 =finish
 
-Pod::Coverage
-Pod::To::Anything
-Pod::To::BigPage
-Pod::To::Cached
 Pod::To::HTML
 Pod::To::HTML::Section
-Pod::To::HTMLBody
 Pod::To::Latex
 Pod::To::Man
 Pod::To::Markdown
 Pod::To::PDF
 Pod::To::PDF::Lite
-Pod::To::Pager
 Raku::Pod::Render
 
