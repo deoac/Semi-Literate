@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Wed 19 Jul 2023 12:45:23 PM EDT
+# Last modified: Wed 19 Jul 2023 01:32:10 PM EDT
 # Version 0.0.1
 
 # no-weave
@@ -192,6 +192,7 @@ This subroutine will remove all the Pod6 code from a semi-literate file
 
 =end pod
 
+#TODO multi sub to accept Str & IO::PatGh
 sub tangle (
 
 =begin pod
@@ -200,7 +201,7 @@ The subroutine has a single parameter, which is the input filename. The
 filename is required.  Typically, this parameter is obtained from the command
 line through the wrapper subroutine C<MAIN>.
 =end pod
-    IO::Path $input-file!,
+    Str $input-file!,
 =begin pod
 
 The subroutine will return a C<Str>, which should be a working Raku program.
@@ -211,7 +212,7 @@ The subroutine will return a C<Str>, which should be a working Raku program.
 First we will get the entire C<.sl> file...
 =end pod
 
-    my Str $source = $input-file.slurp;
+    my Str $source = $input-file.IO.slurp;
 
 =begin pod 1
 Remove the #no-weave delimiters
@@ -314,7 +315,7 @@ C<MAIN>.
 
 =end pod
 
-    IO::Path $input-file!;
+    Str $input-file!;
 =begin pod
 =head3 C<$output-format>
 
@@ -350,7 +351,7 @@ C<sub weave> returns a Str.
 First we will get the entire C<.sl> file...
 =end pod
 
-    my Str $source = $input-file.slurp;
+    my Str $source = $input-file.IO.slurp;
 
     my Str $cleaned-source;
 
@@ -444,6 +445,7 @@ insert the C<code> sections into the Pod6...
         when .key eq 'code' { qq:to/EOCB/; }
             \=begin  pod
             \=begin  code :lang<raku>
+            #TODO make this dependent on the parameter
              {.value
                 .lines
                 .map({"%3s| %s\n".sprintf($line-number++, $_) })
@@ -555,11 +557,11 @@ multi MAIN(Bool :$doc!, Str :$format = 'Text') is hidden-from-USAGE {
 
 my $semi-literate-file = '/Users/jimbollinger/Documents/Development/raku/Projects/Semi-Literate/source/Literate.sl';
 multi MAIN(Bool :$testt!) {
-    say tangle($semi-literate-file.IO);
+    say tangle($semi-literate-file);
 } # end of multi MAIN(Bool :$test!)
 
 multi MAIN(Bool :$testw!) {
-    say weave($semi-literate-file.IO);
+    say weave($semi-literate-file);
 } # end of multi MAIN(Bool :$test!)
 
 #end-no-weave
