@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Wed 19 Jul 2023 12:45:23 PM EDT
+# Last modified: Wed 19 Jul 2023 01:32:10 PM EDT
 # Version 0.0.1
 
 # no-weave
@@ -54,13 +54,14 @@ grammar Semi::Literate is export {
 
 } # end of grammar Semi::Literate
 
+#TODO multi sub to accept Str & IO::PatGh
 sub tangle (
 
-    IO::Path $input-file!,
+    Str $input-file!,
 
         --> Str ) is export {
 
-    my Str $source = $input-file.slurp;
+    my Str $source = $input-file.IO.slurp;
 
     $source ~~ s:g{ ^^ \h* '#' <.ws>     'no-weave' <rest-of-line> } = '';
     $source ~~ s:g{ ^^ \h* '#' <.ws> 'end-no-weave' <rest-of-line> } = '';
@@ -94,7 +95,7 @@ sub tangle (
 
 sub weave (
 
-    IO::Path $input-file!;
+    Str $input-file!;
 
     Str $output-format = 'Markdown'; # Can also be 'HTML' or 'Text'
 
@@ -104,7 +105,7 @@ sub weave (
 
     my UInt $line-number = 1;
 
-    my Str $source = $input-file.slurp;
+    my Str $source = $input-file.IO.slurp;
 
     my Str $cleaned-source;
 
@@ -158,6 +159,7 @@ sub weave (
         when .key eq 'code' { qq:to/EOCB/; }
             \=begin  pod
             \=begin  code :lang<raku>
+            #TODO make this dependent on the parameter
              {.value
                 .lines
                 .map({"%3s| %s\n".sprintf($line-number++, $_) })
@@ -209,11 +211,11 @@ multi MAIN(Bool :$doc!, Str :$format = 'Text') is hidden-from-USAGE {
 
 my $semi-literate-file = '/Users/jimbollinger/Documents/Development/raku/Projects/Semi-Literate/source/Literate.sl';
 multi MAIN(Bool :$testt!) {
-    say tangle($semi-literate-file.IO);
+    say tangle($semi-literate-file);
 } # end of multi MAIN(Bool :$test!)
 
 multi MAIN(Bool :$testw!) {
-    say weave($semi-literate-file.IO);
+    say weave($semi-literate-file);
 } # end of multi MAIN(Bool :$test!)
 
 #end-no-weave
