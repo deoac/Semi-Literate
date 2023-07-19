@@ -1,72 +1,70 @@
-<<<<<<< HEAD
 #!/usr/bin/env raku
 
 use v6.d;
 
+use File::Temp;
 use Semi::Literate;
 
 #| Weave Markdown documentation from Raku code
-sub MAIN($file,
+sub MAIN($input-file,
          Bool :l(:$line-numbers) = True;
-         Str :f(:$format)='markdown';
+         Str :f(:$format) is copy ='markdown';
             #= The output format for the woven file
-         Str :o(:$output-file);
+         Str :o(:$output-file) = '';
     ) {
     my Str $extension;
+    my Str @options;
+    my Bool $no-output-file = False;
 
     $format .= trim;
     given $format {
-        when  /:i markdown 2? | md 2? / {
+        when  /:i markdown / {
             $format    = 'MarkDown2';
             $extension = 'md';
         };
-        when  /:i plain? te?xt / {
+        when  /:i [plain]? t[e]?xt / {
             $format    = 'Text';
             $extension = 'txt';
         }
-        when  /:i html 2? / {
+        when  /:i html / {
             $format    = 'HTML2';
             $extension = 'html';
         } # end of when  /:i html 2? $/
 
-#        when  /:i pdf / {  }
-#        when  /:i latex / {  }
-#        when  /:i man / {  }
+        when /:i pdf / {
+            $format = 'PDF';
+            $extension = '.pdf';
+            @options = "--save-as=$output-file" if $output-file;
+            $no-output-file = True;
+        }
+
         default {
             $extension = $format;
         } # end of default
 
     } # end of given $output-format
 
-    try require ::("Pod::To::$format");
-    if ::("Pod::To::$_") ~~ Failure {
+    my Str $f = "Pod::To::$format";
+    try require ::($f);
+    if ::($f) ~~ Failure {
         die "$format is not a supported output format"
     } # end of if ::("Pod::To::$_") ~~ Failure
 
-    $output-file //= $file.IO. extension: $extension;
+    my Str $woven = weave($input-file, $format);
 
-    weave($file, )
-} # end of sub MAIN($file,
-||||||| e5a135e (Added META6 tests)
-#!/usr/bin/env raku
-use Pod::Weave::To::Markdown;
-use Pod::Weave::To::MarkDown2;
-use Pod::Weave::To::Text;
-use Pod::Weave::To::HTML;
-use Pod::Weave::To::HTML2;
+    my ($pod-file, $fh) = tempfile(suffix =>  '.p6');
 
-#| Weave Markdown documentation from Raku code
-sub MAIN($file,
-         Str :f(:$output-format)='markdown', #= The output format for the woven file
-    ) {
-    given $output-format {
-        when /:i^'markdown'$/ | /:i^'md'$/    { weave-markdown($file.IO).print };
-        when /:i^'markdown2'$/ | /:i^'md2'$/  { weave-markdown2($file.IO).print };
-        when /:i^'text'$/ | /:i^'plaintext'$/ { weave-text($file.IO).print }
-        when /:i^'html'$/                     { weave-html($file.IO).print }
-        when /:i^'html2'$/                    { weave-html2($file.IO).print }
-        default { note "$output-format is not a supported output format"}
-    }
-}
-=======
->>>>>>> parent of e5a135e (Added META6 tests)
+    $pod-file.IO.spurt: $woven;
+
+    my $output-file-handle = $output-file              ??
+                                open(:w, $output-file) !!
+                                $*OUT;
+
+    run $*EXECUTABLE,
+        "--doc=$format",
+        $pod-file,
+        @options,
+        (:out($output-file-handle) unless $no-output-file);
+
+} # end of sub MAIN($input-file,
+
