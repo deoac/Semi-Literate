@@ -4,6 +4,9 @@
     "Shimon Bollinger"
   ],
   "build-depends": [
+      "PrettyDump",
+      "Data::Dump::Tree",
+      "Grammar::Tracer"
   ],
   "depends": [
   ],
@@ -20,6 +23,9 @@
   "tags": [
   ],
   "test-depends": [
+      "PrettyDump",
+      "Data::Dump::Tree",
+      "Test::META"
   ],
   "version": "0.0.1"
 }
