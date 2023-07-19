@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Mon 17 Jul 2023 07:46:36 PM EDT
+# Last modified: Tue 18 Jul 2023 05:13:53 PM EDT
 # Version 0.0.1
 
 # no-weave
@@ -461,8 +461,8 @@ insert the C<code> sections into the Pod6...
 remove useless Pod directives
 =end pod
 
-    $weave ~~ s:g{ \h* '=end pod'   <rest-of-line>
-                   \h* '=begin pod' <rest-of-line> } = '';
+    $weave ~~ s:g{ \h* \=end   <.ws> pod  <rest-of-line>
+                   \h* \=begin <.ws> pod <rest-of-line> } = '';
 =begin pod
 
 #TODO Convert the POD to Markdown, etc.
@@ -556,3 +556,21 @@ multi MAIN(Bool :$testw!) {
 } # end of multi MAIN(Bool :$test!)
 
 #end-no-weave
+
+=finish
+
+Pod::Coverage
+Pod::To::Anything
+Pod::To::BigPage
+Pod::To::Cached
+Pod::To::HTML
+Pod::To::HTML::Section
+Pod::To::HTMLBody
+Pod::To::Latex
+Pod::To::Man
+Pod::To::Markdown
+Pod::To::PDF
+Pod::To::PDF::Lite
+Pod::To::Pager
+Raku::Pod::Render
+

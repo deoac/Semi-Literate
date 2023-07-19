@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Mon 17 Jul 2023 07:45:28 PM EDT
+# Last modified: Tue 18 Jul 2023 05:01:27 PM EDT
 # Version 0.0.1
 
 # no-weave
@@ -171,8 +171,8 @@ sub weave (
     } # end of my $weave = Semi::Literate.parse($source).caps.map
     ).join;
 
-    $weave ~~ s:g{ \h* '=end pod'   <rest-of-line>
-                   \h* '=begin pod' <rest-of-line> } = '';
+    $weave ~~ s:g{ \h* \=end   <.ws> pod  <rest-of-line>
+                   \h* \=begin <.ws> pod <rest-of-line> } = '';
 
     return $weave
 } # end of sub weave (
