@@ -87,3 +87,6 @@ printf "> Setting permissions..."
 command='chmod -R a+x,a-w bin/; chmod -R a-w docs/; chmod -R a-w lib/'
 output=$(eval $command 2>&1); print_status_with_output;
 
+printf "> Running the tests..."
+command='prove6 -l -v'
+eval $command;
