@@ -13,9 +13,34 @@ LITERATE := ${MODULES}/Literate.rakumod
 vpath %.sl ${SOURCES}
 vpath %.rakumod ${MODULES}
 
+all: 		 modules executables documents
+modules: 	 Literate.rakumod module-install
+binaries: 	 ${BIN}/sl-tangle ${BIN}/sl-weave
+executables: modules binaries executable-install
+markdowns:   ${MARKDOWN}/%.md
+
+
 Literate.rakumod: Literate.sl
+	@chmod -R a+w lib/
 	@echo "> Compiling the Semi::Literate module..."
 	@sl-tangle source/Literate.sl  > lib/Semi/Literate.rakumod
+	@chmod -R a-w lib/
+
+module-install:
+	@echo "> Installing the newly created module..."
+	@zef install --force-build --force-install --force-test . >/dev/null
+
+${BIN}/sl-tangle: Literate.rakumod sl-tangle.sl
+	@chmod -R a+w bin/
+	@echo "> Creating the sl-tangle executable..."
+	@sl-tangle source/sl-tangle.sl > bin/sl-tangle
+	@chmod -R a-w,a+x bin/
+
+${BIN}/sl-weave: Literate.rakumod sl-weave.sl
+	@chmod -R a+w bin/
+	@echo "> Creating the sl-weave executable..."
+	@bin/sl-tangle source/sl-weave.sl  > bin/sl-weave
+	@chmod -R a-w,a+x bin/
 
 ${MARKDOWN}/%.md: modules executables
 	@mkdir -p ${MARKDOWN}
@@ -27,29 +52,11 @@ ${MARKDOWN}/%.md: modules executables
 	@bin/sl-weave  ${SOURCES}/sl-weave.sl  > ${MARKDOWN}/sl-weave.md
 
 
-all: 		 all-pre modules executables markdowns all-post
-modules: 	 mods-pre Literate.rakumod module-install mods-post
-binaries: 	 ${BIN}/sl-tangle ${BIN}/sl-weave
-executables: exec-pre modules binaries executable-install exec-post
-markdowns:   md-pre ${MARKDOWN}/%.md md-post
-
-${BIN}/sl-tangle: modules sl-tangle.sl
-	@echo "> Unsetting permissions..."
-	@chmod -R a+w bin/; chmod -R a+w docs/; chmod -R a+w lib/
-	@echo "> Creating the sl-tangle executable..."
-	@sl-tangle source/sl-tangle.sl > bin/sl-tangle
-
-${BIN}/sl-weave: modules sl-weave.sl
-	@echo "> Unsetting permissions..."
-	@chmod -R a+w bin/; chmod -R a+w docs/; chmod -R a+w lib/
-	@echo "> Creating the sl-weave executable..."
-	@bin/sl-tangle source/sl-weave.sl  > bin/sl-weave
-
 executable-install:
 	@echo "> Installing the newly created executables..."
 	@zef install --force-build --force-install --force-test . >/dev/null
 
-module-install:
+install:
 	@echo "> Installing the newly created module..."
 	@zef install --force-build --force-install --force-test . >/dev/null
 
