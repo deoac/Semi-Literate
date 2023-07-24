@@ -2,7 +2,7 @@
 
 # Weave a Semi-literate file into Text, Markdown, HTML, etc.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Thu 20 Jul 2023 09:08:50 PM EDT
+# Last modified: Sun 23 Jul 2023 06:58:48 PM EDT
 # Version 0.0.1
 
 #no-weave
@@ -74,13 +74,14 @@ sub MAIN($input-file,
 
     my $output-file-handle = $output-file              ??
                                 open(:w, $output-file) !!
-                                $*OUT;
+                                $*OUT
+                            unless $no-output-file;
 
     run $*EXECUTABLE,
         "--doc=$format",
         $pod-file,
         @options,
-        (:out($output-file-handle) unless $no-output-file);
+        :out($output-file-handle);
 
 } # end of sub MAIN($input-file,
 

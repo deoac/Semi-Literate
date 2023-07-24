@@ -1,7 +1,19 @@
-# Weave a semi-literate program into Text, Markdown, etc. format
->
-```
-    1| sub MAIN($input-file,
+<!doctype html>
+<html lang="en">
+<head>
+<title>Weave a semi-literate program into Text, Markdown, etc. format</title>
+<meta charset="UTF-8" />
+
+<link href="/asset_files/images/favicon.ico" rel="icon" type="image/x-icon"/>
+<link rel="stylesheet" type="text/css" href="asset_files/css/rakudoc-extra.css" />
+<link rel="stylesheet" type="text/css" href="asset_files/css/rakudoc-styling.css" />
+<link rel="stylesheet" type="text/css" href="asset_files/css/font-awesome.min.css" />
+
+</head>
+	<body class="pod">
+<header>
+<img id="Camelia_bug" src="/asset_files/images/Camelia.svg"><h1 class="title">Weave a semi-literate program into Text, Markdown, etc. format</h1></header><div class="pod-content"><div id=""></div><div class="pod-body no-toc">
+<section name="___top"><pre class="pod-block-code">    1| sub MAIN($input-file,
     2|          Bool :l(:$line-numbers)  = True;
     3|          Str :f(:$format) is copy = 'markdown';
     4|          Str :o(:$output-file);
@@ -28,7 +40,7 @@
    25|         when /:i pdf / {
    26|             $format = 'PDF';
    27|             $extension = '.pdf';
-   28|             @options = "--save-as=$output-file" if $output-file;
+   28|             @options = &quot;--save-as=$output-file&quot; if $output-file;
    29|             $no-output-file = True;
    30|         }
    31| 
@@ -38,15 +50,15 @@
    35| 
    36|     } 
    37| 
-   38|     my Str $f = "Pod::To::$format";
+   38|     my Str $f = &quot;Pod::To::$format&quot;;
    39|     try require ::($f);
    40|     if ::($f) ~~ Failure {
-   41|         die "$format is not a supported output format"
+   41|         die &quot;$format is not a supported output format&quot;
    42|     } 
    43| 
    44|     my Str $woven = weave($input-file, :$format, :$line-numbers);
    45| 
-   46|     my ($pod-file, $fh) = tempfile(suffix =>  '.p6');
+   46|     my ($pod-file, $fh) = tempfile(suffix =&gt;  '.p6');
    47| 
    48|     $pod-file.IO.spurt: $woven;
    49| 
@@ -56,7 +68,7 @@
    53|                             unless $no-output-file;
    54| 
    55|     run $*EXECUTABLE,
-   56|         "--doc=$format",
+   56|         &quot;--doc=$format&quot;,
    57|         $pod-file,
    58|         @options,
    59|         :out($output-file-handle);
@@ -64,13 +76,8 @@
    61| } 
    62| 
    63| 
+</pre></section>		</div>
+</div><footer><div>Rendered from <span class="path"></span></div><div>at <span class="time">2023-07-24T01:22:48Z</span></div></footer>
+	</body>
+</html>
 
-```
-
-
-
-
-
-
-----
-Rendered from  at 2023-07-24T01:23:24Z
