@@ -69,7 +69,8 @@
 <h3 id="The_begin_token"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">The <code>begin</code> token</a></h3>
 <pre class="pod-block-code">    8|     my token begin {
     9|         ^^ \h* \= begin &lt;.ws&gt; pod
-</pre><p>Most programming applications do not focus on the structure of the executable file, which is not meant to be easily read by humans.</p><p>However, we can provide the option for users to specify the number of empty lines that should replace a <code>pod</code> block. To do this, simply add a number at the end of the <code>=begin</code> directive. For example, <code>=begin pod 2</code> .</p><pre class="pod-block-code">   10|         [ \h* $&lt;num-blank-lines&gt;=(\d+) ]?  
+</pre><p>Most programming applications do not focus on the structure of the executable file, which is not meant to be easily read by humans.</p><p>However, we can provide the option for users to specify the number of empty lines that should replace a <code>pod</code> block. To do this, simply add a number at the end of the <code>=begin</code> directive. For example, <code>=begin pod 2</code>. <sup><a name="fnret1" href="#fn1">[1]</a></sup>
+</p><pre class="pod-block-code">   10|         [ \h* $&lt;num-blank-lines&gt;=(\d+) ]?  
 </pre><p>The remainder of the <code>begin</code> directive can only be whitespace.</p><pre class="pod-block-code">   11|         &lt;rest-of-line&gt;
    12|     } 
 </pre>
@@ -268,7 +269,12 @@
   150| 
   151| 
 </pre></section>		</div>
-</div><footer><div>Rendered from <span class="path"></span></div><div>at <span class="time">2023-09-02T02:52:32Z</span></div></footer>
+<div id="_Footnotes" class="footnotes">
+<ul><li id="fn1"><span class="footnote-number">1</span>This is non-standard Pod6 and will not compile until woven!<a class="footnote" href="#fnret1"> « Back »</a></li>
+
+</ul>
+</div>
+</div><footer><div>Rendered from <span class="path"></span></div><div>at <span class="time">2023-09-02T18:01:59Z</span></div></footer>
 	</body>
 </html>
 

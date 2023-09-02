@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Fri 01 Sep 2023 10:49:45 PM EDT
+# Last modified: Sat 02 Sep 2023 02:01:30 PM EDT
 # Version 0.0.1
 
 # no-weave
@@ -80,7 +80,8 @@ file, which is not meant to be easily read by humans.
 
 However, we can provide the option for users to specify the number of empty
 lines that should replace a C<pod> block. To do this, simply add a number at
-the end of the C<=begin> directive. For example, C<=begin  pod 2> .
+the end of the C<=begin> directive. For example, C<=begin  pod 2>. N<This is
+non-standard Pod6 and will not compile until woven!>
 
 =end pod
 

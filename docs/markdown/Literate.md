@@ -78,7 +78,7 @@ So let's define those tokens.
 ```
 Most programming applications do not focus on the structure of the executable file, which is not meant to be easily read by humans.
 
-However, we can provide the option for users to specify the number of empty lines that should replace a `pod` block. To do this, simply add a number at the end of the `=begin` directive. For example, `=begin pod 2` .
+However, we can provide the option for users to specify the number of empty lines that should replace a `pod` block. To do this, simply add a number at the end of the `=begin` directive. For example, `=begin pod 2`. [ 1 ]
 
 ```
    10|         [ \h* $<num-blank-lines>=(\d+) ]?  
@@ -470,6 +470,9 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 
 
+----
+###### 1
+This is non-standard Pod6 and will not compile until woven!
 
 ----
-Rendered from  at 2023-09-02T02:52:38Z
+Rendered from  at 2023-09-02T18:02:07Z
