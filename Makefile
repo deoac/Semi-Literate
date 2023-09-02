@@ -28,10 +28,10 @@ markdown: $(MARKDOWN_TARGETS)
 pdf: $(PDF_TARGETS)
 
 Literate.rakumod: Literate.sl
-	chmod -R a+w lib/
+	@chmod -R a+w lib/
 	@echo -n "> Compiling the Semi::Literate module..."
-	bin/sl-tangle source/Literate.sl  > lib/Semi/Literate.rakumod
-	chmod -R a-w lib/
+	@sl-tangle source/Literate.sl  > lib/Semi/Literate.rakumod
+	@chmod -R a-w lib/
 	@echo "\e[32mOK\e[0m"
 
 module-install:
@@ -93,6 +93,7 @@ clean:
 
 
 create_doc_dirs:
+	@echo -n "> Creating the document directories..."
 	mkdir -p $(DOCDIR)/html
 	mkdir -p $(DOCDIR)/markdown
 	mkdir -p $(DOCDIR)/pdf
@@ -100,16 +101,19 @@ create_doc_dirs:
 
 ./docs/html/%.html: ./source/%.sl
 	@mkdir -p $(@D)
-	sl-weave --format=html --output-file=$@ $<
+	@echo -n "> Creating an HTML document for $<..."
+	@sl-weave --format=html --/verbose --output-file=$@ $<
 	@echo "\e[32mOK\e[0m"
 
 ./docs/markdown/%.md: ./source/%.sl
 	@mkdir -p $(@D)
-	sl-weave --format=markdown --output-file=$@ $<
+	@echo -n "> Creating a Markdown document for $<..."
+	@sl-weave --format=markdown --/verbose --output-file=$@ $<
 	@echo "\e[32mOK\e[0m"
 
 ./docs/pdf/%.pdf: ./source/%.sl
 	@mkdir -p $(@D)
-	sl-weave --format=pdf --output-file=$@ $<
+	@echo -n "> Creating a PDF document for $<..."
+	@sl-weave --format=pdf --/verbose --output-file=$@ $<
 	@echo "\e[32mOK\e[0m"
 
