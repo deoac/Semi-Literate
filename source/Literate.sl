@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Wed 19 Jul 2023 06:40:53 PM EDT
+# Last modified: Fri 01 Sep 2023 09:59:29 PM EDT
 # Version 0.0.1
 
 # no-weave
@@ -199,30 +199,46 @@ sub tangle (
 
 The subroutine has a single parameter, which is the input filename. The
 filename is required.  Typically, this parameter is obtained from the command
-line through the wrapper subroutine C<MAIN>.
+line or passed from the subroutine C<MAIN>.
 =end pod
     Str $input-file!,
 =begin pod
 
-The subroutine will return a C<Str>, which should be a working Raku program.
+The subroutine will return a C<Str>, which will be a working Raku program.
 =end pod
         --> Str ) is export {
 =begin pod
 
-First we will get the entire C<.sl> file...
+First we will get the entire Semi-Literate C<.sl> file...
 =end pod
 
     my Str $source = $input-file.IO.slurp;
 
 =begin pod 1
-Remove the #no-weave delimiters
+Remove the I<no-weave> delimiters
 =end pod
 
     $source ~~ s:g{ ^^ \h* '#' <.ws>     'no-weave' <rest-of-line> } = '';
     $source ~~ s:g{ ^^ \h* '#' <.ws> 'end-no-weave' <rest-of-line> } = '';
 
 =begin pod 1
-Remove blank lines at the beginning and end of the code sections.
+
+Very often the C<code> section of the Semi-Literate file will have blank lines
+that you don't want to see in the tangled working code.
+For example:
+
+=end pod
+                                                # <== unwanted blank lines
+                                                # <== unwanted blank lines
+    sub foo () {
+        { ... }
+    } # end of sub foo ()
+                                                # <== unwanted blank lines
+                                                # <== unwanted blank lines
+=begin pod
+
+
+So we'll remove the blank lines at the beginning and end of the code sections.
 =end pod
 
     $source ~~ s:g/\=end (\N*)\n+/\=end$0\n/;
@@ -358,22 +374,55 @@ First we will get the entire C<.sl> file...
     my Str $cleaned-source;
 
 =begin pod 1
-=head2 Clean the source of items we don't want to see in the woven document.
+=head2 Clean the source of items we don't want to see in the formatted document.
 
-=head3 remove code marked as 'no-weave'
+=head3 Remove code marked as 'no-weave'
+
+Sometimes there will be code you do not want woven into the document, such
+as boilerplate code like C<use v6.d;>.  You have two options to mark such
+code.  By individual lines or by delimited blocks of code.
+
+=head4 Delimited blocks of code
+
+Simply add comments before and after the code you want ignored in the
+formatted document.
+
+=begin code :lang<raku>
+#no-weave
+    {...
+    ...}
+#end-no-weave
+
+=end code
 
 =end pod
+#
+#    $source ~~ s:g{^^ \h* '#'  <.ws> 'no-weave'     <rest-of-line>
+#
+#                    (^^ <rest-of-line> )*?  # all lines between the two weave delimiters
+#
+#                   ^^ \h* '#' <.ws> 'end-no-weave' <rest-of-line>
+#                  } = '';
+#
+#
+#=begin pod 1
+#
+#=head4 Individual lines of code
+#
+#    Add a comment at the end of the line of code.
+#=begin code :lang<raku>
+#use v6.d;  #no-weave
+#=end code
+#
+#
+#=end pod
+#    $source ~~ s:g {
+#        ^^ \h* .* '#' <.ws> 'no-weave' \h* $$
+#    } = ''; # end of $source ~~ s:g {
+#
+=begin pod
 
-    $source ~~ s:g{^^ \h* '#' <.ws> 'no-weave'     <rest-of-line>
-
-                    (^^ <rest-of-line> )*?  # all lines between the two weave delimiters
-
-                   ^^ \h* '#' <.ws> 'end-no-weave' <rest-of-line>
-                  } = '';
-
-
-=begin pod 1
-=head3 remove full comment lines followed by blank lines
+=head3 Remove full comment lines followed by blank lines
 
 =end pod
 
@@ -387,7 +436,7 @@ First we will get the entire C<.sl> file...
 
 =begin pod 1
 
-head3 Remove EOL comments
+=head3 Remove EOL comments
 
 =end pod
 
@@ -406,7 +455,18 @@ head3 Remove EOL comments
                         | \｢ <-[\｣]>*
                     ] )
                 >
-                "#" \N*
+                "#"
+
+
+                # We need to keep these delimiters.
+                # See the section above "Remove code marked as 'no-weave'".
+                <!before
+                      [
+                        | 'no-weave'
+                        | 'end-no-weave'
+                      ]
+                >
+                \N*
                 $$ };
 
         $cleaned-source ~= $m ?? $<stuff-before-the-comment> !! $line;
@@ -426,6 +486,10 @@ head3 Remove EOL comments
 ...Next, we parse it using the C<Semi::Literate> grammar
 and obtain a list of submatches (that's what the C<caps> method does) ...
 =end pod
+
+#    print $cleaned-source;
+#    exit;
+
 
     my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
 
@@ -570,4 +634,3 @@ multi MAIN(Bool :$testw!) {
 } # end of multi MAIN(Bool :$test!)
 
 #end-no-weave
-
