@@ -2,7 +2,7 @@
 
 # Weave a Semi-literate file into Text, Markdown, HTML, etc.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Sun 23 Jul 2023 06:58:48 PM EDT
+# Last modified: Fri 01 Sep 2023 10:08:26 PM EDT
 # Version 0.0.1
 
 #no-weave
@@ -27,28 +27,38 @@ sub MAIN($input-file,
             #= The output format for the woven file.
          Str :o(:$output-file);
             #= The name of the output file.  Defaults to stdout.
+         Bool :v(:$verbose) = True;
+            #= verbose will print diagnostics and debug prints to $*ERR
     ) {
     my Str $extension;
     my Str @options;
     my Bool $no-output-file = False;
 
+    note "Input Format =>  $format" if $verbose;
     $format .= trim;
     given $format {
-        when  /:i markdown / {
+        when  /:i ^ markdown | md $ / {
             $format    = 'MarkDown2';
             $extension = 'md';
         };
-        when  /:i [plain]? t[e]?xt / {
+        when  /:i ^ [[plain][\-|_]?]? t[e]?xt $ / {
             $format    = 'Text';
             $extension = 'txt';
         }
-        when  /:i html / {
+        when  /:i ^ [s]?htm[l]? $/ {
             $format    = 'HTML2';
             $extension = 'html';
         } # end of when  /:i html 2? $/
 
-        when /:i pdf / {
+        when /:i ^ pdf $ / {
             $format = 'PDF';
+            $extension = '.pdf';
+            @options = "--save-as=$output-file" if $output-file;
+            $no-output-file = True;
+        }
+
+        when /:i ^ pdf[\-|_]?lite  $ / {
+            $format = 'PDF::Lite';
             $extension = '.pdf';
             @options = "--save-as=$output-file" if $output-file;
             $no-output-file = True;
@@ -58,8 +68,9 @@ sub MAIN($input-file,
             $extension = $format;
         } # end of default
 
-    } # end of given $output-format
 
+    } # end of given $output-format
+    note "Weave Format =>  $format" if $verbose;
     my Str $f = "Pod::To::$format";
     try require ::($f);
     if ::($f) ~~ Failure {
