@@ -10,6 +10,8 @@
       "Grammar::Tracer"
   ],
   "depends": [
+      "Raku::Pod::Render",
+      "Pod::To::MarkDown2"
   ],
   "description": "A semi-literate way to weave and tangle Raku/POD source code.",
   "license": "Artistic-2.0",
