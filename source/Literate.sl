@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Fri 01 Sep 2023 09:59:29 PM EDT
+# Last modified: Fri 01 Sep 2023 10:49:45 PM EDT
 # Version 0.0.1
 
 # no-weave
@@ -476,6 +476,8 @@ formatted document.
 =begin pod 1
 =head3 Remove blank lines at the begining and end of the code
 
+B<EXPLAIN THIS!>
+
 =end pod
 
     $cleaned-source ~~ s:g{\=end (\N*)\n+} =   "\=end$0\n";
@@ -483,13 +485,10 @@ formatted document.
 
 =begin pod 1
 
+=head2 Interesting stuff
 ...Next, we parse it using the C<Semi::Literate> grammar
 and obtain a list of submatches (that's what the C<caps> method does) ...
 =end pod
-
-#    print $cleaned-source;
-#    exit;
-
 
     my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
 
