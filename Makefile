@@ -12,8 +12,8 @@ vpath %.sl ${SOURCEDIR}
 vpath %.rakumod ${MODULESDIR}
 vpath %. ${BINDIR}
 
-stuff: 		 modules executables docs
-all: 		 temporary module-install stuff
+all: 		 modules executables docs
+temp: 		 temporary module-install all
 modules: 	 Literate.rakumod module-install
 binaries: 	 sl-tangle sl-weave
 executables: binaries executable-install
