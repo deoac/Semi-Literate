@@ -12,7 +12,7 @@
     6|          Bool :l(:$line-numbers)  = True;
     7|          Str :f(:$format) is copy = 'markdown';
     8|          Str :o(:$output-file);
-    9|          Bool :v(:$verbose) = False;
+    9|          Bool :v(:$verbose) = True;
    10|     ) {
    11|     my Str $extension;
    12|     my Str @options;
@@ -90,4 +90,4 @@
 
 
 ----
-Rendered from  at 2023-09-01T23:23:38Z
+Rendered from  at 2023-09-02T02:38:56Z

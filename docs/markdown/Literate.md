@@ -24,6 +24,7 @@
 [Remove full comment lines followed by blank lines](#remove-full-comment-lines-followed-by-blank-lines)  
 [Remove EOL comments](#remove-eol-comments)  
 [Remove blank lines at the begining and end of the code](#remove-blank-lines-at-the-begining-and-end-of-the-code)  
+[Interesting stuff ...Next, we parse it using the Semi::Literate grammar and obtain a list of submatches (that's what the caps method does) ...](#interesting-stuff-next-we-parse-it-using-the-semiliterate-grammar-and-obtain-a-list-of-submatches-thats-what-the-caps-method-does-)  
 [remove blank lines at the end](#remove-blank-lines-at-the-end-0)  
 [NAME](#name)  
 [VERSION](#version)  
@@ -344,13 +345,14 @@ Simply add comments before and after the code you want ignored in the formatted 
 
 ```
 ### Remove blank lines at the begining and end of the code
+**EXPLAIN THIS!**
+
 ```
    92|     $cleaned-source ~~ s:g{\=end (\N*)\n+} =   "\=end$0\n";
    93|     $cleaned-source ~~ s:g{\n+\=begin (<.ws> pod) [<.ws> \d]?} = "\n\=begin$0";
 
 ```
-...Next, we parse it using the `Semi::Literate` grammar and obtain a list of submatches (that's what the `caps` method does) ...
-
+## Interesting stuff ...Next, we parse it using the `Semi::Literate` grammar and obtain a list of submatches (that's what the `caps` method does) ...
 ```
    94|     my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
 
@@ -470,4 +472,4 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 
 ----
-Rendered from  at 2023-09-02T01:58:27Z
+Rendered from  at 2023-09-02T02:52:38Z

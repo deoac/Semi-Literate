@@ -2,7 +2,7 @@
 
 # Weave a Semi-literate file into Text, Markdown, HTML, etc.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Fri 01 Sep 2023 10:08:56 PM EDT
+# Last modified: Fri 01 Sep 2023 10:08:26 PM EDT
 # Version 0.0.1
 
 use v6.d;

@@ -2,44 +2,29 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Fri 01 Sep 2023 09:21:34 PM EDT
+# Last modified: Fri 01 Sep 2023 10:49:45 PM EDT
 # Version 0.0.1
 
-# no-weave
 # always use the latest version of Raku
 use v6.*;
 use PrettyDump;
 use Data::Dump::Tree;
-# end-no-weave
-
-
 #    We need to declare them with C<my> because we
 #    need to use them in a subroutine later. #TODO explain why.
 
     my token rest-of-line {    \N* [\n | $] }
     my token blank-line   { ^^ \h* [\n | $] }
-
-
 #use Grammar::Tracer;
 grammar Semi::Literate is export {
     token TOP {   [ <pod> | <code> ]* }
-
-
-
     my token begin {
         ^^ \h* \= begin <.ws> pod
-
-
         [ \h* $<num-blank-lines>=(\d+) ]?  # an optional number to specify the
                                          # number of blank lines to replace the
                                          # C<Pod> blocks when tangling.
-
         <rest-of-line>
     } # end of my token begin
-
-
     my token end { ^^ \h* \= end <.ws> pod <rest-of-line> }
-
 
     token pod {
         <begin>
@@ -47,34 +32,24 @@ grammar Semi::Literate is export {
         <end>
     } # end of token pod
 
-
     token code { <plain-line>+ }
-
 
     token plain-line {
        $<plain-line> = [^^ <rest-of-line>]
-
-
         <?{ &not-a-delimiter($<plain-line>.Str) }>
     } # end of token plain-line
-
 
     sub not-a-delimiter (Str $line --> Bool) {
         return not $line ~~ /<begin> | <end>/;
     } # end of sub not-a-delimiter (Match $line --> Bool)
-
-
 } # end of grammar Semi::Literate
 
 
 #TODO multi sub to accept Str & IO::PatGh
 sub tangle (
-
     Str $input-file!,
         --> Str ) is export {
-
     my Str $source = $input-file.IO.slurp;
-
 
     $source ~~ s:g{ ^^ \h* '#' <.ws>     'no-weave' <rest-of-line> } = '';
     $source ~~ s:g{ ^^ \h* '#' <.ws> 'end-no-weave' <rest-of-line> } = '';
@@ -86,65 +61,44 @@ sub tangle (
     } # end of sub foo ()
                                                 # <== unwanted blank lines
                                                 # <== unwanted blank lines
-
     $source ~~ s:g/\=end (\N*)\n+/\=end$0\n/;
     $source ~~ s:g/\n+\=begin    /\n\=begin/;
 
-
     my Pair @submatches = Semi::Literate.parse($source).caps;
-
 
     my Str $raku-code = @submatches.map( {
         when .key eq 'code' {
             .value;
         }
 
-
-
         when .key eq 'pod' {
             my $num-blank-lines = .value.hash<begin><num-blank-lines>;
             with $num-blank-lines { "\n" x $num-blank-lines }
         }
 
-        #no-weave
         default { die 'Should never get here' }
-        #end-no-weave
-
     } # end of my Str $raku-code = @submatches.map(
     ).join;
 
-
     $raku-code ~~ s{\n  <blank-line>* $ } = '';
-
     return $raku-code;
 } # end of sub tangle (
 
 
 sub weave (
-
-
     Str $input-file!;
-
     Str :f(:$format) is copy = 'markdown';
         #= The output format for the woven file.
-
-
     Bool :l(:$line-numbers)  = True;
         #= Should line numbers be added to the embeded code?
-
-
-
         --> Str ) is export {
-
     my UInt $line-number = 1;
-
-
     my Str $source = $input-file.IO.slurp;
 
     my Str $cleaned-source;
 
 #
-#    $source ~~ s:g{^^ \h* '#' < <.ws> - ​> 'no-weave'     <rest-of-line>
+#    $source ~~ s:g{^^ \h* '#'  <.ws> 'no-weave'     <rest-of-line>
 #
 #                    (^^ <rest-of-line> )*?  # all lines between the two weave delimiters
 #
@@ -167,7 +121,6 @@ sub weave (
 #        ^^ \h* .* '#' <.ws> 'no-weave' \h* $$
 #    } = ''; # end of $source ~~ s:g {
 #
-
     # delete full comment lines
     $source ~~ s:g{ ^^ \h* '#' \N* \n+} = '';
 
@@ -175,7 +128,6 @@ sub weave (
     # a backslash or is in a quote. (It doesn't catch all quote
     # constructs...(that's a TODO))
     # And leave the newline.
-
 
     for $source.split("\n") -> $line {
         my $m = $line ~~ m{
@@ -194,6 +146,7 @@ sub weave (
                 >
                 "#"
 
+
                 # We need to keep these delimiters.
                 # See the section above "Remove code marked as 'no-weave'".
                 <!before
@@ -209,18 +162,10 @@ sub weave (
         $cleaned-source ~= "\n";
     } # end of for $source.split("\n") -> $line
 
-
     $cleaned-source ~~ s:g{\=end (\N*)\n+} =   "\=end$0\n";
     $cleaned-source ~~ s:g{\n+\=begin (<.ws> pod) [<.ws> \d]?} = "\n\=begin$0";
 
-
-#    print $cleaned-source;
-#    exit;
-
-
     my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
-
-
 
     my Str $weave = @submatches.map( {
         when .key eq 'pod' {
@@ -243,25 +188,19 @@ sub weave (
             \=end  pod
             EOCB
 
-        # no-weave
         default { die 'Should never get here.' }
-        # end-no-weave
     } # end of my $weave = Semi::Literate.parse($source).caps.map
     ).join;
-
 
     $weave ~~ s:g{ \h* \=end   <.ws> pod  <rest-of-line>
                    \h* \=begin <.ws> pod <rest-of-line> } = '';
 
-
     $weave ~~ s{\n  <blank-line>* $ } = '';
-
 
     return $weave
 } # end of sub weave (
 
 
-# no-weave
 my %*SUB-MAIN-OPTS =
   :named-anywhere,             # allow named variables at any location
   :bundling,                   # allow bundling of named arguments
@@ -295,5 +234,3 @@ multi MAIN(Bool :$testt!) {
 multi MAIN(Bool :$testw!) {
     say weave($semi-literate-file);
 } # end of multi MAIN(Bool :$test!)
-
-#end-no-weave

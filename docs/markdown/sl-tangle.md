@@ -27,13 +27,12 @@
     8| ) {
     9|     my Str $raku-source = tangle $input-file;
    10| 
-   11| 
-   12|     my $output-file-handle = $output-file              ??
-   13|                                 open(:w, $output-file) !!
-   14|                                 $*OUT;
-   15| 
-   16|     $output-file-handle.spurt: $raku-source;
-   17| } 
+   11|     my $output-file-handle = $output-file              ??
+   12|                                 open(:w, $output-file) !!
+   13|                                 $*OUT;
+   14| 
+   15|     $output-file-handle.spurt: $raku-source;
+   16| } 
 
 ```
 # NAME
@@ -88,38 +87,38 @@ This module is free software; you can redistribute it and/or modify it under the
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 ```
-   18| multi MAIN (:$test!) {
-   19|     use Test;
-   20| 
-   21|     my @tests = [
-   22|         %{ got => '', op => 'eq', expected => '', desc => 'Example 1' },
-   23|     ];
-   24| 
-   25|     for @tests {
-   26|     } 
-   27| } 
-   28| 
-   29| my %*SUB-MAIN-OPTS =
-   30|   :named-anywhere,             
-   31|   :bundling,                   
-   32|   :allow-no,                   
-   33|   :numeric-suffix-as-value,    
-   34| ;
-   35| 
-   36| multi MAIN(Bool :$pod!) {
-   37|     for $=pod -> $pod-item {
-   38|         for $pod-item.contents -> $pod-block {
-   39|             $pod-block.raku.say;
-   40|         }
-   41|     }
-   42| } 
-   43| 
-   44| multi MAIN(Bool :$doc!, Str :$format = 'Text') {
-   45|     run $*EXECUTABLE, "--doc=$format", $*PROGRAM;
-   46| } 
+   17| multi MAIN (:$test!) {
+   18|     use Test;
+   19| 
+   20|     my @tests = [
+   21|         %{ got => '', op => 'eq', expected => '', desc => 'Example 1' },
+   22|     ];
+   23| 
+   24|     for @tests {
+   25|     } 
+   26| } 
+   27| 
+   28| my %*SUB-MAIN-OPTS =
+   29|   :named-anywhere,             
+   30|   :bundling,                   
+   31|   :allow-no,                   
+   32|   :numeric-suffix-as-value,    
+   33| ;
+   34| 
+   35| multi MAIN(Bool :$pod!) {
+   36|     for $=pod -> $pod-item {
+   37|         for $pod-item.contents -> $pod-block {
+   38|             $pod-block.raku.say;
+   39|         }
+   40|     }
+   41| } 
+   42| 
+   43| multi MAIN(Bool :$doc!, Str :$format = 'Text') {
+   44|     run $*EXECUTABLE, "--doc=$format", $*PROGRAM;
+   45| } 
+   46| 
    47| 
    48| 
-   49| 
 
 ```
 
@@ -129,4 +128,4 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 
 ----
-Rendered from  at 2023-09-01T23:23:36Z
+Rendered from  at 2023-09-02T02:45:41Z
