@@ -6,78 +6,92 @@
 
 <link href="/asset_files/images/favicon.ico" rel="icon" type="image/x-icon"/>
 <link rel="stylesheet" type="text/css" href="asset_files/css/rakudoc-extra.css" />
-<link rel="stylesheet" type="text/css" href="asset_files/css/rakudoc-styling.css" />
 <link rel="stylesheet" type="text/css" href="asset_files/css/font-awesome.min.css" />
+<link rel="stylesheet" type="text/css" href="asset_files/css/rakudoc-styling.css" />
 
 </head>
 	<body class="pod">
 <header>
 <img id="Camelia_bug" src="/asset_files/images/Camelia.svg"><h1 class="title">Weave a semi-literate program into Text, Markdown, etc. format</h1></header><div class="pod-content"><div id=""></div><div class="pod-body no-toc">
-<section name="___top"><pre class="pod-block-code">    1| sub MAIN($input-file,
-    2|          Bool :l(:$line-numbers)  = True;
-    3|          Str :f(:$format) is copy = 'markdown';
-    4|          Str :o(:$output-file);
-    5|     ) {
-    6|     my Str $extension;
-    7|     my Str @options;
-    8|     my Bool $no-output-file = False;
-    9| 
-   10|     $format .= trim;
-   11|     given $format {
-   12|         when  /:i markdown / {
-   13|             $format    = 'MarkDown2';
-   14|             $extension = 'md';
-   15|         };
-   16|         when  /:i [plain]? t[e]?xt / {
-   17|             $format    = 'Text';
-   18|             $extension = 'txt';
-   19|         }
-   20|         when  /:i html / {
-   21|             $format    = 'HTML2';
-   22|             $extension = 'html';
-   23|         } 
-   24| 
-   25|         when /:i pdf / {
-   26|             $format = 'PDF';
-   27|             $extension = '.pdf';
-   28|             @options = &quot;--save-as=$output-file&quot; if $output-file;
-   29|             $no-output-file = True;
-   30|         }
-   31| 
-   32|         default {
-   33|             $extension = $format;
-   34|         } 
-   35| 
-   36|     } 
+<section name="___top"><pre class="pod-block-code">    1| use v6.d;
+    2| 
+    3| use File::Temp;
+    4| use Semi::Literate;
+</pre><pre class="pod-block-code">    5| sub MAIN($input-file,
+    6|          Bool :l(:$line-numbers)  = True;
+    7|          Str :f(:$format) is copy = 'markdown';
+    8|          Str :o(:$output-file);
+    9|          Bool :v(:$verbose) = False;
+   10|     ) {
+   11|     my Str $extension;
+   12|     my Str @options;
+   13|     my Bool $no-output-file = False;
+   14| 
+   15|     note &quot;Input Format =&gt;  $format&quot; if $verbose;
+   16|     $format .= trim;
+   17|     given $format {
+   18|         when  /:i ^ markdown | md $ / {
+   19|             $format    = 'MarkDown2';
+   20|             $extension = 'md';
+   21|         };
+   22|         when  /:i ^ [[plain][\-|_]?]? t[e]?xt $ / {
+   23|             $format    = 'Text';
+   24|             $extension = 'txt';
+   25|         }
+   26|         when  /:i ^ [s]?htm[l]? $/ {
+   27|             $format    = 'HTML2';
+   28|             $extension = 'html';
+   29|         } 
+   30| 
+   31|         when /:i ^ pdf $ / {
+   32|             $format = 'PDF';
+   33|             $extension = '.pdf';
+   34|             @options = &quot;--save-as=$output-file&quot; if $output-file;
+   35|             $no-output-file = True;
+   36|         }
    37| 
-   38|     my Str $f = &quot;Pod::To::$format&quot;;
-   39|     try require ::($f);
-   40|     if ::($f) ~~ Failure {
-   41|         die &quot;$format is not a supported output format&quot;
-   42|     } 
-   43| 
-   44|     my Str $woven = weave($input-file, :$format, :$line-numbers);
-   45| 
-   46|     my ($pod-file, $fh) = tempfile(suffix =&gt;  '.p6');
-   47| 
-   48|     $pod-file.IO.spurt: $woven;
+   38|         when /:i ^ pdf[\-|_]?lite  $ / {
+   39|             $format = 'PDF::Lite';
+   40|             $extension = '.pdf';
+   41|             @options = &quot;--save-as=$output-file&quot; if $output-file;
+   42|             $no-output-file = True;
+   43|         }
+   44| 
+   45|         default {
+   46|             $extension = $format;
+   47|         } 
+   48| 
    49| 
-   50|     my $output-file-handle = $output-file              ??
-   51|                                 open(:w, $output-file) !!
-   52|                                 $*OUT
-   53|                             unless $no-output-file;
-   54| 
-   55|     run $*EXECUTABLE,
-   56|         &quot;--doc=$format&quot;,
-   57|         $pod-file,
-   58|         @options,
-   59|         :out($output-file-handle);
-   60| 
-   61| } 
-   62| 
+   50|     } 
+   51|     note &quot;Weave Format =&gt;  $format&quot; if $verbose;
+   52|     my Str $f = &quot;Pod::To::$format&quot;;
+   53|     try require ::($f);
+   54|     if ::($f) ~~ Failure {
+   55|         die &quot;$format is not a supported output format&quot;
+   56|     } 
+   57| 
+   58|     my Str $woven = weave($input-file, :$format, :$line-numbers);
+   59| 
+   60|     my ($pod-file, $fh) = tempfile(suffix =&gt;  '.p6');
+   61| 
+   62|     $pod-file.IO.spurt: $woven;
    63| 
+   64|     my $output-file-handle = $output-file              ??
+   65|                                 open(:w, $output-file) !!
+   66|                                 $*OUT
+   67|                             unless $no-output-file;
+   68| 
+   69|     run $*EXECUTABLE,
+   70|         &quot;--doc=$format&quot;,
+   71|         $pod-file,
+   72|         @options,
+   73|         :out($output-file-handle);
+   74| 
+   75| } 
+   76| 
+   77| 
 </pre></section>		</div>
-</div><footer><div>Rendered from <span class="path"></span></div><div>at <span class="time">2023-07-24T01:22:48Z</span></div></footer>
+</div><footer><div>Rendered from <span class="path"></span></div><div>at <span class="time">2023-09-01T23:23:28Z</span></div></footer>
 	</body>
 </html>
 
