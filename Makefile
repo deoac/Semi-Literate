@@ -12,7 +12,8 @@ vpath %.sl ${SOURCEDIR}
 vpath %.rakumod ${MODULESDIR}
 vpath %. ${BINDIR}
 
-all: 		 modules executables docs
+stuff: 		 modules executables docs
+all: 		 temporary module-install stuff
 modules: 	 Literate.rakumod module-install
 binaries: 	 sl-tangle sl-weave
 executables: binaries executable-install
@@ -26,6 +27,16 @@ docs: html markdown pdf
 html: $(HTML_TARGETS)
 markdown: $(MARKDOWN_TARGETS)
 pdf: $(PDF_TARGETS)
+
+temporary:
+	@chmod -R a+w lib/
+	@echo -n "> Uninstalling Semi::Literate..."
+	@zef uninstall Semi::Literate >/dev/null
+	@echo "\e[32mOK\e[0m"
+	@echo -n "> pod-tangling Literate.sl..."
+	@pod-tangle source/Literate.sl > lib/Semi/Literate.rakumod
+	@chmod -R a-w lib/
+	@echo "\e[32mOK\e[0m"
 
 Literate.rakumod: Literate.sl
 	@chmod -R a+w lib/
