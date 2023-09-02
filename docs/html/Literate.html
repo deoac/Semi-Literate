@@ -6,8 +6,8 @@
 
 <link href="/asset_files/images/favicon.ico" rel="icon" type="image/x-icon"/>
 <link rel="stylesheet" type="text/css" href="asset_files/css/rakudoc-extra.css" />
-<link rel="stylesheet" type="text/css" href="asset_files/css/font-awesome.min.css" />
 <link rel="stylesheet" type="text/css" href="asset_files/css/rakudoc-styling.css" />
+<link rel="stylesheet" type="text/css" href="asset_files/css/font-awesome.min.css" />
 
 </head>
 	<body class="pod">
@@ -50,7 +50,7 @@
     2| 
     3| # Get the Pod vs. Code structure of a Raku/Pod6 file.
     4| # © 2023 Shimon Bollinger. All rights reserved.
-    5| # Last modified: Sat 02 Sep 2023 04:12:13 PM EDT
+    5| # Last modified: Sat 02 Sep 2023 04:29:38 PM EDT
     6| # Version 0.0.1
     7| 
     8| # no-weave
@@ -83,7 +83,7 @@
 </pre>
 <h2 id="The_Pod6_delimiters"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">The Pod6 delimiters</a></h2>
 <p>According to the <a href="https://docs.raku.org/language/pod">documentation</a>,</p><dl>
-<dt>Every Pod6 document has to begin with =begin pod and end with =end pod.</dt><dd></dd>
+<dt>Every Pod6 document has to begin with =begin pod 1 and end with =end pod.</dt><dd></dd>
 </dl><p>So let's define those tokens.</p>
 <h3 id="The_begin_token"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">The <code>begin</code> token</a></h3>
 <pre class="pod-block-code">   29| 
@@ -272,7 +272,7 @@
   179|     my Str $cleaned-source;
   180| 
   181| $cleaned-source = $source;
-  182| #=begin pod
+  182| #=begin pod 1
   183| #
   184| #=head3 Remove full comment lines followed by blank lines
   185| #
@@ -286,7 +286,7 @@
   193| #    # constructs...(that's a TODO))
   194| #    # And leave the newline.
   195| #
-  196| #=begin pod
+  196| #=begin pod 1
   197| #
   198| #=head3 Remove EOL comments
   199| #
@@ -325,7 +325,7 @@
   232| #        $cleaned-source ~= &quot;\n&quot;;
   233| #    } # end of for $source.split(&quot;\n&quot;) -&gt; $line
   234| #
-  235| #=begin pod
+  235| #=begin pod 1
   236| #=head3 Remove blank lines at the begining and end of the code
   237| #
   238| #B&lt;EXPLAIN THIS!&gt;
@@ -447,7 +447,7 @@
 
 </ul>
 </div>
-</div><footer><div>Rendered from <span class="path"></span></div><div>at <span class="time">2023-09-02T20:13:47Z</span></div></footer>
+</div><footer><div>Rendered from <span class="path"></span></div><div>at <span class="time">2023-09-02T20:31:33Z</span></div></footer>
 	</body>
 </html>
 

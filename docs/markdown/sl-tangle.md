@@ -17,22 +17,33 @@
 
 ----
 ```
-    1| use v6.*;
+    1| #! /usr/bin/env raku
     2| 
-    3| use Semi::Literate;
-    4| 
-    5| multi MAIN (
-    6|     Str $input-file;
-    7|     Str :o(:$output-file) = '';
-    8| ) {
-    9|     my Str $raku-source = tangle $input-file;
+    3| # Tangle a Semi-literate file into a working Raku file.
+    4| # © 2023 Shimon Bollinger. All rights reserved.
+    5| # Last modified: Fri 01 Sep 2023 10:16:10 PM EDT
+    6| # Version 0.0.1
+    7| 
+    8| # always use the latest version of Raku
+    9| use v6.*;
    10| 
-   11|     my $output-file-handle = $output-file              ??
-   12|                                 open(:w, $output-file) !!
-   13|                                 $*OUT;
-   14| 
-   15|     $output-file-handle.spurt: $raku-source;
-   16| } 
+   11| use Semi::Literate;
+   12| 
+   13| #| The actual program starts here.
+   14| multi MAIN (
+   15|     Str $input-file;
+   16|     Str :o(:$output-file) = '';
+   17| ) {
+   18|     my Str $raku-source = tangle $input-file;
+   19| 
+   20|     my $output-file-handle = $output-file              ??
+   21|                                 open(:w, $output-file) !!
+   22|                                 $*OUT;
+   23| 
+   24|     $output-file-handle.spurt: $raku-source;
+   25| } # end of multi MAIN ( )
+   26| 
+   27| 
 
 ```
 # NAME
@@ -42,6 +53,12 @@
 This documentation refers to <application name> version 0.0.1
 
 # SYNOPSIS
+```
+# Brief working invocation example(s) here showing the most common usage(s)
+
+# This section will be as far as many users ever read
+# so make it as educational and exemplary as possible.
+```
 # REQUIRED ARGUMENTS
 A complete list of every argument that must appear on the command line. when the application is invoked, explaining what each of them does, any restrictions on where each one may appear (i.e. flags that must appear before or after filenames), and how the various arguments and options may interact (e.g. mutual exclusions, required combinations, etc.)
 
@@ -87,38 +104,46 @@ This module is free software; you can redistribute it and/or modify it under the
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 ```
-   17| multi MAIN (:$test!) {
-   18|     use Test;
-   19| 
-   20|     my @tests = [
-   21|         %{ got => '', op => 'eq', expected => '', desc => 'Example 1' },
-   22|     ];
-   23| 
-   24|     for @tests {
-   25|     } 
-   26| } 
-   27| 
-   28| my %*SUB-MAIN-OPTS =
-   29|   :named-anywhere,             
-   30|   :bundling,                   
-   31|   :allow-no,                   
-   32|   :numeric-suffix-as-value,    
-   33| ;
-   34| 
-   35| multi MAIN(Bool :$pod!) {
-   36|     for $=pod -> $pod-item {
-   37|         for $pod-item.contents -> $pod-block {
-   38|             $pod-block.raku.say;
-   39|         }
-   40|     }
-   41| } 
-   42| 
-   43| multi MAIN(Bool :$doc!, Str :$format = 'Text') {
-   44|     run $*EXECUTABLE, "--doc=$format", $*PROGRAM;
-   45| } 
-   46| 
-   47| 
-   48| 
+   28| 
+   29| #| Run with the option '--test' to test the program
+   30| multi MAIN (:$test!) {
+   31|     use Test;
+   32| 
+   33|     my @tests = [
+   34|         %{ got => '', op => 'eq', expected => '', desc => 'Example 1' },
+   35|     ];
+   36| 
+   37|     for @tests {
+   38| #        cmp-ok .<got>, .<op>, .<expected>, .<desc>;
+   39|     } # end of for @tests
+   40| } # end of multi MAIN (:$test!)
+   41| 
+   42| my %*SUB-MAIN-OPTS =
+   43|   :named-anywhere,             # allow named variables at any location
+   44|   :bundling,                   # allow bundling of named arguments
+   45| #  :coerce-allomorphs-to(Str),  # coerce allomorphic arguments to given type
+   46|   :allow-no,                   # allow --no-foo as alternative to --/foo
+   47|   :numeric-suffix-as-value,    # allow -j2 as alternative to --j=2
+   48| ;
+   49| 
+   50| #| Run with '--pod' to see all of the POD6 objects
+   51| multi MAIN(Bool :$pod!) {
+   52|     for $=pod -> $pod-item {
+   53|         for $pod-item.contents -> $pod-block {
+   54|             $pod-block.raku.say;
+   55|         }
+   56|     }
+   57| } # end of multi MAIN (:$pod)
+   58| 
+   59| #| Run with '--doc' to generate a document from the POD6
+   60| #| It will be rendered in Text format
+   61| #| unless specified with the --format option.  e.g.
+   62| #|       --format=HTML
+   63| multi MAIN(Bool :$doc!, Str :$format = 'Text') {
+   64|     run $*EXECUTABLE, "--doc=$format", $*PROGRAM;
+   65| } # end of multi MAIN(Bool :$man!)
+   66| 
+   67| 
 
 ```
 
@@ -128,4 +153,4 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 
 ----
-Rendered from  at 2023-09-02T19:23:37Z
+Rendered from  at 2023-09-02T20:22:47Z

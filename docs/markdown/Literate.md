@@ -38,7 +38,7 @@
     2| 
     3| # Get the Pod vs. Code structure of a Raku/Pod6 file.
     4| # © 2023 Shimon Bollinger. All rights reserved.
-    5| # Last modified: Sat 02 Sep 2023 04:12:13 PM EDT
+    5| # Last modified: Sat 02 Sep 2023 04:29:38 PM EDT
     6| # Version 0.0.1
     7| 
     8| # no-weave
@@ -84,7 +84,7 @@ Our file will exclusively consist of `Pod` or `Code` sections, and nothing else.
 ## The Pod6 delimiters
 According to the [documentation](https://docs.raku.org/language/pod),
 
-> **Every Pod6 document has to begin with =begin pod and end with =end pod.**  
+> **Every Pod6 document has to begin with =begin pod 1 and end with =end pod.**  
 
 
 So let's define those tokens.
@@ -441,7 +441,7 @@ First we will get the entire `.sl` file...
   179|     my Str $cleaned-source;
   180| 
   181| $cleaned-source = $source;
-  182| #=begin pod
+  182| #=begin pod 1
   183| #
   184| #=head3 Remove full comment lines followed by blank lines
   185| #
@@ -455,7 +455,7 @@ First we will get the entire `.sl` file...
   193| #    # constructs...(that's a TODO))
   194| #    # And leave the newline.
   195| #
-  196| #=begin pod
+  196| #=begin pod 1
   197| #
   198| #=head3 Remove EOL comments
   199| #
@@ -494,7 +494,7 @@ First we will get the entire `.sl` file...
   232| #        $cleaned-source ~= "\n";
   233| #    } # end of for $source.split("\n") -> $line
   234| #
-  235| #=begin pod
+  235| #=begin pod 1
   236| #=head3 Remove blank lines at the begining and end of the code
   237| #
   238| #B<EXPLAIN THIS!>
@@ -661,5 +661,4 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 This is non-standard Pod6 and will not compile until woven!
 
 ----
-Rendered from  at 2023-09-02T20:13:57Z
-G
+Rendered from  at 2023-09-02T20:31:43Z
