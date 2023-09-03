@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Sat 02 Sep 2023 09:42:13 PM EDT
+# Last modified: Sat 02 Sep 2023 11:19:41 PM EDT
 # Version 0.0.1
 
 # no-weave
@@ -396,7 +396,7 @@ because it has to include the C<code> sections.
 
 sub weave (
 
-=begin pod
+=begin pod 1
 =head2 The parameters of Weave
 
 C<sub weave> will have several parameters.
@@ -412,8 +412,7 @@ C<MAIN>.
 =begin pod 1
 =head3 C<$format>
 
-The output of the weave can (currently) be Markdown, Text, PDF or
-HTML. (Assuming you have the necessary C<Pod::To::X> module installed.) It
+The output of the weave can (currently) be Markdown, Text, or HTML.  It
 defaults to Markdown. The variable is case-insensitive, so 'markdown' also
 works.
 =end pod
@@ -424,8 +423,8 @@ works.
 =begin pod 1
 =head3 C<$line-numbers>
 
-It can be useful to print line numbers in the code listing.
-It defaults to True.
+It can be useful to print line numbers in the code listing.  It currently
+defaults to True.
 =end pod
 
     Bool :l(:$line-numbers)  = True;
@@ -438,7 +437,7 @@ C<sub weave> returns a Str.
 
         --> Str ) is export {
 =begin pod 1
-=head2 The alogrithm
+#TODO
 =end pod
 
     my UInt $line-number = 1;
@@ -539,7 +538,7 @@ insert the C<code> sections into the Pod6...
 #TODO
 =end pod
 
-        when .key eq 'code' { pd $_; qq:to/EOCB/; }
+        when .key eq 'code' { qq:to/EOCB/; }
             \=begin  pod
             \=begin  code :lang<raku>
              { my $fmt = ($line-numbers ?? "%3s| " !! '') ~ "%s\n";
@@ -556,7 +555,6 @@ insert the C<code> sections into the Pod6...
             EOCB
 
         when .key eq 'non-woven' {
-            note "Inside non-woven"
             ; # do nothing
         } # end of when .key eq 'non-woven'
 

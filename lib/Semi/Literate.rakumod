@@ -2,13 +2,15 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Sat 02 Sep 2023 09:42:13 PM EDT
+# Last modified: Sat 02 Sep 2023 11:19:41 PM EDT
 # Version 0.0.1
 
+# no-weave
 # always use the latest version of Raku
 use v6.*;
 use PrettyDump;
 use Data::Dump::Tree;
+# end-no-weave
 
 #    We need to declare them with C<my> because we
 #    need to use them in a subroutine later. #TODO explain why.
@@ -16,7 +18,6 @@ use Data::Dump::Tree;
     my token rest-of-line {    \N* [\n | $]  }
     my token ws-till-EOL  {    \h* [\n | $]  }
     my token blank-line   { ^^ <ws-till-EOL> }
-
 
 #use Grammar::Tracer;
 grammar Semi::Literate is export {
@@ -88,18 +89,17 @@ grammar Semi::Literate is export {
 
 } # end of grammar Semi::Literate
 
-
 #TODO multi sub to accept Str & IO::PatGh
 sub tangle (
 
     Str $input-file!,
+
         --> Str ) is export {
 
     my Str $source = $input-file.IO.slurp;
 
     $source ~~ s:g{ ^^ \h* '#' <.ws>     'no-weave' <rest-of-line> } = '';
     $source ~~ s:g{ ^^ \h* '#' <.ws> 'end-no-weave' <rest-of-line> } = '';
-
 
     $source ~~ s:g/\=end (\N*)\n+/\=end$0\n/;
     $source ~~ s:g/\n+\=begin    /\n\=begin/;
@@ -116,7 +116,9 @@ sub tangle (
             "\n" x $num-blank-lines with $num-blank-lines;
         }
 
+        #no-weave
         default { die 'Should never get here' }
+        #end-no-weave
 
     } # end of my Str $raku-code = @submatches.map(
     ).join;
@@ -126,8 +128,8 @@ sub tangle (
     return $raku-code;
 } # end of sub tangle (
 
-
 sub weave (
+
     Str $input-file!;
 
     Str :f(:$format) is copy = 'markdown';
@@ -216,7 +218,7 @@ $cleaned-source = $source;
             .value
         } # end of when .key
 
-        when .key eq 'code' { pd $_; qq:to/EOCB/; }
+        when .key eq 'code' { qq:to/EOCB/; }
             \=begin  pod
             \=begin  code :lang<raku>
              { my $fmt = ($line-numbers ?? "%3s| " !! '') ~ "%s\n";
@@ -233,11 +235,12 @@ $cleaned-source = $source;
             EOCB
 
         when .key eq 'non-woven' {
-            note "Inside non-woven"
             ; # do nothing
         } # end of when .key eq 'non-woven'
 
+        # no-weave
         default { die 'Should never get here.' }
+        # end-no-weave
     } # end of my $weave = Semi::Literate.parse($source).caps.map
     ).join;
 
@@ -249,7 +252,7 @@ $cleaned-source = $source;
     return $weave
 } # end of sub weave (
 
-
+# no-weave
 my %*SUB-MAIN-OPTS =
   :named-anywhere,             # allow named variables at any location
   :bundling,                   # allow bundling of named arguments
@@ -283,3 +286,5 @@ multi MAIN(Bool :$testt!) {
 multi MAIN(Bool :$testw!) {
     say weave($semi-literate-file);
 } # end of multi MAIN(Bool :$test!)
+
+#end-no-weave

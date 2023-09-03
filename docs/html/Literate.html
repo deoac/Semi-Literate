@@ -40,7 +40,6 @@
  <tr class="toc-level-3"><td class="toc-text"><a href="#$input-file">$input-file</a></td></tr>
  <tr class="toc-level-3"><td class="toc-text"><a href="#$format">$format</a></td></tr>
  <tr class="toc-level-3"><td class="toc-text"><a href="#$line-numbers">$line-numbers</a></td></tr>
- <tr class="toc-level-2"><td class="toc-text"><a href="#The_alogrithm">The alogrithm</a></td></tr>
  <tr class="toc-level-2"><td class="toc-text"><a href="#Interesting_stuff_...Next,_we_parse_it_using_the_Semi::Literate_grammar_and_obtain_a_list_of_submatches_(that's_what_the_caps_method_does)_...">Interesting stuff ...Next, we parse it using the Semi::Literate grammar and obtain a list of submatches (that's what the caps method does) ...</a></td></tr>
  <tr class="toc-level-3"><td class="toc-text"><a href="#remove_blank_lines_at_the_end">remove blank lines at the end</a></td></tr>
  <tr class="toc-level-1"><td class="toc-text"><a href="#NAME">NAME</a></td></tr>
@@ -56,7 +55,7 @@
     2| 
     3| # Get the Pod vs. Code structure of a Raku/Pod6 file.
     4| # © 2023 Shimon Bollinger. All rights reserved.
-    5| # Last modified: Sat 02 Sep 2023 09:42:13 PM EDT
+    5| # Last modified: Sat 02 Sep 2023 11:19:41 PM EDT
     6| # Version 0.0.1
     7| 
     8| # no-weave
@@ -268,22 +267,20 @@
   155|     Str $input-file!;
 </pre>
 <h3 id="$format"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document"><code>$format</code></a></h3>
-<p>The output of the weave can (currently) be Markdown, Text, PDF or HTML. (Assuming you have the necessary <code>Pod::To::X</code> module installed.) It defaults to Markdown. The variable is case-insensitive, so 'markdown' also works.</p><pre class="pod-block-code">  156| 
+<p>The output of the weave can (currently) be Markdown, Text, or HTML. It defaults to Markdown. The variable is case-insensitive, so 'markdown' also works.</p><pre class="pod-block-code">  156| 
   157|     Str :f(:$format) is copy = 'markdown';
   158|         #= The output format for the woven file.
   159| 
 </pre>
 <h3 id="$line-numbers"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document"><code>$line-numbers</code></a></h3>
-<p>It can be useful to print line numbers in the code listing. It defaults to True.</p><pre class="pod-block-code">  160| 
+<p>It can be useful to print line numbers in the code listing. It currently defaults to True.</p><pre class="pod-block-code">  160| 
   161|     Bool :l(:$line-numbers)  = True;
   162|         #= Should line numbers be added to the embeded code?
   163| 
   164| 
 </pre><p><code>sub weave</code> returns a Str.</p><pre class="pod-block-code">  165| 
   166|         --&gt; Str ) is export {
-</pre>
-<h2 id="The_alogrithm"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">The alogrithm</a></h2>
-<pre class="pod-block-code">  167| 
+</pre><p>#TODO</p><pre class="pod-block-code">  167| 
   168|     my UInt $line-number = 1;
   169| 
 </pre><p>First we will get the entire <code>.sl</code> file...</p><pre class="pod-block-code">  170| 
@@ -367,7 +364,7 @@
   246|             .value
   247|         } # end of when .key
 </pre><p>#TODO</p><pre class="pod-block-code">  248| 
-  249|         when .key eq 'code' { pd $_; qq:to/EOCB/; }
+  249|         when .key eq 'code' { qq:to/EOCB/; }
   250|             \=begin  pod
   251|             \=begin  code :lang&lt;raku&gt;
   252|              { my $fmt = ($line-numbers ?? &quot;%3s| &quot; !! '') ~ &quot;%s\n&quot;;
@@ -384,29 +381,28 @@
   263|             EOCB
   264| 
   265|         when .key eq 'non-woven' {
-  266|             note &quot;Inside non-woven&quot;
-  267|             ; # do nothing
-  268|         } # end of when .key eq 'non-woven'
-  269| 
-  270|         # no-weave
-  271|         default { die 'Should never get here.' }
-  272|         # end-no-weave
-  273|     } # end of my $weave = Semi::Literate.parse($source).caps.map
-  274|     ).join;
-  275| 
-</pre><p>remove useless Pod directives</p><pre class="pod-block-code">  276| 
-  277|     $weave ~~ s:g{ \h* \=end   &lt;.ws&gt; pod  &lt;rest-of-line&gt;
-  278|                    \h* \=begin &lt;.ws&gt; pod &lt;rest-of-line&gt; } = '';
-  279| 
+  266|             ; # do nothing
+  267|         } # end of when .key eq 'non-woven'
+  268| 
+  269|         # no-weave
+  270|         default { die 'Should never get here.' }
+  271|         # end-no-weave
+  272|     } # end of my $weave = Semi::Literate.parse($source).caps.map
+  273|     ).join;
+  274| 
+</pre><p>remove useless Pod directives</p><pre class="pod-block-code">  275| 
+  276|     $weave ~~ s:g{ \h* \=end   &lt;.ws&gt; pod  &lt;rest-of-line&gt;
+  277|                    \h* \=begin &lt;.ws&gt; pod &lt;rest-of-line&gt; } = '';
+  278| 
 </pre>
 <h3 id="remove_blank_lines_at_the_end"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">remove blank lines at the end</a></h3>
-<pre class="pod-block-code">  280| 
-  281|     $weave ~~ s{\n  &lt;blank-line&gt;* $ } = '';
-  282| 
-</pre><p>And that's the end of the <code>tangle</code> subroutine!</p><pre class="pod-block-code">  283| 
-  284|     return $weave
-  285| } # end of sub weave (
-  286| 
+<pre class="pod-block-code">  279| 
+  280|     $weave ~~ s{\n  &lt;blank-line&gt;* $ } = '';
+  281| 
+</pre><p>And that's the end of the <code>tangle</code> subroutine!</p><pre class="pod-block-code">  282| 
+  283|     return $weave
+  284| } # end of sub weave (
+  285| 
 </pre>
 <h1 id="NAME"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">NAME</a></h1>
 <p><code>Semi::Literate</code> - A semi-literate way to weave and tangle Raku/Pod6 source code.</p>
@@ -427,50 +423,50 @@
 <h1 id="AUTHOR"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">AUTHOR</a></h1>
 <p>Shimon Bollinger (deoac.bollinger@gmail.com)</p>
 <h1 id="LICENSE_AND_COPYRIGHT"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">LICENSE AND COPYRIGHT</a></h1>
-<p>© 2023 Shimon Bollinger. All rights reserved.</p><p>This module is free software; you can redistribute it and/or modify it under the same terms as Raku itself. See <a href="https://opensource.org/licenses/Artistic-2.0">The Artistic License 2.0</a>.</p><p>This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.</p><pre class="pod-block-code">  287| 
-  288| # no-weave
-  289| my %*SUB-MAIN-OPTS =
-  290|   :named-anywhere,             # allow named variables at any location
-  291|   :bundling,                   # allow bundling of named arguments
-  292| #  :coerce-allomorphs-to(Str),  # coerce allomorphic arguments to given type
-  293|   :allow-no,                   # allow --no-foo as alternative to --/foo
-  294|   :numeric-suffix-as-value,    # allow -j2 as alternative to --j=2
-  295| ;
-  296| 
-  297| #| Run with option '--pod' to see all of the Pod6 objects
-  298| multi MAIN(Bool :$pod!) is hidden-from-USAGE {
-  299|     for $=pod -&gt; $pod-item {
-  300|         for $pod-item.contents -&gt; $pod-block {
-  301|             $pod-block.raku.say;
-  302|         }
-  303|     }
-  304| } # end of multi MAIN (:$pod)
-  305| 
-  306| #| Run with option '--doc' to generate a document from the Pod6
-  307| #| It will be rendered in Text format
-  308| #| unless specified with the --format option.  e.g.
-  309| #|       --doc --format=HTML
-  310| multi MAIN(Bool :$doc!, Str :$format = 'Text') is hidden-from-USAGE {
-  311|     run $*EXECUTABLE, &quot;--doc=$format&quot;, $*PROGRAM;
-  312| } # end of multi MAIN(Bool :$man!)
-  313| 
-  314| my $semi-literate-file = '/Users/jimbollinger/Documents/Development/raku/Projects/Semi-Literate/source/Literate.sl';
-  315| multi MAIN(Bool :$testt!) {
-  316|     say tangle($semi-literate-file);
-  317| } # end of multi MAIN(Bool :$test!)
-  318| 
-  319| multi MAIN(Bool :$testw!) {
-  320|     say weave($semi-literate-file);
-  321| } # end of multi MAIN(Bool :$test!)
-  322| 
-  323| #end-no-weave
+<p>© 2023 Shimon Bollinger. All rights reserved.</p><p>This module is free software; you can redistribute it and/or modify it under the same terms as Raku itself. See <a href="https://opensource.org/licenses/Artistic-2.0">The Artistic License 2.0</a>.</p><p>This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.</p><pre class="pod-block-code">  286| 
+  287| # no-weave
+  288| my %*SUB-MAIN-OPTS =
+  289|   :named-anywhere,             # allow named variables at any location
+  290|   :bundling,                   # allow bundling of named arguments
+  291| #  :coerce-allomorphs-to(Str),  # coerce allomorphic arguments to given type
+  292|   :allow-no,                   # allow --no-foo as alternative to --/foo
+  293|   :numeric-suffix-as-value,    # allow -j2 as alternative to --j=2
+  294| ;
+  295| 
+  296| #| Run with option '--pod' to see all of the Pod6 objects
+  297| multi MAIN(Bool :$pod!) is hidden-from-USAGE {
+  298|     for $=pod -&gt; $pod-item {
+  299|         for $pod-item.contents -&gt; $pod-block {
+  300|             $pod-block.raku.say;
+  301|         }
+  302|     }
+  303| } # end of multi MAIN (:$pod)
+  304| 
+  305| #| Run with option '--doc' to generate a document from the Pod6
+  306| #| It will be rendered in Text format
+  307| #| unless specified with the --format option.  e.g.
+  308| #|       --doc --format=HTML
+  309| multi MAIN(Bool :$doc!, Str :$format = 'Text') is hidden-from-USAGE {
+  310|     run $*EXECUTABLE, &quot;--doc=$format&quot;, $*PROGRAM;
+  311| } # end of multi MAIN(Bool :$man!)
+  312| 
+  313| my $semi-literate-file = '/Users/jimbollinger/Documents/Development/raku/Projects/Semi-Literate/source/Literate.sl';
+  314| multi MAIN(Bool :$testt!) {
+  315|     say tangle($semi-literate-file);
+  316| } # end of multi MAIN(Bool :$test!)
+  317| 
+  318| multi MAIN(Bool :$testw!) {
+  319|     say weave($semi-literate-file);
+  320| } # end of multi MAIN(Bool :$test!)
+  321| 
+  322| #end-no-weave
 </pre></section>		</div>
 <div id="_Footnotes" class="footnotes">
 <ul><li id="fn1"><span class="footnote-number">1</span>This is non-standard Pod6 and will not compile until woven!<a class="footnote" href="#fnret1"> « Back »</a></li>
 
 </ul>
 </div>
-</div><footer><div>Rendered from <span class="path"></span></div><div>at <span class="time">2023-09-03T01:43:37Z</span></div></footer>
+</div><footer><div>Rendered from <span class="path"></span></div><div>at <span class="time">2023-09-03T03:34:32Z</span></div></footer>
 	</body>
 </html>
 

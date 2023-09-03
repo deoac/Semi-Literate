@@ -27,7 +27,6 @@
 [$input-file](#input-file)  
 [$format](#format)  
 [$line-numbers](#line-numbers)  
-[The alogrithm](#the-alogrithm)  
 [Interesting stuff ...Next, we parse it using the Semi::Literate grammar and obtain a list of submatches (that's what the caps method does) ...](#interesting-stuff-next-we-parse-it-using-the-semiliterate-grammar-and-obtain-a-list-of-submatches-thats-what-the-caps-method-does-)  
 [remove blank lines at the end](#remove-blank-lines-at-the-end-0)  
 [NAME](#name)  
@@ -44,7 +43,7 @@
     2| 
     3| # Get the Pod vs. Code structure of a Raku/Pod6 file.
     4| # © 2023 Shimon Bollinger. All rights reserved.
-    5| # Last modified: Sat 02 Sep 2023 09:42:13 PM EDT
+    5| # Last modified: Sat 02 Sep 2023 11:19:41 PM EDT
     6| # Version 0.0.1
     7| 
     8| # no-weave
@@ -403,7 +402,7 @@ The input filename is required. Typically, this parameter is obtained from the c
 
 ```
 ### `$format`
-The output of the weave can (currently) be Markdown, Text, PDF or HTML. (Assuming you have the necessary `Pod::To::X` module installed.) It defaults to Markdown. The variable is case-insensitive, so 'markdown' also works.
+The output of the weave can (currently) be Markdown, Text, or HTML. It defaults to Markdown. The variable is case-insensitive, so 'markdown' also works.
 
 ```
   156| 
@@ -413,7 +412,7 @@ The output of the weave can (currently) be Markdown, Text, PDF or HTML. (Assumin
 
 ```
 ### `$line-numbers`
-It can be useful to print line numbers in the code listing. It defaults to True.
+It can be useful to print line numbers in the code listing. It currently defaults to True.
 
 ```
   160| 
@@ -430,7 +429,8 @@ It can be useful to print line numbers in the code listing. It defaults to True.
   166|         --> Str ) is export {
 
 ```
-## The alogrithm
+#TODO
+
 ```
   167| 
   168|     my UInt $line-number = 1;
@@ -533,7 +533,7 @@ First we will get the entire `.sl` file...
 
 ```
   248| 
-  249|         when .key eq 'code' { pd $_; qq:to/EOCB/; }
+  249|         when .key eq 'code' { qq:to/EOCB/; }
   250|             \=begin  pod
   251|             \=begin  code :lang<raku>
   252|              { my $fmt = ($line-numbers ?? "%3s| " !! '') ~ "%s\n";
@@ -550,41 +550,40 @@ First we will get the entire `.sl` file...
   263|             EOCB
   264| 
   265|         when .key eq 'non-woven' {
-  266|             note "Inside non-woven"
-  267|             ; # do nothing
-  268|         } # end of when .key eq 'non-woven'
-  269| 
-  270|         # no-weave
-  271|         default { die 'Should never get here.' }
-  272|         # end-no-weave
-  273|     } # end of my $weave = Semi::Literate.parse($source).caps.map
-  274|     ).join;
-  275| 
+  266|             ; # do nothing
+  267|         } # end of when .key eq 'non-woven'
+  268| 
+  269|         # no-weave
+  270|         default { die 'Should never get here.' }
+  271|         # end-no-weave
+  272|     } # end of my $weave = Semi::Literate.parse($source).caps.map
+  273|     ).join;
+  274| 
 
 ```
 remove useless Pod directives
 
 ```
-  276| 
-  277|     $weave ~~ s:g{ \h* \=end   <.ws> pod  <rest-of-line>
-  278|                    \h* \=begin <.ws> pod <rest-of-line> } = '';
-  279| 
+  275| 
+  276|     $weave ~~ s:g{ \h* \=end   <.ws> pod  <rest-of-line>
+  277|                    \h* \=begin <.ws> pod <rest-of-line> } = '';
+  278| 
 
 ```
 ### remove blank lines at the end
 ```
-  280| 
-  281|     $weave ~~ s{\n  <blank-line>* $ } = '';
-  282| 
+  279| 
+  280|     $weave ~~ s{\n  <blank-line>* $ } = '';
+  281| 
 
 ```
 And that's the end of the `tangle` subroutine!
 
 ```
-  283| 
-  284|     return $weave
-  285| } # end of sub weave (
-  286| 
+  282| 
+  283|     return $weave
+  284| } # end of sub weave (
+  285| 
 
 ```
 # NAME
@@ -622,43 +621,43 @@ This module is free software; you can redistribute it and/or modify it under the
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 ```
-  287| 
-  288| # no-weave
-  289| my %*SUB-MAIN-OPTS =
-  290|   :named-anywhere,             # allow named variables at any location
-  291|   :bundling,                   # allow bundling of named arguments
-  292| #  :coerce-allomorphs-to(Str),  # coerce allomorphic arguments to given type
-  293|   :allow-no,                   # allow --no-foo as alternative to --/foo
-  294|   :numeric-suffix-as-value,    # allow -j2 as alternative to --j=2
-  295| ;
-  296| 
-  297| #| Run with option '--pod' to see all of the Pod6 objects
-  298| multi MAIN(Bool :$pod!) is hidden-from-USAGE {
-  299|     for $=pod -> $pod-item {
-  300|         for $pod-item.contents -> $pod-block {
-  301|             $pod-block.raku.say;
-  302|         }
-  303|     }
-  304| } # end of multi MAIN (:$pod)
-  305| 
-  306| #| Run with option '--doc' to generate a document from the Pod6
-  307| #| It will be rendered in Text format
-  308| #| unless specified with the --format option.  e.g.
-  309| #|       --doc --format=HTML
-  310| multi MAIN(Bool :$doc!, Str :$format = 'Text') is hidden-from-USAGE {
-  311|     run $*EXECUTABLE, "--doc=$format", $*PROGRAM;
-  312| } # end of multi MAIN(Bool :$man!)
-  313| 
-  314| my $semi-literate-file = '/Users/jimbollinger/Documents/Development/raku/Projects/Semi-Literate/source/Literate.sl';
-  315| multi MAIN(Bool :$testt!) {
-  316|     say tangle($semi-literate-file);
-  317| } # end of multi MAIN(Bool :$test!)
-  318| 
-  319| multi MAIN(Bool :$testw!) {
-  320|     say weave($semi-literate-file);
-  321| } # end of multi MAIN(Bool :$test!)
-  322| 
-  323| #end-no-weave
+  286| 
+  287| # no-weave
+  288| my %*SUB-MAIN-OPTS =
+  289|   :named-anywhere,             # allow named variables at any location
+  290|   :bundling,                   # allow bundling of named arguments
+  291| #  :coerce-allomorphs-to(Str),  # coerce allomorphic arguments to given type
+  292|   :allow-no,                   # allow --no-foo as alternative to --/foo
+  293|   :numeric-suffix-as-value,    # allow -j2 as alternative to --j=2
+  294| ;
+  295| 
+  296| #| Run with option '--pod' to see all of the Pod6 objects
+  297| multi MAIN(Bool :$pod!) is hidden-from-USAGE {
+  298|     for $=pod -> $pod-item {
+  299|         for $pod-item.contents -> $pod-block {
+  300|             $pod-block.raku.say;
+  301|         }
+  302|     }
+  303| } # end of multi MAIN (:$pod)
+  304| 
+  305| #| Run with option '--doc' to generate a document from the Pod6
+  306| #| It will be rendered in Text format
+  307| #| unless specified with the --format option.  e.g.
+  308| #|       --doc --format=HTML
+  309| multi MAIN(Bool :$doc!, Str :$format = 'Text') is hidden-from-USAGE {
+  310|     run $*EXECUTABLE, "--doc=$format", $*PROGRAM;
+  311| } # end of multi MAIN(Bool :$man!)
+  312| 
+  313| my $semi-literate-file = '/Users/jimbollinger/Documents/Development/raku/Projects/Semi-Literate/source/Literate.sl';
+  314| multi MAIN(Bool :$testt!) {
+  315|     say tangle($semi-literate-file);
+  316| } # end of multi MAIN(Bool :$test!)
+  317| 
+  318| multi MAIN(Bool :$testw!) {
+  319|     say weave($semi-literate-file);
+  320| } # end of multi MAIN(Bool :$test!)
+  321| 
+  322| #end-no-weave
 
 ```
 
@@ -671,4 +670,4 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 This is non-standard Pod6 and will not compile until woven!
 
 ----
-Rendered from  at 2023-09-03T01:45:23Z
+Rendered from  at 2023-09-03T03:34:42Z
