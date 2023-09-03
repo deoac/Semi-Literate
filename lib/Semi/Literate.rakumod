@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Sat 02 Sep 2023 04:29:38 PM EDT
+# Last modified: Sat 02 Sep 2023 09:42:13 PM EDT
 # Version 0.0.1
 
 # always use the latest version of Raku
@@ -93,7 +93,6 @@ grammar Semi::Literate is export {
 sub tangle (
 
     Str $input-file!,
-
         --> Str ) is export {
 
     my Str $source = $input-file.IO.slurp;
@@ -101,13 +100,6 @@ sub tangle (
     $source ~~ s:g{ ^^ \h* '#' <.ws>     'no-weave' <rest-of-line> } = '';
     $source ~~ s:g{ ^^ \h* '#' <.ws> 'end-no-weave' <rest-of-line> } = '';
 
-                                                # <== unwanted blank lines
-                                                # <== unwanted blank lines
-    sub foo () {
-        { ... }
-    } # end of sub foo ()
-                                                # <== unwanted blank lines
-                                                # <== unwanted blank lines
 
     $source ~~ s:g/\=end (\N*)\n+/\=end$0\n/;
     $source ~~ s:g/\n+\=begin    /\n\=begin/;
@@ -121,7 +113,7 @@ sub tangle (
 
         when .key eq 'pod' {
             my $num-blank-lines = .value.hash<begin><num-blank-lines>;
-            with $num-blank-lines { "\n" x $num-blank-lines }
+            "\n" x $num-blank-lines with $num-blank-lines;
         }
 
         default { die 'Should never get here' }
@@ -136,7 +128,6 @@ sub tangle (
 
 
 sub weave (
-
     Str $input-file!;
 
     Str :f(:$format) is copy = 'markdown';
@@ -225,7 +216,7 @@ $cleaned-source = $source;
             .value
         } # end of when .key
 
-        when .key eq 'code' { qq:to/EOCB/; }
+        when .key eq 'code' { pd $_; qq:to/EOCB/; }
             \=begin  pod
             \=begin  code :lang<raku>
              { my $fmt = ($line-numbers ?? "%3s| " !! '') ~ "%s\n";
@@ -242,6 +233,7 @@ $cleaned-source = $source;
             EOCB
 
         when .key eq 'non-woven' {
+            note "Inside non-woven"
             ; # do nothing
         } # end of when .key eq 'non-woven'
 
@@ -266,7 +258,7 @@ my %*SUB-MAIN-OPTS =
   :numeric-suffix-as-value,    # allow -j2 as alternative to --j=2
 ;
 
-#| Run with option '--pod' to see all of the POD6 objects
+#| Run with option '--pod' to see all of the Pod6 objects
 multi MAIN(Bool :$pod!) is hidden-from-USAGE {
     for $=pod -> $pod-item {
         for $pod-item.contents -> $pod-block {
@@ -275,7 +267,7 @@ multi MAIN(Bool :$pod!) is hidden-from-USAGE {
     }
 } # end of multi MAIN (:$pod)
 
-#| Run with option '--doc' to generate a document from the POD6
+#| Run with option '--doc' to generate a document from the Pod6
 #| It will be rendered in Text format
 #| unless specified with the --format option.  e.g.
 #|       --doc --format=HTML

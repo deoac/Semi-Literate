@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Sat 02 Sep 2023 04:29:38 PM EDT
+# Last modified: Sat 02 Sep 2023 09:42:13 PM EDT
 # Version 0.0.1
 
 # no-weave
@@ -266,13 +266,12 @@ This subroutine will remove all the Pod6 code from a semi-literate file
 sub tangle (
 
 =begin pod 1
-
 The subroutine has a single parameter, which is the input filename. The
 filename is required.  Typically, this parameter is obtained from the command
 line or passed from the subroutine C<MAIN>.
 =end pod
     Str $input-file!,
-=begin pod 1
+=begin pod
 
 The subroutine will return a C<Str>, which will be a working Raku program.
 =end pod
@@ -285,19 +284,24 @@ First we will get the entire Semi-Literate C<.sl> file...
     my Str $source = $input-file.IO.slurp;
 
 =begin pod 1
-Remove the I<no-weave> delimiters
+=head2 Clean the source
+
+=head3 Remove the I<no-weave> delimiters
+
 =end pod
 
     $source ~~ s:g{ ^^ \h* '#' <.ws>     'no-weave' <rest-of-line> } = '';
     $source ~~ s:g{ ^^ \h* '#' <.ws> 'end-no-weave' <rest-of-line> } = '';
 
 =begin pod 1
+=head3 Remove unnecessary blank lines
 
 Very often the C<code> section of the Semi-Literate file will have blank lines
 that you don't want to see in the tangled working code.
 For example:
 
-=end pod
+=begin code :lang<raku>
+
                                                 # <== unwanted blank lines
                                                 # <== unwanted blank lines
     sub foo () {
@@ -305,18 +309,23 @@ For example:
     } # end of sub foo ()
                                                 # <== unwanted blank lines
                                                 # <== unwanted blank lines
+
+=end code
+=end pod
+
 =begin pod 1
 
 
-So we'll remove the blank lines at the beginning and end of the code sections.
+So we'll remove the blank lines at the beginning and end of the Pod6 sections.
 =end pod
 
     $source ~~ s:g/\=end (\N*)\n+/\=end$0\n/;
     $source ~~ s:g/\n+\=begin    /\n\=begin/;
 
 =begin pod 1
+=head2 The interesting stuff
 
-...Next, we parse it using the C<Semi::Literate> grammar
+We parse it using the C<Semi::Literate> grammar
 and obtain a list of submatches (that's what the C<caps> method does) ...
 =end pod
 
@@ -324,8 +333,7 @@ and obtain a list of submatches (that's what the C<caps> method does) ...
 
 =begin pod 1
 
-...And now begins the interesting part.  We iterate through the submatches and
-keep only the C<code> sections...
+...and iterate through the submatches and keep only the C<code> sections...
 =end pod
 
     my Str $raku-code = @submatches.map( {
@@ -334,7 +342,9 @@ keep only the C<code> sections...
         }
 
 =begin pod 1
-        #TODO rewrite
+=head3 Replace Pod6 sections with blank lines
+
+#TODO rewrite
 Most programming applications do not focus on the structure of the
 executable file, which is not meant to be easily read by humans.
 
@@ -346,12 +356,9 @@ at the end of the C<=begin> directive. For example, C<=begin  pod 2> .
 
         when .key eq 'pod' {
             my $num-blank-lines = .value.hash<begin><num-blank-lines>;
-            with $num-blank-lines { "\n" x $num-blank-lines }
+            "\n" x $num-blank-lines with $num-blank-lines;
         }
 
-=begin pod 1
-#TODO
-=end pod
         #no-weave
         default { die 'Should never get here' }
         #end-no-weave
@@ -389,7 +396,7 @@ because it has to include the C<code> sections.
 
 sub weave (
 
-=begin pod 1
+=begin pod
 =head2 The parameters of Weave
 
 C<sub weave> will have several parameters.
@@ -405,7 +412,8 @@ C<MAIN>.
 =begin pod 1
 =head3 C<$format>
 
-The output of the weave can (currently) be Markdown, Text, or HTML.  It
+The output of the weave can (currently) be Markdown, Text, PDF or
+HTML. (Assuming you have the necessary C<Pod::To::X> module installed.) It
 defaults to Markdown. The variable is case-insensitive, so 'markdown' also
 works.
 =end pod
@@ -416,8 +424,8 @@ works.
 =begin pod 1
 =head3 C<$line-numbers>
 
-It can be useful to print line numbers in the code listing.  It currently
-defaults to True.
+It can be useful to print line numbers in the code listing.
+It defaults to True.
 =end pod
 
     Bool :l(:$line-numbers)  = True;
@@ -430,7 +438,7 @@ C<sub weave> returns a Str.
 
         --> Str ) is export {
 =begin pod 1
-#TODO
+=head2 The alogrithm
 =end pod
 
     my UInt $line-number = 1;
@@ -531,7 +539,7 @@ insert the C<code> sections into the Pod6...
 #TODO
 =end pod
 
-        when .key eq 'code' { qq:to/EOCB/; }
+        when .key eq 'code' { pd $_; qq:to/EOCB/; }
             \=begin  pod
             \=begin  code :lang<raku>
              { my $fmt = ($line-numbers ?? "%3s| " !! '') ~ "%s\n";
@@ -548,6 +556,7 @@ insert the C<code> sections into the Pod6...
             EOCB
 
         when .key eq 'non-woven' {
+            note "Inside non-woven"
             ; # do nothing
         } # end of when .key eq 'non-woven'
 
@@ -583,21 +592,25 @@ And that's the end of the C<tangle> subroutine!
 
 =head1 NAME
 
-C<Semi::Literate> - Get the Pod vs Code structure from a Raku/Pod6 file.
-
+C<Semi::Literate> - A semi-literate way to weave and tangle Raku/Pod6 source code.
 =head1 VERSION
 
 This documentation refers to C<Semi-Literate> version 0.0.1
 
 =head1 SYNOPSIS
 
-    use Semi::Literate;
-    # Brief but working code example(s) here showing the most common usage(s)
+=begin code :lang<raku>
 
-    # This section will be as far as many users bother reading
-    # so make it as educational and exemplary as possible.
+use Semi::Literate;
+# Brief but working code example(s) here showing the most common usage(s)
 
+# This section will be as far as many users bother reading
+# so make it as educational and exemplary as possible.
+
+=end code
 =head1 DESCRIPTION
+
+C<Semi::Literate> is based on Daniel Sockwell's Pod::Literate module
 
 A full description of the module and its features.
 May include numerous subsections (i.e. =head2, =head2, etc.)
@@ -609,7 +622,7 @@ Patches are welcome.
 
 =head1 AUTHOR
 
-Shimon Bollinger  (deoac.bollinger@gmail.com)
+Shimon Bollinger (deoac.bollinger@gmail.com)
 
 =head1 LICENSE AND COPYRIGHT
 
@@ -634,7 +647,7 @@ my %*SUB-MAIN-OPTS =
   :numeric-suffix-as-value,    # allow -j2 as alternative to --j=2
 ;
 
-#| Run with option '--pod' to see all of the POD6 objects
+#| Run with option '--pod' to see all of the Pod6 objects
 multi MAIN(Bool :$pod!) is hidden-from-USAGE {
     for $=pod -> $pod-item {
         for $pod-item.contents -> $pod-block {
@@ -643,7 +656,7 @@ multi MAIN(Bool :$pod!) is hidden-from-USAGE {
     }
 } # end of multi MAIN (:$pod)
 
-#| Run with option '--doc' to generate a document from the POD6
+#| Run with option '--doc' to generate a document from the Pod6
 #| It will be rendered in Text format
 #| unless specified with the --format option.  e.g.
 #|       --doc --format=HTML
