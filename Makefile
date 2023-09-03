@@ -79,7 +79,7 @@ install:
 	@zef install --force-build --force-install --force-test . >/dev/null
 	@echo "\e[32mOK\e[0m"
 
-test: pre ${LITERATE} executables post
+test: ${LITERATE} executables
 	@echo -n "> Running the tests..."
 	@prove6 -l -v
 	@echo "\e[32mOK\e[0m"
