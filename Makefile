@@ -12,6 +12,7 @@ vpath %.sl ${SOURCEDIR}
 vpath %.rakumod ${MODULESDIR}
 vpath %. ${BINDIR}
 
+debug:       all view
 all: 		 modules executables docs
 temp: 		 temporary module-install all
 modules: 	 Literate.rakumod module-install
@@ -27,6 +28,10 @@ docs: html markdown pdf
 html: $(HTML_TARGETS)
 markdown: $(MARKDOWN_TARGETS)
 pdf: $(PDF_TARGETS)
+
+view:
+	@open README.md
+	@open README.html
 
 temporary:
 	@chmod -R a+w lib/
