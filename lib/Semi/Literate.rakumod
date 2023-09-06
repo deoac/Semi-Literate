@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Sat 02 Sep 2023 11:19:41 PM EDT
+# Last modified: Tue 05 Sep 2023 09:48:10 PM EDT
 # Version 0.0.1
 
 # no-weave
@@ -21,7 +21,7 @@ use Data::Dump::Tree;
 
 #use Grammar::Tracer;
 grammar Semi::Literate is export {
-    token TOP {   [ <pod> | <code> ]* }
+    token TOP {   [ <pod> | <non-woven-code> | <woven-code>]* }
 
     my token begin {
         ^^ \h* \= begin <.ws> pod
@@ -41,14 +41,9 @@ grammar Semi::Literate is export {
         <end>
     } # end of token pod
 
-    token code {
-        | <woven>
-        | <non-woven>
-    } # end of token code
+    token woven-code { <plain-line>+ }
 
-    token woven { <plain-line>+ }
-
-    token non-woven {
+    token non-woven-code {
         | <one-line-no-weave>+
         | <delimited-no-weave>+
     } # end of token non-woven
@@ -68,13 +63,13 @@ grammar Semi::Literate is export {
     token begin-no-weave {
         ^^ \h*                      # optional leading whitespace
         '#' <.ws> 'no-weave'        # the delimiter itself (#no-weave)
-        <.ws> <rest-of-line>        # optional trailing whitespace
+        <.ws> <rest-of-line>        # optional trailing whitespace or comment
     } # end of token <begin-no-weave>
 
     token end-no-weave {
         ^^ \h*                      # optional leading whitespace
         '#' <.ws> 'end-no-weave'    # the delimiter itself (#end-no-weave)
-        <.ws> <rest-of-line>        # optional trailing whitespace
+        <.ws> <rest-of-line>        # optional trailing whitespace or comment
     } # end of token <end--no-weave>
 
     token plain-line {
@@ -89,6 +84,7 @@ grammar Semi::Literate is export {
 
 } # end of grammar Semi::Literate
 
+
 #TODO multi sub to accept Str & IO::PatGh
 sub tangle (
 
@@ -98,16 +94,15 @@ sub tangle (
 
     my Str $source = $input-file.IO.slurp;
 
-    $source ~~ s:g{ ^^ \h* '#' <.ws>     'no-weave' <rest-of-line> } = '';
-    $source ~~ s:g{ ^^ \h* '#' <.ws> 'end-no-weave' <rest-of-line> } = '';
 
     $source ~~ s:g/\=end (\N*)\n+/\=end$0\n/;
     $source ~~ s:g/\n+\=begin    /\n\=begin/;
 
+
     my Pair @submatches = Semi::Literate.parse($source).caps;
 
     my Str $raku-code = @submatches.map( {
-        when .key eq 'code' {
+        when .key eq 'woven-code'|'non-woven-code' {
             .value;
         }
 
@@ -117,11 +112,15 @@ sub tangle (
         }
 
         #no-weave
-        default { die 'Should never get here' }
+        default { die "Tangle: should never get here. .key == {.key}" }
         #end-no-weave
 
     } # end of my Str $raku-code = @submatches.map(
     ).join;
+
+    $source ~~ s:g{ ^^ \h*   '#' <.ws>     'no-weave' <rest-of-line> } = '';
+    $source ~~ s:g{ ^^ (.*?) '#' <.ws>     'no-weave' <rest-of-line> } = "$0\n";
+    $source ~~ s:g{ ^^ \h*   '#' <.ws> 'end-no-weave' <rest-of-line> } = '';
 
     $raku-code ~~ s{\n  <blank-line>* $ } = '';
 
@@ -147,69 +146,41 @@ sub weave (
     my Str $cleaned-source;
 
 $cleaned-source = $source;
-#=begin pod 1
-#
-#=head3 Remove full comment lines followed by blank lines
-#
-#=end pod
-#
-#    # delete full comment lines
-#    $source ~~ s:g{ ^^ \h* '#' \N* \n+} = '';
-#
-#    # remove Raku comments, unless the '#' is escaped with
-#    # a backslash or is in a quote. (It doesn't catch all quote
-#    # constructs...(that's a TODO))
-#    # And leave the newline.
-#
-#=begin pod 1
-#
-#=head3 Remove EOL comments
-#
-#=end pod
-#
-#    for $source.split("\n") -> $line {
-#        my $m = $line ~~ m{
-#                ^^
-#               $<stuff-before-the-comment> = ( \N*? )
-#
-#                #TODO make this more robust - allow other delimiters, take into
-#                #account the Q language, heredocs, nested strings...
-#                <!after         # make sure the '#' isn't in a string
-#                    ( [
-#                        | \\
-#                        | \" <-[\"]>*
-#                        | \' <-[\']>*
-#                        | \｢ <-[\｣]>*
-#                    ] )
-#                >
-#                "#"
-#
-#
-#                # We need to keep these delimiters.
-#                # See the section above "Remove code marked as 'no-weave'".
-#                <!before
-#                      [
-#                        | 'no-weave'
-#                        | 'end-no-weave'
-#                      ]
-#                >
-#                \N*
-#                $$ };
-#
-#        $cleaned-source ~= $m ?? $<stuff-before-the-comment> !! $line;
-#        $cleaned-source ~= "\n";
-#    } # end of for $source.split("\n") -> $line
-#
-#=begin pod 1
-#=head3 Remove blank lines at the begining and end of the code
-#
-#B<EXPLAIN THIS!>
-#
-#=end pod
-#
-#    $cleaned-source ~~ s:g{\=end (\N*)\n+} =   "\=end$0\n";
-#    $cleaned-source ~~ s:g{\n+\=begin (<.ws> pod) [<.ws> \d]?} = "\n\=begin$0";
-#
+
+    # delete full comment lines
+    $source ~~ s:g{ ^^ \h* '#' \N* \n+} = '';
+
+    # remove Raku comments, unless the '#' is escaped with
+    # a backslash or is in a quote. (It doesn't catch all quote
+    # constructs...(that's a TODO))
+    # And leave the newline.
+
+    for $source.split("\n") -> $line {
+        my $m = $line ~~ m{
+                ^^
+               $<stuff-before-the-comment> = ( \N*? )
+
+                #TODO make this more robust - allow other delimiters, take into
+                #account the Q language, heredocs, nested strings...
+                <!after         # make sure the '#' isn't in a string
+                    ( [
+                        | \\
+                        | \" <-[\"]>*
+                        | \' <-[\']>*
+                        | \｢ <-[\｣]>*
+                    ] )
+                >
+                "#"
+
+                \N*
+                $$ };
+
+        $cleaned-source ~= $m ?? $<stuff-before-the-comment> !! $line;
+        $cleaned-source ~= "\n";
+    } # end of for $source.split("\n") -> $line
+
+    $cleaned-source ~~ s:g{\=end (\N*)\n+} =   "\=end$0\n";
+    $cleaned-source ~~ s:g{\n+\=begin (<.ws> pod) [<.ws> \d]?} = "\n\=begin$0";
 
     my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
 
@@ -218,7 +189,7 @@ $cleaned-source = $source;
             .value
         } # end of when .key
 
-        when .key eq 'code' { qq:to/EOCB/; }
+        when .key eq 'woven-code' { qq:to/EOCB/; }
             \=begin  pod
             \=begin  code :lang<raku>
              { my $fmt = ($line-numbers ?? "%3s| " !! '') ~ "%s\n";
@@ -234,12 +205,12 @@ $cleaned-source = $source;
             \=end  pod
             EOCB
 
-        when .key eq 'non-woven' {
+        when .key eq 'non-woven-code' {
             ; # do nothing
         } # end of when .key eq 'non-woven'
 
         # no-weave
-        default { die 'Should never get here.' }
+        default { die "Weave: should never get here. .key == {.key}" }
         # end-no-weave
     } # end of my $weave = Semi::Literate.parse($source).caps.map
     ).join;

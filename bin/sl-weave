@@ -5,10 +5,12 @@
 # Last modified: Fri 01 Sep 2023 10:08:26 PM EDT
 # Version 0.0.1
 
+#no-weave
 use v6.d;
 
 use File::Temp;
 use Semi::Literate;
+#end-no-weave
 #| Weave Markdown documentation from Raku code
 sub MAIN($input-file,
          Bool :l(:$line-numbers)  = True;
