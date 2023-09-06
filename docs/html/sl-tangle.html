@@ -27,47 +27,33 @@
  <tr class="toc-level-1"><td class="toc-text"><a href="#BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS</a></td></tr>
  <tr class="toc-level-1"><td class="toc-text"><a href="#AUTHOR">AUTHOR</a></td></tr>
  <tr class="toc-level-1"><td class="toc-text"><a href="#LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT</a></td></tr>
- <tr class="toc-level-1"><td class="toc-text"><a href="#NAME">NAME</a></td></tr>
- <tr class="toc-level-1"><td class="toc-text"><a href="#VERSION">VERSION</a></td></tr>
- <tr class="toc-level-1"><td class="toc-text"><a href="#SYNOPSIS">SYNOPSIS</a></td></tr>
- <tr class="toc-level-1"><td class="toc-text"><a href="#REQUIRED_ARGUMENTS">REQUIRED ARGUMENTS</a></td></tr>
- <tr class="toc-level-1"><td class="toc-text"><a href="#OPTIONS">OPTIONS</a></td></tr>
- <tr class="toc-level-1"><td class="toc-text"><a href="#DESCRIPTION">DESCRIPTION</a></td></tr>
- <tr class="toc-level-1"><td class="toc-text"><a href="#DIAGNOSTICS">DIAGNOSTICS</a></td></tr>
- <tr class="toc-level-1"><td class="toc-text"><a href="#CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT</a></td></tr>
- <tr class="toc-level-1"><td class="toc-text"><a href="#DEPENDENCIES">DEPENDENCIES</a></td></tr>
- <tr class="toc-level-1"><td class="toc-text"><a href="#INCOMPATIBILITIES">INCOMPATIBILITIES</a></td></tr>
- <tr class="toc-level-1"><td class="toc-text"><a href="#BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS</a></td></tr>
- <tr class="toc-level-1"><td class="toc-text"><a href="#AUTHOR">AUTHOR</a></td></tr>
- <tr class="toc-level-1"><td class="toc-text"><a href="#LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT</a></td></tr>
 </table></div>
 </nav><div id=""></div><div class="pod-body">
 <section name="___top"><pre class="pod-block-code">    1| #! /usr/bin/env raku
     2| 
     3| # Tangle a Semi-literate file into a working Raku file.
     4| # © 2023 Shimon Bollinger. All rights reserved.
-    5| # Last modified: Tue 05 Sep 2023 09:52:56 PM EDT
+    5| # Last modified: Wed 06 Sep 2023 03:47:56 PM EDT
     6| # Version 0.0.1
-    7| 
-    8| # always use the latest version of Raku
-    9| use v6.*;
-   10| 
-   11| use Semi::Literate;
-   12| 
-   13| #| The actual program starts here.
-   14| multi MAIN (
-   15|     Str $input-file;
-   16|     Str :o(:$output-file) = '';
-   17| ) {
-   18|     my Str $raku-source = tangle $input-file;
-   19| 
-   20|     my $output-file-handle = $output-file              ??
-   21|                                 open(:w, $output-file) !!
-   22|                                 $*OUT;
-   23| 
-   24|     $output-file-handle.spurt: $raku-source;
-   25| } # end of multi MAIN ( )
-</pre>
+</pre></section>
+<section name="___top"><pre class="pod-block-code">    7| 
+    8| use Semi::Literate;
+    9| 
+   10| #| The actual program starts here.
+   11| multi MAIN (
+   12|     Str $input-file;
+   13|     Str :o(:$output-file) = '';
+   14| ) {
+   15|     my Str $raku-source = tangle $input-file;
+   16| 
+   17|     my $output-file-handle = $output-file              ??
+   18|                                 open(:w, $output-file) !!
+   19|                                 $*OUT;
+   20| 
+   21|     $output-file-handle.spurt: $raku-source;
+   22| } # end of multi MAIN ( )
+</pre></section>
+<section name="___top">
 <h1 id="NAME"><a href="#___top" class="u" title="go to top of document">NAME</a></h1>
 <p>&lt;application name&gt; - &lt;One line description of application's purpose&gt;</p>
 <h1 id="VERSION"><a href="#___top" class="u" title="go to top of document">VERSION</a></h1>
@@ -96,121 +82,10 @@
 <h1 id="AUTHOR"><a href="#___top" class="u" title="go to top of document">AUTHOR</a></h1>
 <p>Shimon Bollinger (deoac.shimon@gmail.com)</p>
 <h1 id="LICENCE_AND_COPYRIGHT"><a href="#___top" class="u" title="go to top of document">LICENCE AND COPYRIGHT</a></h1>
-<p>© 2023 Shimon Bollinger. All rights reserved.</p><p>This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself. See <a href="http://perldoc.perl.org/perlartistic.html">perlartistic</a>.</p><p>This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.</p><pre class="pod-block-code">   26| #| Run with the option '--test' to test the program
-   27| multi MAIN (:$test!) {
-   28|     use Test;
-   29| 
-   30|     my @tests = [
-   31|         %{ got =&gt; '', op =&gt; 'eq', expected =&gt; '', desc =&gt; 'Example 1' },
-   32|     ];
-   33| 
-   34|     for @tests {
-   35| #        cmp-ok .&lt;got&gt;, .&lt;op&gt;, .&lt;expected&gt;, .&lt;desc&gt;;
-   36|     } # end of for @tests
-   37| } # end of multi MAIN (:$test!)
-   38| 
-   39| my %*SUB-MAIN-OPTS =
-   40|   :named-anywhere,             # allow named variables at any location
-   41|   :bundling,                   # allow bundling of named arguments
-   42| #  :coerce-allomorphs-to(Str),  # coerce allomorphic arguments to given type
-   43|   :allow-no,                   # allow --no-foo as alternative to --/foo
-   44|   :numeric-suffix-as-value,    # allow -j2 as alternative to --j=2
-   45| ;
-   46| 
-   47| #| Run with '--pod' to see all of the POD6 objects
-   48| multi MAIN(Bool :$pod!) {
-   49|     for $=pod -&gt; $pod-item {
-   50|         for $pod-item.contents -&gt; $pod-block {
-   51|             $pod-block.raku.say;
-   52|         }
-   53|     }
-   54| } # end of multi MAIN (:$pod)
-   55| 
-   56| #| Run with '--doc' to generate a document from the POD6
-   57| #| It will be rendered in Text format
-   58| #| unless specified with the --format option.  e.g.
-   59| #|       --format=HTML
-   60| multi MAIN(Bool :$doc!, Str :$format = 'Text') {
-   61|     run $*EXECUTABLE, &quot;--doc=$format&quot;, $*PROGRAM;
-   62| } # end of multi MAIN(Bool :$man!)
-   63| 
-   64| 
-   65| use v6.*;
-   66| 
-   67| use Semi::Literate;
-   68| 
-   69| multi MAIN (
-   70|     Str $input-file;
-   71|     Str :o(:$output-file) = '';
-   72| ) {
-   73|     my Str $raku-source = tangle $input-file;
-   74| 
-   75|     my $output-file-handle = $output-file              ??
-   76|                                 open(:w, $output-file) !!
-   77|                                 $*OUT;
-   78| 
-   79|     $output-file-handle.spurt: $raku-source;
-   80| } 
-</pre>
-<h1 id="NAME"><a href="#___top" class="u" title="go to top of document">NAME</a></h1>
-<p>&lt;application name&gt; - &lt;One line description of application's purpose&gt;</p>
-<h1 id="VERSION"><a href="#___top" class="u" title="go to top of document">VERSION</a></h1>
-<p>This documentation refers to &lt;application name&gt; version 0.0.1</p>
-<h1 id="SYNOPSIS"><a href="#___top" class="u" title="go to top of document">SYNOPSIS</a></h1>
-
-<h1 id="REQUIRED_ARGUMENTS"><a href="#___top" class="u" title="go to top of document">REQUIRED ARGUMENTS</a></h1>
-<p>A complete list of every argument that must appear on the command line. when the application is invoked, explaining what each of them does, any restrictions on where each one may appear (i.e. flags that must appear before or after filenames), and how the various arguments and options may interact (e.g. mutual exclusions, required combinations, etc.)</p><p>If all of the application's arguments are optional this section may be omitted entirely.</p>
-<h1 id="OPTIONS"><a href="#___top" class="u" title="go to top of document">OPTIONS</a></h1>
-<p>A complete list of every available option with which the application can be invoked, explaining what each does, and listing any restrictions, or interactions.</p><p>If the application has no options this section may be omitted entirely.</p>
-<h1 id="DESCRIPTION"><a href="#___top" class="u" title="go to top of document">DESCRIPTION</a></h1>
-<p>A full description of the application and its features. May include numerous subsections (i.e. =head2, =head3, etc.)</p>
-<h1 id="DIAGNOSTICS"><a href="#___top" class="u" title="go to top of document">DIAGNOSTICS</a></h1>
-<p>A list of every error and warning message that the application can generate (even the ones that will &quot;never happen&quot;), with a full explanation of each problem, one or more likely causes, and any suggested remedies. If the application generates exit status codes (e.g. under Unix) then list the exit status associated with each error.</p>
-<h1 id="CONFIGURATION_AND_ENVIRONMENT"><a href="#___top" class="u" title="go to top of document">CONFIGURATION AND ENVIRONMENT</a></h1>
-<p>A full explanation of any configuration system(s) used by the application, including the names and locations of any configuration files, and the meaning of any environment variables or properties that can be set. These descriptions must also include details of any configuration language used</p>
-<h1 id="DEPENDENCIES"><a href="#___top" class="u" title="go to top of document">DEPENDENCIES</a></h1>
-<p>A list of all the other modules that this module relies upon, including any restrictions on versions, and an indication whether these required modules are part of the standard Perl distribution, part of the module's distribution, or must be installed separately.</p>
-<h1 id="INCOMPATIBILITIES"><a href="#___top" class="u" title="go to top of document">INCOMPATIBILITIES</a></h1>
-<p>A list of any modules that this module cannot be used in conjunction with. This may be due to name conflicts in the interface, or competition for system or program resources, or due to internal limitations of Perl (for example, many modules that use source code filters are mutually incompatible).</p>
-<h1 id="BUGS_AND_LIMITATIONS"><a href="#___top" class="u" title="go to top of document">BUGS AND LIMITATIONS</a></h1>
-<p>A list of known problems with the module, together with some indication whether they are likely to be fixed in an upcoming release.</p><p>Also a list of restrictions on the features the module does provide: data types that cannot be handled, performance issues and the circumstances in which they may arise, practical limitations on the size of data sets, special cases that are not (yet) handled, etc.</p><p>The initial template usually just has:</p><p>There are no known bugs in this module. Patches are welcome.</p>
-<h1 id="AUTHOR"><a href="#___top" class="u" title="go to top of document">AUTHOR</a></h1>
-<p>Shimon Bollinger (deoac.shimon@gmail.com)</p>
-<h1 id="LICENCE_AND_COPYRIGHT"><a href="#___top" class="u" title="go to top of document">LICENCE AND COPYRIGHT</a></h1>
-<p>© 2023 Shimon Bollinger. All rights reserved.</p><p>This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself. See <a href="http://perldoc.perl.org/perlartistic.html">perlartistic</a>.</p><p>This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.</p><pre class="pod-block-code">   81| multi MAIN (:$test!) {
-   82|     use Test;
-   83| 
-   84|     my @tests = [
-   85|         %{ got =&gt; '', op =&gt; 'eq', expected =&gt; '', desc =&gt; 'Example 1' },
-   86|     ];
-   87| 
-   88|     for @tests {
-   89|     } 
-   90| } 
-   91| 
-   92| my %*SUB-MAIN-OPTS =
-   93|   :named-anywhere,             
-   94|   :bundling,                   
-   95|   :allow-no,                   
-   96|   :numeric-suffix-as-value,    
-   97| ;
-   98| 
-   99| multi MAIN(Bool :$pod!) {
-  100|     for $=pod -&gt; $pod-item {
-  101|         for $pod-item.contents -&gt; $pod-block {
-  102|             $pod-block.raku.say;
-  103|         }
-  104|     }
-  105| } 
-  106| 
-  107| multi MAIN(Bool :$doc!, Str :$format = 'Text') {
-  108|     run $*EXECUTABLE, &quot;--doc=$format&quot;, $*PROGRAM;
-  109| } 
-  110| 
-  111| 
-  112| 
+<p>© 2023 Shimon Bollinger. All rights reserved.</p><p>This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself. See <a href="http://perldoc.perl.org/perlartistic.html">perlartistic</a>.</p><p>This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.</p></section>
+<section name="___top"><pre class="pod-block-code">   23| 
 </pre></section>		</div>
-</div><footer><div>Rendered from <span class="path"></span></div><div>at <span class="time">2023-09-06T01:53:58Z</span></div></footer>
+</div><footer><div>Rendered from <span class="path"></span></div><div>at <span class="time">2023-09-06T20:28:49Z</span></div></footer>
 	</body>
 </html>
 
