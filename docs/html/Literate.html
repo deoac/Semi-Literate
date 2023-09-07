@@ -6,8 +6,8 @@
 
 <link href="/asset_files/images/favicon.ico" rel="icon" type="image/x-icon"/>
 <link rel="stylesheet" type="text/css" href="asset_files/css/rakudoc-extra.css" />
-<link rel="stylesheet" type="text/css" href="asset_files/css/font-awesome.min.css" />
 <link rel="stylesheet" type="text/css" href="asset_files/css/rakudoc-styling.css" />
+<link rel="stylesheet" type="text/css" href="asset_files/css/font-awesome.min.css" />
 
 </head>
 	<body class="pod">
@@ -18,29 +18,28 @@
  <tr class="toc-level-2"><td class="toc-text"><a href="#Convenient_tokens">Convenient tokens</a></td></tr>
  <tr class="toc-level-1"><td class="toc-text"><a href="#The_Grammar">The Grammar</a></td></tr>
  <tr class="toc-level-2"><td class="toc-text"><a href="#The_Pod6_delimiters">The Pod6 delimiters</a></td></tr>
- <tr class="toc-level-3"><td class="toc-text"><a href="#The_begin_token">The begin token</a></td></tr>
- <tr class="toc-level-3"><td class="toc-text"><a href="#The_end_token">The end token</a></td></tr>
+ <tr class="toc-level-3"><td class="toc-text"><a href="#The_begin-pod_token">The begin-pod token</a></td></tr>
+ <tr class="toc-level-3"><td class="toc-text"><a href="#The_end-pod_token">The end-pod token</a></td></tr>
  <tr class="toc-level-2"><td class="toc-text"><a href="#The_Pod_token">The Pod token</a></td></tr>
- <tr class="toc-level-2"><td class="toc-text"><a href="#The_Code_token">The Code token</a></td></tr>
+ <tr class="toc-level-2"><td class="toc-text"><a href="#The_Code_tokens">The Code tokens</a></td></tr>
  <tr class="toc-level-3"><td class="toc-text"><a href="#Woven_sections">Woven sections</a></td></tr>
  <tr class="toc-level-3"><td class="toc-text"><a href="#Non-woven_sections">Non-woven sections</a></td></tr>
  <tr class="toc-level-4"><td class="toc-text"><a href="#One_line_of_code">One line of code</a></td></tr>
  <tr class="toc-level-4"><td class="toc-text"><a href="#Delimited_blocks_of_code">Delimited blocks of code</a></td></tr>
  <tr class="toc-level-3"><td class="toc-text"><a href="#The_plain-line_token">The plain-line token</a></td></tr>
- <tr class="toc-level-3"><td class="toc-text"><a href="#Disallowing_the_delimiters_in_a_plain-line.">Disallowing the delimiters in a plain-line.</a></td></tr>
  <tr class="toc-level-1"><td class="toc-text"><a href="#The_Tangle_subroutine">The Tangle subroutine</a></td></tr>
  <tr class="toc-level-2"><td class="toc-text"><a href="#Clean_the_source">Clean the source</a></td></tr>
- <tr class="toc-level-3"><td class="toc-text"><a href="#Remove_the_no-weave_delimiters">Remove the no-weave delimiters</a></td></tr>
  <tr class="toc-level-3"><td class="toc-text"><a href="#Remove_unnecessary_blank_lines">Remove unnecessary blank lines</a></td></tr>
  <tr class="toc-level-2"><td class="toc-text"><a href="#The_interesting_stuff">The interesting stuff</a></td></tr>
  <tr class="toc-level-3"><td class="toc-text"><a href="#Replace_Pod6_sections_with_blank_lines">Replace Pod6 sections with blank lines</a></td></tr>
+ <tr class="toc-level-3"><td class="toc-text"><a href="#Remove_the_no-weave_delimiters">Remove the no-weave delimiters</a></td></tr>
  <tr class="toc-level-3"><td class="toc-text"><a href="#remove_blank_lines_at_the_end">remove blank lines at the end</a></td></tr>
  <tr class="toc-level-1"><td class="toc-text"><a href="#The_Weave_subroutine">The Weave subroutine</a></td></tr>
  <tr class="toc-level-2"><td class="toc-text"><a href="#The_parameters_of_Weave">The parameters of Weave</a></td></tr>
  <tr class="toc-level-3"><td class="toc-text"><a href="#$input-file">$input-file</a></td></tr>
  <tr class="toc-level-3"><td class="toc-text"><a href="#$format">$format</a></td></tr>
  <tr class="toc-level-3"><td class="toc-text"><a href="#$line-numbers">$line-numbers</a></td></tr>
- <tr class="toc-level-2"><td class="toc-text"><a href="#The_alogrithm">The alogrithm</a></td></tr>
+ <tr class="toc-level-3"><td class="toc-text"><a href="#Remove_blank_lines_at_the_begining_and_end_of_the_code">Remove blank lines at the begining and end of the code</a></td></tr>
  <tr class="toc-level-2"><td class="toc-text"><a href="#Interesting_stuff_...Next,_we_parse_it_using_the_Semi::Literate_grammar_and_obtain_a_list_of_submatches_(that's_what_the_caps_method_does)_...">Interesting stuff ...Next, we parse it using the Semi::Literate grammar and obtain a list of submatches (that's what the caps method does) ...</a></td></tr>
  <tr class="toc-level-3"><td class="toc-text"><a href="#remove_blank_lines_at_the_end">remove blank lines at the end</a></td></tr>
  <tr class="toc-level-1"><td class="toc-text"><a href="#NAME">NAME</a></td></tr>
@@ -56,156 +55,152 @@
     2| 
     3| # Get the Pod vs. Code structure of a Raku/Pod6 file.
     4| # © 2023 Shimon Bollinger. All rights reserved.
-    5| # Last modified: Sat 02 Sep 2023 09:42:13 PM EDT
+    5| # Last modified: Thu 07 Sep 2023 07:13:05 PM EDT
     6| # Version 0.0.1
-    7| 
-    8| # no-weave
-    9| # always use the latest version of Raku
-   10| use v6.*;
-   11| use PrettyDump;
-   12| use Data::Dump::Tree;
-   13| # end-no-weave
-   14| 
-</pre>
+</pre></section>
+<section name="___top">
 <h1 id="INTRODUCTION"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">INTRODUCTION</a></h1>
 <p>I want to create a semi-literate Raku source file with the extension <code>.sl</code>. Then, I will <em>weave</em> it to generate a readable file in formats like Markdown, PDF, HTML, and more. Additionally, I will <em>tangle</em> it to create source code without any Pod6.</p><p>To do this, I need to divide the file into <code>Pod</code> and <code>Code</code> sections by parsing it. For this purpose, I will create a dedicated Grammar.</p>
 <h2 id="Convenient_tokens"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">Convenient tokens</a></h2>
-<p>Let's create two tokens for convenience.</p><pre class="pod-block-code">   15| 
-   16| #    We need to declare them with C&lt;my&gt; because we
-   17| #    need to use them in a subroutine later. #TODO explain why.
-   18| 
-   19|     my token rest-of-line {    \N* [\n | $]  }
-   20|     my token ws-till-EOL  {    \h* [\n | $]  }
-   21|     my token blank-line   { ^^ &lt;ws-till-EOL&gt; }
-   22| 
-</pre>
+<p>Let's create three tokens for convenience.</p></section>
+<section name="pod"><pre class="pod-block-code">    7| #    We need to declare them with C&lt;my&gt; because we
+    8| #    need to use them in a subroutine later. #TODO explain why.
+    9| 
+   10|     my token rest-of-line {    \N* [\n | $]  }
+   11|     my token ws-till-EOL  {    \h* [\n | $]  }
+   12|     my token blank-line   { ^^ &lt;ws-till-EOL&gt; }
+</pre></section>
+<section name="pod">
 <h1 id="The_Grammar"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">The Grammar</a></h1>
-<p>Our file will exclusively consist of <code>Pod</code> or <code>Code</code> sections, and nothing else. The <code>TOP</code> token clearly indicates this.</p><pre class="pod-block-code">   23| 
-   24| #use Grammar::Tracer;
-   25| grammar Semi::Literate is export {
-   26|     token TOP {   [ &lt;pod&gt; | &lt;code&gt; ]* }
-   27| 
-   28| 
-</pre>
+<p>Our file will exclusively consist of <code>Pod</code> or <code>Code</code> sections, and nothing else. The <code>Code</code> sections are of two types, a) code that is woven into the documentation, and b) code that is not woven into the documentation. The <code>TOP</code> token clearly indicates this.</p></section>
+<section name="pod"><pre class="pod-block-code">   13| #use Grammar::Tracer;
+   14| grammar Semi::Literate is export {
+   15|     token TOP {
+   16|         [
+   17|           | &lt;non-woven-code&gt;
+   18|           | &lt;pod&gt;
+   19|           | &lt;woven-code&gt;
+   20|         ]*
+   21|     } # end of token TOP
+</pre></section>
+<section name="pod">
 <h2 id="The_Pod6_delimiters"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">The Pod6 delimiters</a></h2>
 <p>According to the <a href="https://docs.raku.org/language/pod">documentation</a>,</p><dl>
-<dt>Every Pod6 document has to begin with =begin pod 1 and end with =end pod.</dt><dd></dd>
+<dt>Every Pod6 document has to begin with =begin pod and end with =end pod.</dt><dd></dd>
 </dl><p>So let's define those tokens.</p>
-<h3 id="The_begin_token"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">The <code>begin</code> token</a></h3>
-<pre class="pod-block-code">   29| 
-   30|     my token begin {
-   31|         ^^ \h* \= begin &lt;.ws&gt; pod
-   32| 
-</pre><p>Most programming applications do not focus on the structure of the executable file, which is not meant to be easily read by humans.</p><p>However, we can provide the option for users to specify the number of empty lines that should replace a <code>pod</code> block. To do this, simply add a number at the end of the <code>=begin</code> directive. For example, <code>=begin pod 2</code>. <sup><a name="fnret1" href="#fn1">[1]</a></sup>
-</p><pre class="pod-block-code">   33| 
-   34|         [ \h* $&lt;num-blank-lines&gt;=(\d+) ]?  # an optional number to specify the
-   35|                                          # number of blank lines to replace the
-   36|                                          # C&lt;Pod&gt; blocks when tangling.
-</pre><p>The remainder of the <code>begin</code> directive can only be whitespace.</p><pre class="pod-block-code">   37| 
-   38|         &lt;ws-till-EOL&gt;
-   39|     } # end of my token begin
-   40| 
-</pre>
-<h3 id="The_end_token"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">The <code>end</code> token</a></h3>
-<p>The <code>end</code> token is much simpler.</p><pre class="pod-block-code">   41| 
-   42|     my token end { ^^ \h* \= end &lt;.ws&gt; pod &lt;ws-till-EOL&gt; }
-   43| 
-</pre>
+<h3 id="The_begin-pod_token"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">The <code>begin-pod</code> token</a></h3>
+</section>
+<section name="pod"><pre class="pod-block-code">   22|     token begin-pod {
+   23|         ^^ &lt;.ws&gt; '=' begin &lt;.ws&gt; pod
+</pre></section>
+<section name="pod"><p>Most programming applications do not focus on the structure of the executable file, which is not meant to be easily read by humans. Our tangle would replace all the Pod6 blocks with a single <code>\n</code>. That can clump code together that is easier read if there were one or more blank lines.</p><p>However, we can provide the option for users to specify the number of empty lines that should replace a <code>pod</code> block. To do this, simply add a number at the end of the <code>=begin</code> directive. For example, <code>=begin pod</code>. <sup><a name="fnret1" href="#fn1">[1]</a></sup>
+</p></section>
+<section name="pod"><pre class="pod-block-code">   24|         [ &lt;.ws&gt; $&lt;num-blank-lines&gt;=(\d+) ]?  # an optional number to specify the
+   25|                                          # number of blank lines to replace the
+   26|                                          # C&lt;Pod&gt; blocks when tangling.
+</pre></section>
+<section name="pod"></section>
+<section name="pod"><pre class="pod-block-code">   27|         &lt;ws-till-EOL&gt;
+   28|     } # end of token begin
+</pre></section>
+<section name="pod">
+<h3 id="The_end-pod_token"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">The <code>end-pod</code> token</a></h3>
+<p>The <code>end-pod</code> token is much simpler.</p></section>
+<section name="pod"><pre class="pod-block-code">   29|     token end-pod { ^^ &lt;.ws&gt; '=' end &lt;.ws&gt; pod &lt;ws-till-EOL&gt; }
+</pre></section>
+<section name="pod">
 <h2 id="The_Pod_token"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">The <code>Pod</code> token</a></h2>
-<p>Within the delimiters, all lines are considered documentation. We will refer to these lines as <code>plain-lines</code>. Additionally, it is possible to have nested <code>Pod</code> sections. This allows for a hierarchical organization of documentation, allowing for more structured and detailed explanations.</p><p>It is also permissible for the block to be empty. Therefore, we will use the 'zero-or-more' quantifier on the lines of documentation, allowing for the possibility of having no lines in the block.</p><pre class="pod-block-code">   44| 
-   45|     token pod {
-   46|         &lt;begin&gt;
-   47|             [&lt;pod&gt; | &lt;plain-line&gt;]*
-   48|         &lt;end&gt;
-   49|     } # end of token pod
-   50| 
-</pre>
-<h2 id="The_Code_token"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">The <code>Code</code> token</a></h2>
-<p>The <code>Code</code> sections are similarly easily defined. There are two types of <code>Code</code> sections, depending on whether they will appear in the woven code. See <a href="#no-weave">no-weave</a> for why some code would not be included in the woven code.</p><pre class="pod-block-code">   51| 
-   52|     token code {
-   53|         | &lt;woven&gt;
-   54|         | &lt;non-woven&gt;
-   55|     } # end of token code
-</pre>
+<p>Within the delimiters, all lines are considered documentation. We will refer to these lines as <code>plain-lines</code>. Additionally, it is possible to have nested <code>Pod</code> sections. This allows for a hierarchical organization of documentation, allowing for more structured and detailed explanations.</p><p>It is also permissible for the block to be empty. Therefore, we will use the 'zero-or-more' quantifier on the lines of documentation, allowing for the possibility of having no lines in the block.</p></section>
+<section name="pod"><pre class="pod-block-code">   30|     token pod {
+   31|         &lt;begin-pod&gt;
+   32|             [&lt;pod&gt; | &lt;plain-line&gt;]*
+   33|         &lt;end-pod&gt;
+   34|     } # end of token pod
+</pre></section>
+<section name="pod">
+<h2 id="The_Code_tokens"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">The <code>Code</code> tokens</a></h2>
+<p>The <code>Code</code> sections are similarly easily defined. There are two types of <code>Code</code> sections, depending on whether they will appear in the woven code. See <a href="below.html">below</a> for why some code would not be included in the woven code.</p>
 <h3 id="Woven_sections"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">Woven sections</a></h3>
-<p>These sections are trivially defined. They are just one or more <code>plain-line</code>s.</p><pre class="pod-block-code">   56| 
-   57|     token woven { &lt;plain-line&gt;+ }
-</pre>
+<p>These sections are trivially defined. They are just one or more <code>plain-line</code>s.</p></section>
+<section name="pod"><pre class="pod-block-code">   35|     token woven-code { &lt;plain-line&gt;+ }
+</pre></section>
+<section name="pod">
 <h3 id="Non-woven_sections"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">Non-woven sections</a></h3>
-<p>Sometimes there will be code you do not want woven into the document, such as boilerplate code like <code>use v6.d;</code>. You have two options to mark such code. By individual lines or by delimited blocks of code.</p><pre class="pod-block-code">   58| 
-   59|     token non-woven {
-   60|         | &lt;one-line-no-weave&gt;+
-   61|         | &lt;delimited-no-weave&gt;+
-   62|     } # end of token non-woven
-</pre>
+<p>Sometimes there will be code you do not want woven into the document, such as boilerplate code like <code>use v6.d;</code>. You have two options to mark such code. By individual lines or by delimited blocks of code.</p></section>
+<section name="pod"><pre class="pod-block-code">   36|     token non-woven-code {
+   37|         [
+   38|           | &lt;one-line-no-weave&gt;
+   39|           | &lt;delimited-no-weave&gt;
+   40|         ]+
+   41|     } # end of token non-woven
+</pre></section>
+<section name="pod">
 <h4 id="One_line_of_code"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">One line of code</a></h4>
-<p>Simply append <code>#no-weave</code> at the end of the line!</p><pre class="pod-block-code">   63| 
-   64|     token one-line-no-weave {
-   65|         ^^ \N*
-   66|         '#' &lt;.ws&gt; 'no-weave'
-   67|         &lt;.ws&gt; &lt;rest-of-line&gt;
-   68|     } # end of token one-line-no-weave
-   69| 
-</pre>
+<p>Simply append <code># begin-no-weave</code> at the end of the line!</p></section>
+<section name="pod"><pre class="pod-block-code">   42|     token one-line-no-weave {
+   43|         ^^ \N*?
+   44|         '#' &lt;.ws&gt; 'no-weave-this-line'
+   45|         &lt;ws-till-EOL&gt;
+   46|     } # end of token one-line-no-weave
+</pre></section>
+<section name="pod">
 <h4 id="Delimited_blocks_of_code"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">Delimited blocks of code</a></h4>
-<p>Simply add comments <code>#no-weave</code> and <code>#end-no-weave</code> before and after the code you want ignored in the formatted document.</p><pre class="pod-block-code">   70|     token delimited-no-weave {
-   71|         &lt;begin-no-weave&gt;
-   72|             &lt;plain-line&gt;*?
-   73|         &lt;end-no-weave&gt;
-   74|     } # end of token delimited-no-weave
-   75| 
-   76|     token begin-no-weave {
-   77|         ^^ \h*                      # optional leading whitespace
-   78|         '#' &lt;.ws&gt; 'no-weave'        # the delimiter itself (#no-weave)
-   79|         &lt;.ws&gt; &lt;rest-of-line&gt;        # optional trailing whitespace
-   80|     } # end of token &lt;begin-no-weave&gt;
-   81| 
-   82|     token end-no-weave {
-   83|         ^^ \h*                      # optional leading whitespace
-   84|         '#' &lt;.ws&gt; 'end-no-weave'    # the delimiter itself (#end-no-weave)
-   85|         &lt;.ws&gt; &lt;rest-of-line&gt;        # optional trailing whitespace
-   86|     } # end of token &lt;end--no-weave&gt;
-   87| 
-</pre>
+<p>Simply add comments <code># begin-no-weave</code> and <code>#end-no-weave</code> before and after the code you want ignored in the formatted document.</p></section>
+<section name="pod"><pre class="pod-block-code">   47|     token begin-no-weave {
+   48|         ^^ &lt;.ws&gt;                    # optional leading whitespace
+   49|         '#' &lt;.ws&gt; 'begin-no-weave'  # the delimiter itself (# begin-no-weave)
+   50|         &lt;ws-till-EOL&gt;               # optional trailing whitespace or comment
+   51|     } # end of token &lt;begin-no-weave&gt;
+   52| 
+   53|     token end-no-weave {
+   54|         ^^ &lt;.ws&gt;                    # optional leading whitespace
+   55|         '#' &lt;.ws&gt; 'end-no-weave'    # the delimiter itself (#end-no-weave)
+   56|         &lt;ws-till-EOL&gt;               # optional trailing whitespace or comment
+   57|     } # end of token &lt;end--no-weave&gt;
+   58| 
+   59|     token delimited-no-weave {
+   60|         &lt;begin-no-weave&gt;
+   61|             &lt;plain-line&gt;*
+   62|         &lt;end-no-weave&gt;
+   63|     } # end of token delimited-no-weave
+</pre></section>
+<section name="pod">
 <h3 id="The_plain-line_token"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">The <code>plain-line</code> token</a></h3>
-<p>The <code>plain-line</code> token is, really, any line at all...</p><pre class="pod-block-code">   88| 
-   89|     token plain-line {
-   90|        $&lt;plain-line&gt; = [^^ &lt;rest-of-line&gt;]
-   91| 
-</pre>
-<h3 id="Disallowing_the_delimiters_in_a_plain-line."><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">Disallowing the delimiters in a <code>plain-line</code>.</a></h3>
-<p>... except for one subtlety. They it can't be one of the begin/end delimiters. We can specify that with a <a href="https://docs.raku.org/language/regexes\#Regex_Boolean_condition_check">Regex Boolean Condition Check</a>.</p><pre class="pod-block-code">   92| 
-   93|         &lt;?{ &amp;not-a-delimiter($&lt;plain-line&gt;.Str) }&gt;
-   94|     } # end of token plain-line
-   95| 
-</pre><p>This function simply checks whether the <code>plain-line</code> match object matches either the <code>begin</code> or <code>end</code> token.</p><p>Incidentally, this function is why we had to declare those tokens with the <code>my</code> keyword. This function wouldn't work otherwise.</p><pre class="pod-block-code">   96| 
-   97|     sub not-a-delimiter (Str $line --&gt; Bool) {
-   98|         return not $line ~~ /&lt;begin&gt; | &lt;end&gt;/;
-   99|     } # end of sub not-a-delimiter (Match $line --&gt; Bool)
-  100| 
-</pre><p>And that concludes the grammar for separating <code>Pod</code> from <code>Code</code>!</p><pre class="pod-block-code">  101| 
-  102| } # end of grammar Semi::Literate
-  103| 
-</pre>
+<p>The <code>plain-line</code> token is, really, any line at all... ... except for one subtlety. They it can't be one of the begin/end delimiters. We can specify that with a <a href="https://docs.raku.org/language/regexes\#Regex_Boolean_condition_check">Regex Boolean Condition Check</a>.</p></section>
+<section name="pod"><pre class="pod-block-code">   64|     token plain-line {
+   65|         :my $*EXCEPTION = False;
+   66|         [
+   67|           ||  &lt;begin-pod&gt;         { $*EXCEPTION = True }
+   68|           ||  &lt;end-pod&gt;           { $*EXCEPTION = True }
+   69|           ||  &lt;begin-no-weave&gt;    { $*EXCEPTION = True }
+   70|           ||  &lt;end-no-weave&gt;      { $*EXCEPTION = True }
+   71|           ||  &lt;one-line-no-weave&gt; { $*EXCEPTION = True }
+   72|           || $&lt;plain-line&gt; = [^^ &lt;rest-of-line&gt;]
+   73|         ]
+   74|         &lt;?{ !$*EXCEPTION }&gt;
+   75|     } # end of token plain-line
+</pre></section>
+<section name="pod"><p>And that concludes the grammar for separating <code>Pod</code> from <code>Code</code>!</p></section>
+<section name="pod"><pre class="pod-block-code">   76| } # end of grammar Semi::Literate
+</pre></section>
+<section name="pod">
 <h1 id="The_Tangle_subroutine"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">The Tangle subroutine</a></h1>
-<p>This subroutine will remove all the Pod6 code from a semi-literate file (<code>.sl</code>) and keep only the Raku code.</p><pre class="pod-block-code">  104| 
-  105| #TODO multi sub to accept Str &amp; IO::PatGh
-  106| sub tangle (
-  107| 
-</pre><p>The subroutine has a single parameter, which is the input filename. The filename is required. Typically, this parameter is obtained from the command line or passed from the subroutine <code>MAIN</code>.</p><pre class="pod-block-code">  108|     Str $input-file!,
-</pre><p>The subroutine will return a <code>Str</code>, which will be a working Raku program.</p><pre class="pod-block-code">  109|         --&gt; Str ) is export {
-</pre><p>First we will get the entire Semi-Literate <code>.sl</code> file...</p><pre class="pod-block-code">  110| 
-  111|     my Str $source = $input-file.IO.slurp;
-  112| 
-</pre>
+<p>This subroutine will remove all the Pod6 code from a semi-literate file (<code>.sl</code>) and keep only the Raku code.</p></section>
+<section name="pod"><pre class="pod-block-code">   77| #TODO multi sub to accept Str &amp; IO::PatGh
+   78| sub tangle (
+</pre></section>
+<section name="pod"></section>
+<section name="pod"><pre class="pod-block-code">   79|     Str $input-file!,
+</pre></section>
+<section name="pod"><p>The subroutine will return a <code>Str</code>, which will be a working Raku program.</p></section>
+<section name="pod"><pre class="pod-block-code">   80|         --&gt; Str ) is export {
+</pre></section>
+<section name="pod"><p>First we will get the entire Semi-Literate <code>.sl</code> file...</p></section>
+<section name="pod"><pre class="pod-block-code">   81|     my Str $source = $input-file.IO.slurp;
+</pre></section>
+<section name="pod">
 <h2 id="Clean_the_source"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">Clean the source</a></h2>
 
-<h3 id="Remove_the_no-weave_delimiters"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">Remove the <em>no-weave</em> delimiters</a></h3>
-<pre class="pod-block-code">  113| 
-  114|     $source ~~ s:g{ ^^ \h* '#' &lt;.ws&gt;     'no-weave' &lt;rest-of-line&gt; } = '';
-  115|     $source ~~ s:g{ ^^ \h* '#' &lt;.ws&gt; 'end-no-weave' &lt;rest-of-line&gt; } = '';
-  116| 
-</pre>
 <h3 id="Remove_unnecessary_blank_lines"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">Remove unnecessary blank lines</a></h3>
 <p>Very often the <code>code</code> section of the Semi-Literate file will have blank lines that you don't want to see in the tangled working code. For example:</p><pre class="pod-block-code">                                                # &lt;== unwanted blank lines
                                                 # &lt;== unwanted blank lines
@@ -215,199 +210,140 @@
                                                 # &lt;== unwanted blank lines
                                                 # &lt;== unwanted blank lines
 
-</pre><pre class="pod-block-code">  117| 
-</pre><p>So we'll remove the blank lines at the beginning and end of the Pod6 sections.</p><pre class="pod-block-code">  118| 
-  119|     $source ~~ s:g/\=end (\N*)\n+/\=end$0\n/;
-  120|     $source ~~ s:g/\n+\=begin    /\n\=begin/;
-  121| 
-</pre>
+</pre></section>
+<section name="pod"><p>So we'll remove the blank lines immediately outside the beginning and end of the Pod6 sections.</p></section>
+<section name="pod"><pre class="pod-block-code">   82|     $source ~~ s:g/\=end (\N*)\n+/\=end$0\n/;
+   83|     $source ~~ s:g/\n+\=begin    /\n\=begin/;
+</pre></section>
+<section name="pod">
 <h2 id="The_interesting_stuff"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">The interesting stuff</a></h2>
-<p>We parse it using the <code>Semi::Literate</code> grammar and obtain a list of submatches (that's what the <code>caps</code> method does) ...</p><pre class="pod-block-code">  122| 
-  123|     my Pair @submatches = Semi::Literate.parse($source).caps;
-  124| 
-</pre><p>...and iterate through the submatches and keep only the <code>code</code> sections...</p><pre class="pod-block-code">  125| 
-  126|     my Str $raku-code = @submatches.map( {
-  127|         when .key eq 'code' {
-  128|             .value;
-  129|         }
-  130| 
-</pre>
+<p>We parse it using the <code>Semi::Literate</code> grammar and obtain a list of submatches (that's what the <code>caps</code> method does) ...</p></section>
+<section name="pod"><pre class="pod-block-code">   84|     my Pair @submatches = Semi::Literate.parse($source).caps;
+</pre></section>
+<section name="pod"><p>...and iterate through the submatches and keep only the <code>code</code> sections...</p></section>
+<section name="pod"><pre class="pod-block-code">   85| #    note &quot;submatches.elems: {@submatches.elems}&quot;;
+   86|     my Str $raku-code = @submatches.map( {
+   87| #        note .key;
+   88|         when .key eq 'woven-code'|'non-woven-code' {
+   89|             .value;
+   90|         }
+</pre></section>
+<section name="pod">
 <h3 id="Replace_Pod6_sections_with_blank_lines"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">Replace Pod6 sections with blank lines</a></h3>
-<p>#TODO rewrite Most programming applications do not focus on the structure of the executable file, which is not meant to be easily read by humans.</p><p>However, we can provide the option for users to specify the number of empty lines that should replace a <code>pod</code> block. To do this, simply add a number at the end of the <code>=begin</code> directive. For example, <code>=begin pod 2</code> .</p><pre class="pod-block-code">  131| 
-  132| 
-  133|         when .key eq 'pod' {
-  134|             my $num-blank-lines = .value.hash&lt;begin&gt;&lt;num-blank-lines&gt;;
-  135|             &quot;\n&quot; x $num-blank-lines with $num-blank-lines;
-  136|         }
-  137| 
-  138|         #no-weave
-  139|         default { die 'Should never get here' }
-  140|         #end-no-weave
-</pre><p>... and we will join all the code sections together...</p><pre class="pod-block-code">  141| 
-  142|     } # end of my Str $raku-code = @submatches.map(
-  143|     ).join;
-  144| 
-</pre>
+</section>
+<section name="pod"><pre class="pod-block-code">   91|         when .key eq 'pod' {
+   92|             my $num-blank-lines = .value.hash&lt;begin-pod&gt;&lt;num-blank-lines&gt;;
+   93|             &quot;\n&quot; x $num-blank-lines with $num-blank-lines;
+   94|         }
+</pre></section>
+<section name="pod"><p>... and we will join all the code sections together...</p></section>
+<section name="pod"><pre class="pod-block-code">   95|     } # end of my Str $raku-code = @submatches.map(
+   96|     ).join;
+</pre></section>
+<section name="pod">
+<h3 id="Remove_the_no-weave_delimiters"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">Remove the <em>no-weave</em> delimiters</a></h3>
+</section>
+<section name="pod"><pre class="pod-block-code">   97|     $source ~~ s:g{ ^^ \h*   '#' &lt;.ws&gt;     'begin-no-weave' &lt;rest-of-line&gt; } = '';
+   98|     $source ~~ s:g{ ^^ (.*?) '#' &lt;.ws&gt;     'begin-no-weave' &lt;rest-of-line&gt; } = &quot;$0\n&quot;;
+   99|     $source ~~ s:g{ ^^ \h*   '#' &lt;.ws&gt; 'end-no-weave' &lt;rest-of-line&gt; } = '';
+</pre></section>
+<section name="pod">
 <h3 id="remove_blank_lines_at_the_end"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">remove blank lines at the end</a></h3>
-<pre class="pod-block-code">  145| 
-  146|     $raku-code ~~ s{\n  &lt;blank-line&gt;* $ } = '';
-  147| 
-</pre><p>And that's the end of the <code>tangle</code> subroutine!</p><pre class="pod-block-code">  148|     return $raku-code;
-  149| } # end of sub tangle (
-  150| 
-</pre>
+</section>
+<section name="pod"><pre class="pod-block-code">  100|     $raku-code ~~ s{\n  &lt;blank-line&gt;* $ } = '';
+</pre></section>
+<section name="pod"><p>And that's the end of the <code>tangle</code> subroutine!</p></section>
+<section name="pod"><pre class="pod-block-code">  101|     return $raku-code;
+  102| } # end of sub tangle (
+</pre></section>
+<section name="pod">
 <h1 id="The_Weave_subroutine"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">The Weave subroutine</a></h1>
-<p>The <code>Weave</code> subroutine will <em>weave</em> the <code>.sl</code> file into a readable Markdown, HTML, or other format. It is a little more complicated than <code>sub tangle</code> because it has to include the <code>code</code> sections.</p><pre class="pod-block-code">  151| 
-  152| sub weave (
-  153| 
-</pre>
+<p>The <code>Weave</code> subroutine will <em>weave</em> the <code>.sl</code> file into a readable Markdown, HTML, or other format. It is a little more complicated than <code>sub tangle</code> because it has to include the <code>code</code> sections.</p></section>
+<section name="pod"><pre class="pod-block-code">  103| sub weave (
+</pre></section>
+<section name="pod">
 <h2 id="The_parameters_of_Weave"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">The parameters of Weave</a></h2>
 <p><code>sub weave</code> will have several parameters.</p>
 <h3 id="$input-file"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document"><code>$input-file</code></a></h3>
-<p>The input filename is required. Typically, this parameter is obtained from the command line through a wrapper subroutine <code>MAIN</code>.</p><pre class="pod-block-code">  154| 
-  155|     Str $input-file!;
-</pre>
+<p>The input filename is required. Typically, this parameter is obtained from the command line through a wrapper subroutine <code>MAIN</code>.</p></section>
+<section name="pod"><pre class="pod-block-code">  104|     Str $input-file!;
+</pre></section>
+<section name="pod">
 <h3 id="$format"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document"><code>$format</code></a></h3>
-<p>The output of the weave can (currently) be Markdown, Text, PDF or HTML. (Assuming you have the necessary <code>Pod::To::X</code> module installed.) It defaults to Markdown. The variable is case-insensitive, so 'markdown' also works.</p><pre class="pod-block-code">  156| 
-  157|     Str :f(:$format) is copy = 'markdown';
-  158|         #= The output format for the woven file.
-  159| 
-</pre>
+<p>The output of the weave can (currently) be Markdown, Text, or HTML. It defaults to Markdown. The variable is case-insensitive, so 'markdown' also works.</p></section>
+<section name="pod"><pre class="pod-block-code">  105|     Str :f(:$format) is copy = 'markdown';
+  106|         #= The output format for the woven file.
+</pre></section>
+<section name="pod">
 <h3 id="$line-numbers"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document"><code>$line-numbers</code></a></h3>
-<p>It can be useful to print line numbers in the code listing. It defaults to True.</p><pre class="pod-block-code">  160| 
-  161|     Bool :l(:$line-numbers)  = True;
-  162|         #= Should line numbers be added to the embeded code?
-  163| 
-  164| 
-</pre><p><code>sub weave</code> returns a Str.</p><pre class="pod-block-code">  165| 
-  166|         --&gt; Str ) is export {
-</pre>
-<h2 id="The_alogrithm"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">The alogrithm</a></h2>
-<pre class="pod-block-code">  167| 
-  168|     my UInt $line-number = 1;
-  169| 
-</pre><p>First we will get the entire <code>.sl</code> file...</p><pre class="pod-block-code">  170| 
-  171|     my Str $source = $input-file.IO.slurp;
-  172| 
-  173|     my Str $cleaned-source;
-  174| 
-  175| $cleaned-source = $source;
-  176| #=begin pod 1
-  177| #
-  178| #=head3 Remove full comment lines followed by blank lines
-  179| #
-  180| #=end pod
-  181| #
-  182| #    # delete full comment lines
-  183| #    $source ~~ s:g{ ^^ \h* '#' \N* \n+} = '';
-  184| #
-  185| #    # remove Raku comments, unless the '#' is escaped with
-  186| #    # a backslash or is in a quote. (It doesn't catch all quote
-  187| #    # constructs...(that's a TODO))
-  188| #    # And leave the newline.
-  189| #
-  190| #=begin pod 1
-  191| #
-  192| #=head3 Remove EOL comments
-  193| #
-  194| #=end pod
-  195| #
-  196| #    for $source.split(&quot;\n&quot;) -&gt; $line {
-  197| #        my $m = $line ~~ m{
-  198| #                ^^
-  199| #               $&lt;stuff-before-the-comment&gt; = ( \N*? )
-  200| #
-  201| #                #TODO make this more robust - allow other delimiters, take into
-  202| #                #account the Q language, heredocs, nested strings...
-  203| #                &lt;!after         # make sure the '#' isn't in a string
-  204| #                    ( [
-  205| #                        | \\
-  206| #                        | \&quot; &lt;-[\&quot;]&gt;*
-  207| #                        | \' &lt;-[\']&gt;*
-  208| #                        | \｢ &lt;-[\｣]&gt;*
-  209| #                    ] )
-  210| #                &gt;
-  211| #                &quot;#&quot;
-  212| #
-  213| #
-  214| #                # We need to keep these delimiters.
-  215| #                # See the section above &quot;Remove code marked as 'no-weave'&quot;.
-  216| #                &lt;!before
-  217| #                      [
-  218| #                        | 'no-weave'
-  219| #                        | 'end-no-weave'
-  220| #                      ]
-  221| #                &gt;
-  222| #                \N*
-  223| #                $$ };
-  224| #
-  225| #        $cleaned-source ~= $m ?? $&lt;stuff-before-the-comment&gt; !! $line;
-  226| #        $cleaned-source ~= &quot;\n&quot;;
-  227| #    } # end of for $source.split(&quot;\n&quot;) -&gt; $line
-  228| #
-  229| #=begin pod 1
-  230| #=head3 Remove blank lines at the begining and end of the code
-  231| #
-  232| #B&lt;EXPLAIN THIS!&gt;
-  233| #
-  234| #=end pod
-  235| #
-  236| #    $cleaned-source ~~ s:g{\=end (\N*)\n+} =   &quot;\=end$0\n&quot;;
-  237| #    $cleaned-source ~~ s:g{\n+\=begin (&lt;.ws&gt; pod) [&lt;.ws&gt; \d]?} = &quot;\n\=begin$0&quot;;
-  238| #
-</pre>
+<p>It can be useful to print line numbers in the code listing. It currently defaults to True.</p></section>
+<section name="pod"><pre class="pod-block-code">  107|     Bool :l(:$line-numbers)  = True;
+  108|         #= Should line numbers be added to the embeded code?
+</pre></section>
+<section name="pod"></section>
+<section name="pod"><pre class="pod-block-code">  109|         --&gt; Str ) is export {
+</pre></section>
+<section name="pod"></section>
+<section name="pod"><pre class="pod-block-code">  110|     my UInt $line-number = 1;
+</pre></section>
+<section name="pod"></section>
+<section name="pod"><pre class="pod-block-code">  111|     my Str $source = $input-file.IO.slurp;
+</pre></section>
+<section name="pod">
+<h3 id="Remove_blank_lines_at_the_begining_and_end_of_the_code"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">Remove blank lines at the begining and end of the code</a></h3>
+<p><strong>EXPLAIN THIS!</strong></p></section>
+<section name="pod"><pre class="pod-block-code">  112|     my Str $cleaned-source = $source;
+  113|     $cleaned-source ~~ s:g{\=end (\N*)\n+} =   &quot;\=end$0\n&quot;;
+  114|     $cleaned-source ~~ s:g{\n+\=begin (&lt;.ws&gt; pod) [&lt;.ws&gt; \d]?} = &quot;\n\=begin$0&quot;;
+</pre></section>
+<section name="pod">
 <h2 id="Interesting_stuff_...Next,_we_parse_it_using_the_Semi::Literate_grammar_and_obtain_a_list_of_submatches_(that's_what_the_caps_method_does)_..."><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">Interesting stuff ...Next, we parse it using the <code>Semi::Literate</code> grammar and obtain a list of submatches (that's what the <code>caps</code> method does) ...</a></h2>
-<pre class="pod-block-code">  239| 
-  240|     my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
-  241| 
-</pre><p>...And now begins the interesting part. We iterate through the submatches and insert the <code>code</code> sections into the Pod6...</p><pre class="pod-block-code">  242| 
-  243| 
-  244|     my Str $weave = @submatches.map( {
-  245|         when .key eq 'pod' {
-  246|             .value
-  247|         } # end of when .key
-</pre><p>#TODO</p><pre class="pod-block-code">  248| 
-  249|         when .key eq 'code' { pd $_; qq:to/EOCB/; }
-  250|             \=begin  pod
-  251|             \=begin  code :lang&lt;raku&gt;
-  252|              { my $fmt = ($line-numbers ?? &quot;%3s| &quot; !! '') ~ &quot;%s\n&quot;;
-  253|                 .value
-  254|                 .lines
-  255|                 .map($line-numbers
-  256|                         ?? {&quot;%4s| %s\n&quot;.sprintf($line-number++, $_) }
-  257|                         !! {     &quot;%s\n&quot;.sprintf(                $_) }
-  258|                     )
-  259|                 .chomp;
-  260|              }
-  261|             \=end  code
-  262|             \=end  pod
-  263|             EOCB
-  264| 
-  265|         when .key eq 'non-woven' {
-  266|             note &quot;Inside non-woven&quot;
-  267|             ; # do nothing
-  268|         } # end of when .key eq 'non-woven'
-  269| 
-  270|         # no-weave
-  271|         default { die 'Should never get here.' }
-  272|         # end-no-weave
-  273|     } # end of my $weave = Semi::Literate.parse($source).caps.map
-  274|     ).join;
-  275| 
-</pre><p>remove useless Pod directives</p><pre class="pod-block-code">  276| 
-  277|     $weave ~~ s:g{ \h* \=end   &lt;.ws&gt; pod  &lt;rest-of-line&gt;
-  278|                    \h* \=begin &lt;.ws&gt; pod &lt;rest-of-line&gt; } = '';
-  279| 
-</pre>
+</section>
+<section name="pod"><pre class="pod-block-code">  115|     my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
+</pre></section>
+<section name="pod"><p>...And now begins the interesting part. We iterate through the submatches and insert the <code>code</code> sections into the Pod6...</p></section>
+<section name="pod"><pre class="pod-block-code">  116| #    note &quot;weave submatches.elems: {@submatches.elems}&quot;;
+  117| #    note &quot;submatches keys: {@submatches».keys}&quot;;
+  118|     my Str $weave = @submatches.map( {
+  119|         when .key eq 'pod' {
+  120|             .value
+  121|         } # end of when .key
+</pre></section>
+<section name="pod"></section>
+<section name="pod"><pre class="pod-block-code">  122|         when .key eq 'woven-code' { qq:to/EOCB/; }
+  123|             \=begin pod
+  124|             \=begin code :lang&lt;raku&gt;
+  125|              { my $fmt = ($line-numbers ?? &quot;%3s| &quot; !! '') ~ &quot;%s\n&quot;;
+  126|                 .value
+  127|                 .lines
+  128|                 .map($line-numbers
+  129|                         ?? {&quot;%4s| %s\n&quot;.sprintf($line-number++, $_) }
+  130|                         !! {     &quot;%s\n&quot;.sprintf(                $_) }
+  131|                     )
+  132|                 .chomp;
+  133|              }
+  134|             \=end code
+  135|             \=end pod
+  136|             EOCB
+  137| 
+  138|         when .key eq 'non-woven-code' {
+  139| #            note 'not-weaving';
+  140|           ''; # do nothing
+  141|         } # end of when .key eq 'non-woven'
+</pre></section>
+<section name="pod"><pre class="pod-block-code">  142|     } # end of my $weave = Semi::Literate.parse($source).caps.map
+  143|     ).join;
+</pre></section>
+<section name="pod">
 <h3 id="remove_blank_lines_at_the_end"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">remove blank lines at the end</a></h3>
-<pre class="pod-block-code">  280| 
-  281|     $weave ~~ s{\n  &lt;blank-line&gt;* $ } = '';
-  282| 
-</pre><p>And that's the end of the <code>tangle</code> subroutine!</p><pre class="pod-block-code">  283| 
-  284|     return $weave
-  285| } # end of sub weave (
-  286| 
-</pre>
+</section>
+<section name="pod"><pre class="pod-block-code">  144|     $weave ~~ s{\n  &lt;blank-line&gt;* $ } = '';
+</pre></section>
+<section name="pod"><p>And that's the end of the <code>tangle</code> subroutine!</p></section>
+<section name="pod"><pre class="pod-block-code">  145|     return $weave
+  146| } # end of sub weave (
+</pre></section>
+<section name="pod">
 <h1 id="NAME"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">NAME</a></h1>
 <p><code>Semi::Literate</code> - A semi-literate way to weave and tangle Raku/Pod6 source code.</p>
 <h1 id="VERSION"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">VERSION</a></h1>
@@ -427,50 +363,13 @@
 <h1 id="AUTHOR"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">AUTHOR</a></h1>
 <p>Shimon Bollinger (deoac.bollinger@gmail.com)</p>
 <h1 id="LICENSE_AND_COPYRIGHT"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">LICENSE AND COPYRIGHT</a></h1>
-<p>© 2023 Shimon Bollinger. All rights reserved.</p><p>This module is free software; you can redistribute it and/or modify it under the same terms as Raku itself. See <a href="https://opensource.org/licenses/Artistic-2.0">The Artistic License 2.0</a>.</p><p>This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.</p><pre class="pod-block-code">  287| 
-  288| # no-weave
-  289| my %*SUB-MAIN-OPTS =
-  290|   :named-anywhere,             # allow named variables at any location
-  291|   :bundling,                   # allow bundling of named arguments
-  292| #  :coerce-allomorphs-to(Str),  # coerce allomorphic arguments to given type
-  293|   :allow-no,                   # allow --no-foo as alternative to --/foo
-  294|   :numeric-suffix-as-value,    # allow -j2 as alternative to --j=2
-  295| ;
-  296| 
-  297| #| Run with option '--pod' to see all of the Pod6 objects
-  298| multi MAIN(Bool :$pod!) is hidden-from-USAGE {
-  299|     for $=pod -&gt; $pod-item {
-  300|         for $pod-item.contents -&gt; $pod-block {
-  301|             $pod-block.raku.say;
-  302|         }
-  303|     }
-  304| } # end of multi MAIN (:$pod)
-  305| 
-  306| #| Run with option '--doc' to generate a document from the Pod6
-  307| #| It will be rendered in Text format
-  308| #| unless specified with the --format option.  e.g.
-  309| #|       --doc --format=HTML
-  310| multi MAIN(Bool :$doc!, Str :$format = 'Text') is hidden-from-USAGE {
-  311|     run $*EXECUTABLE, &quot;--doc=$format&quot;, $*PROGRAM;
-  312| } # end of multi MAIN(Bool :$man!)
-  313| 
-  314| my $semi-literate-file = '/Users/jimbollinger/Documents/Development/raku/Projects/Semi-Literate/source/Literate.sl';
-  315| multi MAIN(Bool :$testt!) {
-  316|     say tangle($semi-literate-file);
-  317| } # end of multi MAIN(Bool :$test!)
-  318| 
-  319| multi MAIN(Bool :$testw!) {
-  320|     say weave($semi-literate-file);
-  321| } # end of multi MAIN(Bool :$test!)
-  322| 
-  323| #end-no-weave
-</pre></section>		</div>
+<p>© 2023 Shimon Bollinger. All rights reserved.</p><p>This module is free software; you can redistribute it and/or modify it under the same terms as Raku itself. See <a href="https://opensource.org/licenses/Artistic-2.0">The Artistic License 2.0</a>.</p><p>This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.</p></section>		</div>
 <div id="_Footnotes" class="footnotes">
 <ul><li id="fn1"><span class="footnote-number">1</span>This is non-standard Pod6 and will not compile until woven!<a class="footnote" href="#fnret1"> « Back »</a></li>
 
 </ul>
 </div>
-</div><footer><div>Rendered from <span class="path"></span></div><div>at <span class="time">2023-09-03T01:43:37Z</span></div></footer>
+</div><footer><div>Rendered from <span class="path"></span></div><div>at <span class="time">2023-09-07T23:14:45Z</span></div></footer>
 	</body>
 </html>
 

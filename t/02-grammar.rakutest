@@ -233,7 +233,7 @@ EOS
 #Goodbye world
 #EOS
 
-plan %good-pod.elems + %bad-pod.elems + 1;
+#plan %good-pod.elems + %bad-pod.elems + 1;
 
 for %good-pod.keys.sort -> $key {
     is Semi::Literate.parse($key), $key,
@@ -246,6 +246,15 @@ for %bad-pod.keys.sort -> $key {
                  X::Syntax::Confused,
                  %bad-pod{ $key };
 }
+
+like "=end pod", /<Semi::Literate::end-pod>/, "end-pod delimiter OK";
+like "=begin pod", /<Semi::Literate::begin-pod>/, "begin-pod delimiter OK";
+like "# end-no-weave", /<Semi::Literate::end-no-weave>/, "end-no-weave delimiter OK";
+like "# begin-no-weave", /<Semi::Literate::begin-no-weave>/, "begin-no-weave delimiter OK";
+like "=end pod", /<Semi::Literate::end-pod>/, "end-pod delimiter OK";
+like "=begin pod", /<Semi::Literate::begin-pod>/, "begin-pod delimiter OK";
+like "#end-no-weave", /<Semi::Literate::end-no-weave>/, "end-no-weave delimiter OK";
+like "#begin-no-weave", /<Semi::Literate::begin-no-weave>/, "begin-no-weave delimiter OK";
 
 skip "Can't test against a local file.";
 #my Str $source = '/Users/jimbollinger/Documents/Development/raku/Projects/Semi-Literate/source/Literate.sl'.IO.slurp;

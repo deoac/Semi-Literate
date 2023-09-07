@@ -2,11 +2,13 @@
 
 # Tangle a Semi-literate file into a working Raku file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Fri 01 Sep 2023 10:16:10 PM EDT
+# Last modified: Wed 06 Sep 2023 03:47:56 PM EDT
 # Version 0.0.1
 
+# begin-no-weave
 # always use the latest version of Raku
 use v6.*;
+# end-no-weave
 
 use Semi::Literate;
 
@@ -128,6 +130,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 =end pod
 
+# begin-no-weave
 #| Run with the option '--test' to test the program
 multi MAIN (:$test!) {
     use Test;
@@ -165,5 +168,5 @@ multi MAIN(Bool :$pod!) {
 multi MAIN(Bool :$doc!, Str :$format = 'Text') {
     run $*EXECUTABLE, "--doc=$format", $*PROGRAM;
 } # end of multi MAIN(Bool :$man!)
-
+#end-no-weave
 

@@ -58,7 +58,7 @@ module-install:
 sl-tangle: Literate.rakumod sl-tangle.sl
 	@chmod -R a+w bin/
 	@echo -n "> Creating the sl-tangle executable..."
-	@sl-tangle source/sl-tangle.sl > bin/sl-tangle
+	@pod-tangle source/sl-tangle.sl > bin/sl-tangle
 	@chmod -R a-w,a+x bin/
 	@echo "\e[32mOK\e[0m"
 
@@ -79,7 +79,7 @@ install:
 	@zef install --force-build --force-install --force-test . >/dev/null
 	@echo "\e[32mOK\e[0m"
 
-test: pre ${LITERATE} executables post
+test: ${LITERATE} executables
 	@echo -n "> Running the tests..."
 	@prove6 -l -v
 	@echo "\e[32mOK\e[0m"

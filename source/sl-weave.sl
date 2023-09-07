@@ -2,10 +2,10 @@
 
 # Weave a Semi-literate file into Text, Markdown, HTML, etc.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Fri 01 Sep 2023 10:08:26 PM EDT
+# Last modified: Wed 06 Sep 2023 03:28:29 PM EDT
 # Version 0.0.1
 
-#no-weave
+# begin-no-weave
 use v6.d;
 
 use File::Temp;
