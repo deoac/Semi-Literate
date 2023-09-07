@@ -55,7 +55,7 @@
     2| 
     3| # Get the Pod vs. Code structure of a Raku/Pod6 file.
     4| # © 2023 Shimon Bollinger. All rights reserved.
-    5| # Last modified: Wed 06 Sep 2023 04:48:51 PM EDT
+    5| # Last modified: Thu 07 Sep 2023 07:13:05 PM EDT
     6| # Version 0.0.1
 </pre></section>
 <section name="___top">
@@ -86,7 +86,7 @@
 <section name="pod">
 <h2 id="The_Pod6_delimiters"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">The Pod6 delimiters</a></h2>
 <p>According to the <a href="https://docs.raku.org/language/pod">documentation</a>,</p><dl>
-<dt>Every Pod6 document has to begin with =begin pod 1 and end with =end pod.</dt><dd></dd>
+<dt>Every Pod6 document has to begin with =begin pod and end with =end pod.</dt><dd></dd>
 </dl><p>So let's define those tokens.</p>
 <h3 id="The_begin-pod_token"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">The <code>begin-pod</code> token</a></h3>
 </section>
@@ -99,7 +99,7 @@
    25|                                          # number of blank lines to replace the
    26|                                          # C&lt;Pod&gt; blocks when tangling.
 </pre></section>
-<section name="pod"><p>The remainder of the <code>begin-pod</code> directive can only be whitespace.</p></section>
+<section name="pod"></section>
 <section name="pod"><pre class="pod-block-code">   27|         &lt;ws-till-EOL&gt;
    28|     } # end of token begin
 </pre></section>
@@ -189,7 +189,7 @@
 <section name="pod"><pre class="pod-block-code">   77| #TODO multi sub to accept Str &amp; IO::PatGh
    78| sub tangle (
 </pre></section>
-<section name="pod"><p>The subroutine has a single parameter, which is the input filename. The filename is required. Typically, this parameter is obtained from the command line or passed from the subroutine <code>MAIN</code>.</p></section>
+<section name="pod"></section>
 <section name="pod"><pre class="pod-block-code">   79|     Str $input-file!,
 </pre></section>
 <section name="pod"><p>The subroutine will return a <code>Str</code>, which will be a working Raku program.</p></section>
@@ -280,13 +280,13 @@
 <section name="pod"><pre class="pod-block-code">  107|     Bool :l(:$line-numbers)  = True;
   108|         #= Should line numbers be added to the embeded code?
 </pre></section>
-<section name="pod"><p><code>sub weave</code> returns a Str.</p></section>
+<section name="pod"></section>
 <section name="pod"><pre class="pod-block-code">  109|         --&gt; Str ) is export {
 </pre></section>
-<section name="pod"><p>#TODO</p></section>
+<section name="pod"></section>
 <section name="pod"><pre class="pod-block-code">  110|     my UInt $line-number = 1;
 </pre></section>
-<section name="pod"><p>First we will get the entire <code>.sl</code> file...</p></section>
+<section name="pod"></section>
 <section name="pod"><pre class="pod-block-code">  111|     my Str $source = $input-file.IO.slurp;
 </pre></section>
 <section name="pod">
@@ -295,102 +295,53 @@
 <section name="pod"><pre class="pod-block-code">  112|     my Str $cleaned-source = $source;
   113|     $cleaned-source ~~ s:g{\=end (\N*)\n+} =   &quot;\=end$0\n&quot;;
   114|     $cleaned-source ~~ s:g{\n+\=begin (&lt;.ws&gt; pod) [&lt;.ws&gt; \d]?} = &quot;\n\=begin$0&quot;;
-  115| 
-  116|     #TODO figure out how to delete comments while leaving no-weave directives
-  117| #=begin pod 1
-  118| #
-  119| #=head3 Remove full comment lines followed by blank lines
-  120| #
-  121| #=end pod
-  122| #
-  123| #    # delete full comment lines
-  124| #    $cleaned-source ~~ s:g{ ^^ \h* '#' \N* \n+} = '';
-  125| 
-  126| #=begin pod 1
-  127| #
-  128| #=head3 Remove EOL comments
-  129| #
-  130| #=end pod
-  131| #
-  132| #    # remove Raku comments, unless the '#' is escaped with
-  133| #    # a backslash or is in a quote. (It doesn't catch all quote
-  134| #    # constructs...(that's a TODO))
-  135| #    # And leave the newline.
-  136| #
-  137| #    for $source.lines -&gt; $line {
-  138| #        next if $line ~~ /&lt;Semi::Literate::one-line-no-weave&gt;/;
-  139| #
-  140| #        my $m = $line ~~ m{
-  141| #                ^^
-  142| #               $&lt;stuff-before-the-comment&gt; = ( \N*? )
-  143| #
-  144| #                #TODO make this more robust - allow other delimiters, take into
-  145| #                #account the Q language, heredocs, nested strings...
-  146| #
-  147| #                &lt;!after         # make sure the '#' isn't in a string
-  148| #                    ( [
-  149| #                        | \\
-  150| #                        | \&quot; &lt;-[\&quot;]&gt;*
-  151| #                        | \' &lt;-[\']&gt;*
-  152| #                        | \｢ &lt;-[\｣]&gt;*
-  153| #                    ] )
-  154| #                &gt;
-  155| #                &quot;#&quot;
-  156| #
-  157| #                \N*
-  158| #                $$ };
-  159| #
-  160| #        $cleaned-source ~= $m ?? $&lt;stuff-before-the-comment&gt; !! $line;
-  161| #        $cleaned-source ~= &quot;\n&quot;;
-  162| #    } # end of for $source.lines -&gt; $line
-  163| #
 </pre></section>
 <section name="pod">
 <h2 id="Interesting_stuff_...Next,_we_parse_it_using_the_Semi::Literate_grammar_and_obtain_a_list_of_submatches_(that's_what_the_caps_method_does)_..."><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">Interesting stuff ...Next, we parse it using the <code>Semi::Literate</code> grammar and obtain a list of submatches (that's what the <code>caps</code> method does) ...</a></h2>
 </section>
-<section name="pod"><pre class="pod-block-code">  164|     my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
+<section name="pod"><pre class="pod-block-code">  115|     my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
 </pre></section>
 <section name="pod"><p>...And now begins the interesting part. We iterate through the submatches and insert the <code>code</code> sections into the Pod6...</p></section>
-<section name="pod"><pre class="pod-block-code">  165| #    note &quot;weave submatches.elems: {@submatches.elems}&quot;;
-  166| #    note &quot;submatches keys: {@submatches».keys}&quot;;
-  167|     my Str $weave = @submatches.map( {
-  168|         when .key eq 'pod' {
-  169|             .value
-  170|         } # end of when .key
+<section name="pod"><pre class="pod-block-code">  116| #    note &quot;weave submatches.elems: {@submatches.elems}&quot;;
+  117| #    note &quot;submatches keys: {@submatches».keys}&quot;;
+  118|     my Str $weave = @submatches.map( {
+  119|         when .key eq 'pod' {
+  120|             .value
+  121|         } # end of when .key
 </pre></section>
-<section name="pod"><p>#TODO</p></section>
-<section name="pod"><pre class="pod-block-code">  171|         when .key eq 'woven-code' { qq:to/EOCB/; }
-  172|             \=begin pod
-  173|             \=begin code :lang&lt;raku&gt;
-  174|              { my $fmt = ($line-numbers ?? &quot;%3s| &quot; !! '') ~ &quot;%s\n&quot;;
-  175|                 .value
-  176|                 .lines
-  177|                 .map($line-numbers
-  178|                         ?? {&quot;%4s| %s\n&quot;.sprintf($line-number++, $_) }
-  179|                         !! {     &quot;%s\n&quot;.sprintf(                $_) }
-  180|                     )
-  181|                 .chomp;
-  182|              }
-  183|             \=end code
-  184|             \=end pod
-  185|             EOCB
-  186| 
-  187|         when .key eq 'non-woven-code' {
-  188| #            note 'not-weaving';
-  189|           ''; # do nothing
-  190|         } # end of when .key eq 'non-woven'
+<section name="pod"></section>
+<section name="pod"><pre class="pod-block-code">  122|         when .key eq 'woven-code' { qq:to/EOCB/; }
+  123|             \=begin pod
+  124|             \=begin code :lang&lt;raku&gt;
+  125|              { my $fmt = ($line-numbers ?? &quot;%3s| &quot; !! '') ~ &quot;%s\n&quot;;
+  126|                 .value
+  127|                 .lines
+  128|                 .map($line-numbers
+  129|                         ?? {&quot;%4s| %s\n&quot;.sprintf($line-number++, $_) }
+  130|                         !! {     &quot;%s\n&quot;.sprintf(                $_) }
+  131|                     )
+  132|                 .chomp;
+  133|              }
+  134|             \=end code
+  135|             \=end pod
+  136|             EOCB
+  137| 
+  138|         when .key eq 'non-woven-code' {
+  139| #            note 'not-weaving';
+  140|           ''; # do nothing
+  141|         } # end of when .key eq 'non-woven'
 </pre></section>
-<section name="pod"><pre class="pod-block-code">  191|     } # end of my $weave = Semi::Literate.parse($source).caps.map
-  192|     ).join;
+<section name="pod"><pre class="pod-block-code">  142|     } # end of my $weave = Semi::Literate.parse($source).caps.map
+  143|     ).join;
 </pre></section>
 <section name="pod">
 <h3 id="remove_blank_lines_at_the_end"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">remove blank lines at the end</a></h3>
 </section>
-<section name="pod"><pre class="pod-block-code">  193|     $weave ~~ s{\n  &lt;blank-line&gt;* $ } = '';
+<section name="pod"><pre class="pod-block-code">  144|     $weave ~~ s{\n  &lt;blank-line&gt;* $ } = '';
 </pre></section>
 <section name="pod"><p>And that's the end of the <code>tangle</code> subroutine!</p></section>
-<section name="pod"><pre class="pod-block-code">  194|     return $weave
-  195| } # end of sub weave (
+<section name="pod"><pre class="pod-block-code">  145|     return $weave
+  146| } # end of sub weave (
 </pre></section>
 <section name="pod">
 <h1 id="NAME"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">NAME</a></h1>
@@ -418,7 +369,7 @@
 
 </ul>
 </div>
-</div><footer><div>Rendered from <span class="path"></span></div><div>at <span class="time">2023-09-06T20:54:13Z</span></div></footer>
+</div><footer><div>Rendered from <span class="path"></span></div><div>at <span class="time">2023-09-07T23:14:45Z</span></div></footer>
 	</body>
 </html>
 

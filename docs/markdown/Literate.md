@@ -43,7 +43,7 @@
     2| 
     3| # Get the Pod vs. Code structure of a Raku/Pod6 file.
     4| # © 2023 Shimon Bollinger. All rights reserved.
-    5| # Last modified: Wed 06 Sep 2023 04:48:51 PM EDT
+    5| # Last modified: Thu 07 Sep 2023 07:13:05 PM EDT
     6| # Version 0.0.1
 
 ```
@@ -102,7 +102,7 @@ Our file will exclusively consist of `Pod` or `Code` sections, and nothing else.
 ## The Pod6 delimiters
 According to the [documentation](https://docs.raku.org/language/pod),
 
-> **Every Pod6 document has to begin with =begin pod 1 and end with =end pod.**  
+> **Every Pod6 document has to begin with =begin pod and end with =end pod.**  
 
 
 So let's define those tokens.
@@ -138,8 +138,6 @@ However, we can provide the option for users to specify the number of empty line
 
 
 
-
-The remainder of the `begin-pod` directive can only be whitespace.
 
 
 
@@ -333,8 +331,6 @@ This subroutine will remove all the Pod6 code from a semi-literate file (`.sl`) 
 
 
 
-
-The subroutine has a single parameter, which is the input filename. The filename is required. Typically, this parameter is obtained from the command line or passed from the subroutine `MAIN`.
 
 
 
@@ -583,8 +579,6 @@ It can be useful to print line numbers in the code listing. It currently default
 
 
 
-`sub weave` returns a Str.
-
 
 
 
@@ -597,8 +591,6 @@ It can be useful to print line numbers in the code listing. It currently default
 
 
 
-#TODO
-
 
 
 
@@ -610,8 +602,6 @@ It can be useful to print line numbers in the code listing. It currently default
 
 
 
-
-First we will get the entire `.sl` file...
 
 
 
@@ -636,55 +626,6 @@ First we will get the entire `.sl` file...
   112|     my Str $cleaned-source = $source;
   113|     $cleaned-source ~~ s:g{\=end (\N*)\n+} =   "\=end$0\n";
   114|     $cleaned-source ~~ s:g{\n+\=begin (<.ws> pod) [<.ws> \d]?} = "\n\=begin$0";
-  115| 
-  116|     #TODO figure out how to delete comments while leaving no-weave directives
-  117| #=begin pod 1
-  118| #
-  119| #=head3 Remove full comment lines followed by blank lines
-  120| #
-  121| #=end pod
-  122| #
-  123| #    # delete full comment lines
-  124| #    $cleaned-source ~~ s:g{ ^^ \h* '#' \N* \n+} = '';
-  125| 
-  126| #=begin pod 1
-  127| #
-  128| #=head3 Remove EOL comments
-  129| #
-  130| #=end pod
-  131| #
-  132| #    # remove Raku comments, unless the '#' is escaped with
-  133| #    # a backslash or is in a quote. (It doesn't catch all quote
-  134| #    # constructs...(that's a TODO))
-  135| #    # And leave the newline.
-  136| #
-  137| #    for $source.lines -> $line {
-  138| #        next if $line ~~ /<Semi::Literate::one-line-no-weave>/;
-  139| #
-  140| #        my $m = $line ~~ m{
-  141| #                ^^
-  142| #               $<stuff-before-the-comment> = ( \N*? )
-  143| #
-  144| #                #TODO make this more robust - allow other delimiters, take into
-  145| #                #account the Q language, heredocs, nested strings...
-  146| #
-  147| #                <!after         # make sure the '#' isn't in a string
-  148| #                    ( [
-  149| #                        | \\
-  150| #                        | \" <-[\"]>*
-  151| #                        | \' <-[\']>*
-  152| #                        | \｢ <-[\｣]>*
-  153| #                    ] )
-  154| #                >
-  155| #                "#"
-  156| #
-  157| #                \N*
-  158| #                $$ };
-  159| #
-  160| #        $cleaned-source ~= $m ?? $<stuff-before-the-comment> !! $line;
-  161| #        $cleaned-source ~= "\n";
-  162| #    } # end of for $source.lines -> $line
-  163| #
 
 ```
 
@@ -697,7 +638,7 @@ First we will get the entire `.sl` file...
 
 
 ```
-  164|     my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
+  115|     my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
 
 ```
 
@@ -711,45 +652,43 @@ First we will get the entire `.sl` file...
 
 
 ```
-  165| #    note "weave submatches.elems: {@submatches.elems}";
-  166| #    note "submatches keys: {@submatches».keys}";
-  167|     my Str $weave = @submatches.map( {
-  168|         when .key eq 'pod' {
-  169|             .value
-  170|         } # end of when .key
+  116| #    note "weave submatches.elems: {@submatches.elems}";
+  117| #    note "submatches keys: {@submatches».keys}";
+  118|     my Str $weave = @submatches.map( {
+  119|         when .key eq 'pod' {
+  120|             .value
+  121|         } # end of when .key
 
 ```
 
 
 
 
-#TODO
-
 
 
 
 
 ```
-  171|         when .key eq 'woven-code' { qq:to/EOCB/; }
-  172|             \=begin pod
-  173|             \=begin code :lang<raku>
-  174|              { my $fmt = ($line-numbers ?? "%3s| " !! '') ~ "%s\n";
-  175|                 .value
-  176|                 .lines
-  177|                 .map($line-numbers
-  178|                         ?? {"%4s| %s\n".sprintf($line-number++, $_) }
-  179|                         !! {     "%s\n".sprintf(                $_) }
-  180|                     )
-  181|                 .chomp;
-  182|              }
-  183|             \=end code
-  184|             \=end pod
-  185|             EOCB
-  186| 
-  187|         when .key eq 'non-woven-code' {
-  188| #            note 'not-weaving';
-  189|           ''; # do nothing
-  190|         } # end of when .key eq 'non-woven'
+  122|         when .key eq 'woven-code' { qq:to/EOCB/; }
+  123|             \=begin pod
+  124|             \=begin code :lang<raku>
+  125|              { my $fmt = ($line-numbers ?? "%3s| " !! '') ~ "%s\n";
+  126|                 .value
+  127|                 .lines
+  128|                 .map($line-numbers
+  129|                         ?? {"%4s| %s\n".sprintf($line-number++, $_) }
+  130|                         !! {     "%s\n".sprintf(                $_) }
+  131|                     )
+  132|                 .chomp;
+  133|              }
+  134|             \=end code
+  135|             \=end pod
+  136|             EOCB
+  137| 
+  138|         when .key eq 'non-woven-code' {
+  139| #            note 'not-weaving';
+  140|           ''; # do nothing
+  141|         } # end of when .key eq 'non-woven'
 
 ```
 
@@ -757,8 +696,8 @@ First we will get the entire `.sl` file...
 
 
 ```
-  191|     } # end of my $weave = Semi::Literate.parse($source).caps.map
-  192|     ).join;
+  142|     } # end of my $weave = Semi::Literate.parse($source).caps.map
+  143|     ).join;
 
 ```
 
@@ -771,7 +710,7 @@ First we will get the entire `.sl` file...
 
 
 ```
-  193|     $weave ~~ s{\n  <blank-line>* $ } = '';
+  144|     $weave ~~ s{\n  <blank-line>* $ } = '';
 
 ```
 
@@ -785,8 +724,8 @@ And that's the end of the `tangle` subroutine!
 
 
 ```
-  194|     return $weave
-  195| } # end of sub weave (
+  145|     return $weave
+  146| } # end of sub weave (
 
 ```
 
@@ -837,4 +776,4 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 This is non-standard Pod6 and will not compile until woven!
 
 ----
-Rendered from  at 2023-09-06T20:54:23Z
+Rendered from  at 2023-09-07T23:14:54Z
