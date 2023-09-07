@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Wed 06 Sep 2023 04:45:02 PM EDT
+# Last modified: Wed 06 Sep 2023 04:48:51 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -12,18 +12,12 @@ use PrettyDump;
 use Data::Dump::Tree;
 #end-no-weave
 
-
-
-
 #    We need to declare them with C<my> because we
 #    need to use them in a subroutine later. #TODO explain why.
 
     my token rest-of-line {    \N* [\n | $]  }
     my token ws-till-EOL  {    \h* [\n | $]  }
     my token blank-line   { ^^ <ws-till-EOL> }
-
-
-
 
 #use Grammar::Tracer;
 grammar Semi::Literate is export {
@@ -35,31 +29,17 @@ grammar Semi::Literate is export {
         ]*
     } # end of token TOP
 
-
-
-
     token begin-pod {
         ^^ <.ws> '=' begin <.ws> pod
-
-
-
 
         [ <.ws> $<num-blank-lines>=(\d+) ]?  # an optional number to specify the
                                          # number of blank lines to replace the
                                          # C<Pod> blocks when tangling.
 
-
-
         <ws-till-EOL>
     } # end of token begin
 
-
-
-
     token end-pod { ^^ <.ws> '=' end <.ws> pod <ws-till-EOL> }
-
-
-
 
     token pod {
         <begin-pod>
@@ -67,13 +47,7 @@ grammar Semi::Literate is export {
         <end-pod>
     } # end of token pod
 
-
-
-
     token woven-code { <plain-line>+ }
-
-
-
 
     token non-woven-code {
         [
@@ -82,15 +56,11 @@ grammar Semi::Literate is export {
         ]+
     } # end of token non-woven
 
-
-
     token one-line-no-weave {
         ^^ \N*?
         '#' <.ws> 'no-weave-this-line'
         <ws-till-EOL>
     } # end of token one-line-no-weave
-
-
 
     token begin-no-weave {
         ^^ <.ws>                    # optional leading whitespace
@@ -110,9 +80,6 @@ grammar Semi::Literate is export {
         <end-no-weave>
     } # end of token delimited-no-weave
 
-
-
-
     token plain-line {
         :my $*EXCEPTION = False;
         [
@@ -126,44 +93,22 @@ grammar Semi::Literate is export {
         <?{ !$*EXCEPTION }>
     } # end of token plain-line
 
-
-
-
 } # end of grammar Semi::Literate
-
-
-
 
 #TODO multi sub to accept Str & IO::PatGh
 sub tangle (
 
-
-
     Str $input-file!,
-
 
         --> Str ) is export {
 
-
-
     my Str $source = $input-file.IO.slurp;
-
-
-
-
-
 
 
     $source ~~ s:g/\=end (\N*)\n+/\=end$0\n/;
     $source ~~ s:g/\n+\=begin    /\n\=begin/;
 
-
-
-
     my Pair @submatches = Semi::Literate.parse($source).caps;
-
-
-
 
 #    note "submatches.elems: {@submatches.elems}";
     my Str $raku-code = @submatches.map( {
@@ -171,10 +116,6 @@ sub tangle (
         when .key eq 'woven-code'|'non-woven-code' {
             .value;
         }
-
-
-
-
 
         when .key eq 'pod' {
             my $num-blank-lines = .value.hash<begin-pod><num-blank-lines>;
@@ -185,76 +126,47 @@ sub tangle (
         default { die "Tangle: should never get here. .key == {.key}" }
         #end-no-weave
 
-
-
     } # end of my Str $raku-code = @submatches.map(
     ).join;
-
-
-
 
     $source ~~ s:g{ ^^ \h*   '#' <.ws>     'begin-no-weave' <rest-of-line> } = '';
     $source ~~ s:g{ ^^ (.*?) '#' <.ws>     'begin-no-weave' <rest-of-line> } = "$0\n";
     $source ~~ s:g{ ^^ \h*   '#' <.ws> 'end-no-weave' <rest-of-line> } = '';
 
-
-
-
     $raku-code ~~ s{\n  <blank-line>* $ } = '';
-
-
 
     return $raku-code;
 } # end of sub tangle (
 
-
-
-
 sub weave (
 
-
-
-
     Str $input-file!;
-
-
 
     Str :f(:$format) is copy = 'markdown';
         #= The output format for the woven file.
 
-
-
-
     Bool :l(:$line-numbers)  = True;
         #= Should line numbers be added to the embeded code?
 
-
-
-
-
         --> Str ) is export {
-
-
 
     my UInt $line-number = 1;
 
-
-
-
     my Str $source = $input-file.IO.slurp;
-
-
-
 
     my Str $cleaned-source = $source;
     $cleaned-source ~~ s:g{\=end (\N*)\n+} =   "\=end$0\n";
     $cleaned-source ~~ s:g{\n+\=begin (<.ws> pod) [<.ws> \d]?} = "\n\=begin$0";
 
-
-
-
-    # delete full comment lines
-    $cleaned-source ~~ s:g{ ^^ \h* '#' \N* \n+} = '';
+    #TODO figure out how to delete comments while leaving no-weave directives
+#=begin pod 1
+#
+#=head3 Remove full comment lines followed by blank lines
+#
+#=end pod
+#
+#    # delete full comment lines
+#    $cleaned-source ~~ s:g{ ^^ \h* '#' \N* \n+} = '';
 
 #=begin pod 1
 #
@@ -295,14 +207,7 @@ sub weave (
 #    } # end of for $source.lines -> $line
 #
 
-
-
-
     my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
-
-
-
-
 
 #    note "weave submatches.elems: {@submatches.elems}";
 #    note "submatches keys: {@submatches».keys}";
@@ -310,8 +215,6 @@ sub weave (
         when .key eq 'pod' {
             .value
         } # end of when .key
-
-
 
         when .key eq 'woven-code' { qq:to/EOCB/; }
             \=begin pod
@@ -340,19 +243,10 @@ sub weave (
     } # end of my $weave = Semi::Literate.parse($source).caps.map
     ).join;
 
-
-
-
     $weave ~~ s{\n  <blank-line>* $ } = '';
-
-
-
 
     return $weave
 } # end of sub weave (
-
-
-
 
 # begin-no-weave
 my %*SUB-MAIN-OPTS =
