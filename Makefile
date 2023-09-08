@@ -36,7 +36,7 @@ view:
 temporary:
 	@chmod -R a+w lib/
 	@echo -n "> Uninstalling Semi::Literate..."
-	@zef uninstall Semi::Literate >/dev/null
+	@-zef uninstall Semi::Literate >/dev/null
 	@echo "\e[32mOK\e[0m"
 	@echo -n "> pod-tangling Literate.sl..."
 	@pod-tangle source/Literate.sl > lib/Semi/Literate.rakumod
