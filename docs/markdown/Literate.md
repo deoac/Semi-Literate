@@ -2,8 +2,8 @@
 >
 ## Table of Contents
 [INTRODUCTION](#introduction)  
-[Convenient tokens](#convenient-tokens)  
 [The Grammar](#the-grammar)  
+[Convenient tokens](#convenient-tokens)  
 [The Pod6 delimiters](#the-pod6-delimiters)  
 [The begin-pod token](#the-begin-pod-token)  
 [The end-pod token](#the-end-pod-token)  
@@ -43,8 +43,9 @@
     2| 
     3| # Get the Pod vs. Code structure of a Raku/Pod6 file.
     4| # © 2023 Shimon Bollinger. All rights reserved.
-    5| # Last modified: Thu 07 Sep 2023 07:13:05 PM EDT
+    5| # Last modified: Fri 08 Sep 2023 07:21:52 PM EDT
     6| # Version 0.0.1
+    7| 
 
 ```
 
@@ -56,27 +57,33 @@ I want to create a semi-literate Raku source file with the extension `.sl`. Then
 
 To do this, I need to divide the file into `Pod` and `Code` sections by parsing it. For this purpose, I will create a dedicated Grammar.
 
-## Convenient tokens
-Let's create three tokens for convenience.
-
-
-
-
-
-```
-    7| #    We need to declare them with C<my> because we
-    8| #    need to use them in a subroutine later. #TODO explain why.
-    9| 
-   10|     my token rest-of-line {    \N* [\n | $]  }
-   11|     my token ws-till-EOL  {    \h* [\n | $]  }
-   12|     my token blank-line   { ^^ <ws-till-EOL> }
-
-```
-
-
-
-
 # The Grammar
+
+
+
+
+## Convenient tokens
+Let's create four tokens for convenience.
+
+
+
+
+
+```
+    8|     my token hws          {    <!ww>\h*        }
+    9|     my token rest-of-line {    \N*   [\n | $]  }
+   10|     my token ws-till-EOL  {    <hws> [\n | $]  }
+   11|     my token blank-line   { ^^ <ws-till-EOL>   }
+   12| 
+   13| 
+   14| #use Grammar::Tracer;
+   15| grammar Semi::Literate is export {
+
+```
+
+
+
+
 Our file will exclusively consist of `Pod` or `Code` sections, and nothing else. The `Code` sections are of two types, a) code that is woven into the documentation, and b) code that is not woven into the documentation. The `TOP` token clearly indicates this.
 
 
@@ -84,15 +91,13 @@ Our file will exclusively consist of `Pod` or `Code` sections, and nothing else.
 
 
 ```
-   13| #use Grammar::Tracer;
-   14| grammar Semi::Literate is export {
-   15|     token TOP {
-   16|         [
-   17|           | <non-woven-code>
-   18|           | <pod>
-   19|           | <woven-code>
-   20|         ]*
-   21|     } # end of token TOP
+   16|     token TOP {
+   17|         [
+   18|           | <non-woven-code>
+   19|           | <pod>
+   20|           | <woven-code>
+   21|         ]*
+   22|     } # end of token TOP
 
 ```
 
@@ -113,8 +118,8 @@ So let's define those tokens.
 
 
 ```
-   22|     token begin-pod {
-   23|         ^^ <.ws> '=' begin <.ws> pod
+   23|     token begin-pod {
+   24|         ^^ <hws> '=' begin <hws> pod <ws-till-EOL>
 
 ```
 
@@ -130,22 +135,10 @@ However, we can provide the option for users to specify the number of empty line
 
 
 ```
-   24|         [ <.ws> $<num-blank-lines>=(\d+) ]?  # an optional number to specify the
-   25|                                          # number of blank lines to replace the
-   26|                                          # C<Pod> blocks when tangling.
-
-```
-
-
-
-
-
-
-
-
-```
-   27|         <ws-till-EOL>
-   28|     } # end of token begin
+   25|         # an optional number to specify the number of blank lines
+   26|         # to replace the C<Pod> blocks when tangling.
+   27|         [ '=' comment $<num-blank-lines>=(\d+) ]?
+   28|     } # end of token begin-pod
 
 ```
 
@@ -160,7 +153,7 @@ The `end-pod` token is much simpler.
 
 
 ```
-   29|     token end-pod { ^^ <.ws> '=' end <.ws> pod <ws-till-EOL> }
+   29|     token end-pod { ^^ <hws> '=' end <hws> pod <ws-till-EOL> }
 
 ```
 
@@ -236,7 +229,7 @@ Simply append `# begin-no-weave` at the end of the line!
 ```
    42|     token one-line-no-weave {
    43|         ^^ \N*?
-   44|         '#' <.ws> 'no-weave-this-line'
+   44|         '#' <hws> 'no-weave-this-line'
    45|         <ws-till-EOL>
    46|     } # end of token one-line-no-weave
 
@@ -254,14 +247,14 @@ Simply add comments `# begin-no-weave` and `#end-no-weave` before and after the 
 
 ```
    47|     token begin-no-weave {
-   48|         ^^ <.ws>                    # optional leading whitespace
-   49|         '#' <.ws> 'begin-no-weave'  # the delimiter itself (# begin-no-weave)
+   48|         ^^ <hws>                    # optional leading whitespace
+   49|         '#' <hws> 'begin-no-weave'  # the delimiter itself (# begin-no-weave)
    50|         <ws-till-EOL>               # optional trailing whitespace or comment
    51|     } # end of token <begin-no-weave>
    52| 
    53|     token end-no-weave {
-   54|         ^^ <.ws>                    # optional leading whitespace
-   55|         '#' <.ws> 'end-no-weave'    # the delimiter itself (#end-no-weave)
+   54|         ^^ <hws>                    # optional leading whitespace
+   55|         '#' <hws> 'end-no-weave'    # the delimiter itself (#end-no-weave)
    56|         <ws-till-EOL>               # optional trailing whitespace or comment
    57|     } # end of token <end--no-weave>
    58| 
@@ -398,8 +391,9 @@ So we'll remove the blank lines immediately outside the beginning and end of the
 
 
 ```
-   82|     $source ~~ s:g/\=end (\N*)\n+/\=end$0\n/;
-   83|     $source ~~ s:g/\n+\=begin    /\n\=begin/;
+   82|     my Str $cleaned-source = $source;
+   83|     $cleaned-source ~~ s:g{\=end (\N*)\n+} =   "\=end$0\n";
+   84|     $cleaned-source ~~ s:g{\n+\=begin (<hws> pod) [<hws> \d]?} = "\n\=begin$0";
 
 ```
 
@@ -414,7 +408,7 @@ We parse it using the `Semi::Literate` grammar and obtain a list of submatches (
 
 
 ```
-   84|     my Pair @submatches = Semi::Literate.parse($source).caps;
+   85|     my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
 
 ```
 
@@ -428,12 +422,12 @@ We parse it using the `Semi::Literate` grammar and obtain a list of submatches (
 
 
 ```
-   85| #    note "submatches.elems: {@submatches.elems}";
-   86|     my Str $raku-code = @submatches.map( {
-   87| #        note .key;
-   88|         when .key eq 'woven-code'|'non-woven-code' {
-   89|             .value;
-   90|         }
+   86| #    note "submatches.elems: {@submatches.elems}";
+   87|     my Str $raku-code = @submatches.map( {
+   88| #        note .key;
+   89|         when .key eq 'woven-code'|'non-woven-code' {
+   90|             .value;
+   91|         }
 
 ```
 
@@ -446,10 +440,12 @@ We parse it using the `Semi::Literate` grammar and obtain a list of submatches (
 
 
 ```
-   91|         when .key eq 'pod' {
-   92|             my $num-blank-lines = .value.hash<begin-pod><num-blank-lines>;
-   93|             "\n" x $num-blank-lines with $num-blank-lines;
-   94|         }
+   92|         when .key eq 'pod' {
+   93|             my $num-blank-lines = .value.hash<begin-pod><num-blank-lines>;
+   94| #            pd .value.hash<begin-pod>; exit;
+   95|             "####\n" x $num-blank-lines with $num-blank-lines;
+   96|         }
+   97| 
 
 ```
 
@@ -463,8 +459,8 @@ We parse it using the `Semi::Literate` grammar and obtain a list of submatches (
 
 
 ```
-   95|     } # end of my Str $raku-code = @submatches.map(
-   96|     ).join;
+   98|     } # end of my Str $raku-code = @submatches.map(
+   99|     ).join;
 
 ```
 
@@ -477,9 +473,9 @@ We parse it using the `Semi::Literate` grammar and obtain a list of submatches (
 
 
 ```
-   97|     $source ~~ s:g{ ^^ \h*   '#' <.ws>     'begin-no-weave' <rest-of-line> } = '';
-   98|     $source ~~ s:g{ ^^ (.*?) '#' <.ws>     'begin-no-weave' <rest-of-line> } = "$0\n";
-   99|     $source ~~ s:g{ ^^ \h*   '#' <.ws> 'end-no-weave' <rest-of-line> } = '';
+  100|     $source ~~ s:g{ ^^ \h*   '#' <hws> 'begin-no-weave' <rest-of-line> } = '';
+  101|     $source ~~ s:g{ ^^ (.*?) '#' <hws> 'begin-no-weave' <rest-of-line> } = "$0\n";
+  102|     $source ~~ s:g{ ^^ \h*   '#' <hws> 'end-no-weave' <rest-of-line>   } = '';
 
 ```
 
@@ -492,7 +488,7 @@ We parse it using the `Semi::Literate` grammar and obtain a list of submatches (
 
 
 ```
-  100|     $raku-code ~~ s{\n  <blank-line>* $ } = '';
+  103|     $raku-code ~~ s{\n  <blank-line>* $ } = '';
 
 ```
 
@@ -506,8 +502,8 @@ And that's the end of the `tangle` subroutine!
 
 
 ```
-  101|     return $raku-code;
-  102| } # end of sub tangle (
+  104|     return $raku-code;
+  105| } # end of sub tangle (
 
 ```
 
@@ -522,7 +518,7 @@ The `Weave` subroutine will _weave_ the `.sl` file into a readable Markdown, HTM
 
 
 ```
-  103| sub weave (
+  106| sub weave (
 
 ```
 
@@ -540,7 +536,7 @@ The input filename is required. Typically, this parameter is obtained from the c
 
 
 ```
-  104|     Str $input-file!;
+  107|     Str $input-file!;
 
 ```
 
@@ -555,8 +551,8 @@ The output of the weave can (currently) be Markdown, Text, or HTML. It defaults 
 
 
 ```
-  105|     Str :f(:$format) is copy = 'markdown';
-  106|         #= The output format for the woven file.
+  108|     Str :f(:$format) is copy = 'markdown';
+  109|         #= The output format for the woven file.
 
 ```
 
@@ -571,8 +567,8 @@ It can be useful to print line numbers in the code listing. It currently default
 
 
 ```
-  107|     Bool :l(:$line-numbers)  = True;
-  108|         #= Should line numbers be added to the embeded code?
+  110|     Bool :l(:$line-numbers)  = True;
+  111|         #= Should line numbers be added to the embeded code?
 
 ```
 
@@ -584,7 +580,7 @@ It can be useful to print line numbers in the code listing. It currently default
 
 
 ```
-  109|         --> Str ) is export {
+  112|         --> Str ) is export {
 
 ```
 
@@ -596,7 +592,7 @@ It can be useful to print line numbers in the code listing. It currently default
 
 
 ```
-  110|     my UInt $line-number = 1;
+  113|     my UInt $line-number = 1;
 
 ```
 
@@ -608,7 +604,7 @@ It can be useful to print line numbers in the code listing. It currently default
 
 
 ```
-  111|     my Str $source = $input-file.IO.slurp;
+  114|     my Str $source = $input-file.IO.slurp;
 
 ```
 
@@ -623,9 +619,9 @@ It can be useful to print line numbers in the code listing. It currently default
 
 
 ```
-  112|     my Str $cleaned-source = $source;
-  113|     $cleaned-source ~~ s:g{\=end (\N*)\n+} =   "\=end$0\n";
-  114|     $cleaned-source ~~ s:g{\n+\=begin (<.ws> pod) [<.ws> \d]?} = "\n\=begin$0";
+  115|     my Str $cleaned-source = $source;
+  116|     $cleaned-source ~~ s:g{\=end (\N*)\n+} =   "\=end$0\n";
+  117|     $cleaned-source ~~ s:g{\n+\=begin (<hws> pod) [<hws> \d]?} = "\n\=begin$0";
 
 ```
 
@@ -638,7 +634,7 @@ It can be useful to print line numbers in the code listing. It currently default
 
 
 ```
-  115|     my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
+  118|     my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
 
 ```
 
@@ -652,12 +648,12 @@ It can be useful to print line numbers in the code listing. It currently default
 
 
 ```
-  116| #    note "weave submatches.elems: {@submatches.elems}";
-  117| #    note "submatches keys: {@submatches».keys}";
-  118|     my Str $weave = @submatches.map( {
-  119|         when .key eq 'pod' {
-  120|             .value
-  121|         } # end of when .key
+  119| #    note "weave submatches.elems: {@submatches.elems}";
+  120| #    note "submatches keys: {@submatches».keys}";
+  121|     my Str $weave = @submatches.map( {
+  122|         when .key eq 'pod' {
+  123|             .value
+  124|         } # end of when .key
 
 ```
 
@@ -669,26 +665,27 @@ It can be useful to print line numbers in the code listing. It currently default
 
 
 ```
-  122|         when .key eq 'woven-code' { qq:to/EOCB/; }
-  123|             \=begin pod
-  124|             \=begin code :lang<raku>
-  125|              { my $fmt = ($line-numbers ?? "%3s| " !! '') ~ "%s\n";
-  126|                 .value
-  127|                 .lines
-  128|                 .map($line-numbers
-  129|                         ?? {"%4s| %s\n".sprintf($line-number++, $_) }
-  130|                         !! {     "%s\n".sprintf(                $_) }
-  131|                     )
-  132|                 .chomp;
-  133|              }
-  134|             \=end code
-  135|             \=end pod
-  136|             EOCB
-  137| 
-  138|         when .key eq 'non-woven-code' {
-  139| #            note 'not-weaving';
-  140|           ''; # do nothing
-  141|         } # end of when .key eq 'non-woven'
+  125|         when .key eq 'woven-code' { qq:to/EOCB/; }
+  126|             \=begin pod
+  127|             \=begin code :lang<raku>
+  128|              { my $fmt = ($line-numbers ?? "%3s| " !! '') ~ "%s\n";
+  129|                 .value
+  130|                 .lines
+  131|                 .map($line-numbers
+  132|                         ?? {"%4s| %s\n".sprintf($line-number++, $_) }
+  133|                         !! {     "%s\n".sprintf(                $_) }
+  134|                     )
+  135|                 .chomp;
+  136|              }
+  137|             \=end code
+  138|             \=end pod
+  139|             EOCB
+  140| 
+  141|         when .key eq 'non-woven-code' {
+  142| #            note 'not-weaving';
+  143|           ''; # do nothing
+  144|         } # end of when .key eq 'non-woven'
+  145| 
 
 ```
 
@@ -696,8 +693,8 @@ It can be useful to print line numbers in the code listing. It currently default
 
 
 ```
-  142|     } # end of my $weave = Semi::Literate.parse($source).caps.map
-  143|     ).join;
+  146|     } # end of my $weave = Semi::Literate.parse($source).caps.map
+  147|     ).join;
 
 ```
 
@@ -710,7 +707,7 @@ It can be useful to print line numbers in the code listing. It currently default
 
 
 ```
-  144|     $weave ~~ s{\n  <blank-line>* $ } = '';
+  148|     $weave ~~ s{\n  <blank-line>* $ } = '';
 
 ```
 
@@ -724,8 +721,8 @@ And that's the end of the `tangle` subroutine!
 
 
 ```
-  145|     return $weave
-  146| } # end of sub weave (
+  149|     return $weave
+  150| } # end of sub weave (
 
 ```
 
@@ -776,4 +773,4 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 This is non-standard Pod6 and will not compile until woven!
 
 ----
-Rendered from  at 2023-09-07T23:14:54Z
+Rendered from  at 2023-09-08T23:23:50Z

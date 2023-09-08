@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Thu 07 Sep 2023 07:13:05 PM EDT
+# Last modified: Fri 08 Sep 2023 07:21:52 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -29,22 +29,28 @@ To do this, I need to divide the file into C<Pod> and C<Code> sections by parsin
 it. For this purpose, I will create a dedicated Grammar.
 
 
-=head2 Convenient tokens
-
-Let's create three tokens for convenience.
+=head1 The Grammar
 
 =end pod
 
-#    We need to declare them with C<my> because we
-#    need to use them in a subroutine later. #TODO explain why.
+=begin pod
+=head2 Convenient tokens
 
-    my token rest-of-line {    \N* [\n | $]  }
-    my token ws-till-EOL  {    \h* [\n | $]  }
-    my token blank-line   { ^^ <ws-till-EOL> }
+Let's create four tokens for convenience.
+
+=end pod
+
+
+    my token hws          {    <!ww>\h*        }
+    my token rest-of-line {    \N*   [\n | $]  }
+    my token ws-till-EOL  {    <hws> [\n | $]  }
+    my token blank-line   { ^^ <ws-till-EOL>   }
+
+
+#use Grammar::Tracer;
+grammar Semi::Literate is export {
 
 =begin pod
-=comment 2
-=head1 The Grammar
 
 Our file will exclusively consist of C<Pod> or C<Code> sections, and nothing
 else. The C<Code> sections are of two types, a) code that is woven into the
@@ -53,8 +59,6 @@ C<TOP> token clearly indicates this.
 
 =end pod
 
-#use Grammar::Tracer;
-grammar Semi::Literate is export {
     token TOP {
         [
           | <non-woven-code>
@@ -82,8 +86,7 @@ So let's define those tokens.
 =end pod
 
     token begin-pod {
-        ^^ <.ws> '=' begin <.ws> pod
-
+        ^^ <hws> '=' begin <hws> pod <ws-till-EOL>
 =begin pod
 =comment 1
 
@@ -99,16 +102,10 @@ non-standard Pod6 and will not compile until woven!>
 
 =end pod
 
-        [ <.ws> $<num-blank-lines>=(\d+) ]?  # an optional number to specify the
-                                         # number of blank lines to replace the
-                                         # C<Pod> blocks when tangling.
-=begin pod
-=comment 1
-The remainder of the C<begin-pod> directive can only be whitespace.
-=end pod
-
-        <ws-till-EOL>
-    } # end of token begin
+        # an optional number to specify the number of blank lines
+        # to replace the C<Pod> blocks when tangling.
+        [ '=' comment $<num-blank-lines>=(\d+) ]?
+    } # end of token begin-pod
 
 =begin pod
 =comment 1
@@ -119,7 +116,7 @@ The C<end-pod> token is much simpler.
 
 =end pod
 
-    token end-pod { ^^ <.ws> '=' end <.ws> pod <ws-till-EOL> }
+    token end-pod { ^^ <hws> '=' end <hws> pod <ws-till-EOL> }
 
 =begin pod
 =comment 1
@@ -189,7 +186,7 @@ Simply append C<# begin-no-weave> at the end of the line!
 
     token one-line-no-weave {
         ^^ \N*?
-        '#' <.ws> 'no-weave-this-line'
+        '#' <hws> 'no-weave-this-line'
         <ws-till-EOL>
     } # end of token one-line-no-weave
 
@@ -205,14 +202,14 @@ code you want ignored in the formatted document.
 
 =end pod
     token begin-no-weave {
-        ^^ <.ws>                    # optional leading whitespace
-        '#' <.ws> 'begin-no-weave'  # the delimiter itself (# begin-no-weave)
+        ^^ <hws>                    # optional leading whitespace
+        '#' <hws> 'begin-no-weave'  # the delimiter itself (# begin-no-weave)
         <ws-till-EOL>               # optional trailing whitespace or comment
     } # end of token <begin-no-weave>
 
     token end-no-weave {
-        ^^ <.ws>                    # optional leading whitespace
-        '#' <.ws> 'end-no-weave'    # the delimiter itself (#end-no-weave)
+        ^^ <hws>                    # optional leading whitespace
+        '#' <hws> 'end-no-weave'    # the delimiter itself (#end-no-weave)
         <ws-till-EOL>               # optional trailing whitespace or comment
     } # end of token <end--no-weave>
 
@@ -323,8 +320,9 @@ So we'll remove the blank lines immediately outside the beginning and end of
 the Pod6 sections.
 =end pod
 
-    $source ~~ s:g/\=end (\N*)\n+/\=end$0\n/;
-    $source ~~ s:g/\n+\=begin    /\n\=begin/;
+    my Str $cleaned-source = $source;
+    $cleaned-source ~~ s:g{\=end (\N*)\n+} =   "\=end$0\n";
+    $cleaned-source ~~ s:g{\n+\=begin (<hws> pod) [<hws> \d]?} = "\n\=begin$0";
 
 =begin pod
 =comment 1
@@ -334,7 +332,7 @@ We parse it using the C<Semi::Literate> grammar
 and obtain a list of submatches (that's what the C<caps> method does) ...
 =end pod
 
-    my Pair @submatches = Semi::Literate.parse($source).caps;
+    my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
 
 =begin pod
 =comment 1
@@ -358,7 +356,8 @@ and obtain a list of submatches (that's what the C<caps> method does) ...
 
         when .key eq 'pod' {
             my $num-blank-lines = .value.hash<begin-pod><num-blank-lines>;
-            "\n" x $num-blank-lines with $num-blank-lines;
+#            pd .value.hash<begin-pod>; exit;
+            "####\n" x $num-blank-lines with $num-blank-lines;
         }
 
         # begin-no-weave
@@ -379,9 +378,9 @@ and obtain a list of submatches (that's what the C<caps> method does) ...
 
 =end pod
 
-    $source ~~ s:g{ ^^ \h*   '#' <.ws>     'begin-no-weave' <rest-of-line> } = '';
-    $source ~~ s:g{ ^^ (.*?) '#' <.ws>     'begin-no-weave' <rest-of-line> } = "$0\n";
-    $source ~~ s:g{ ^^ \h*   '#' <.ws> 'end-no-weave' <rest-of-line> } = '';
+    $source ~~ s:g{ ^^ \h*   '#' <hws> 'begin-no-weave' <rest-of-line> } = '';
+    $source ~~ s:g{ ^^ (.*?) '#' <hws> 'begin-no-weave' <rest-of-line> } = "$0\n";
+    $source ~~ s:g{ ^^ \h*   '#' <hws> 'end-no-weave' <rest-of-line>   } = '';
 
 =begin pod
 =comment 1
@@ -480,7 +479,7 @@ B<EXPLAIN THIS!>
 
     my Str $cleaned-source = $source;
     $cleaned-source ~~ s:g{\=end (\N*)\n+} =   "\=end$0\n";
-    $cleaned-source ~~ s:g{\n+\=begin (<.ws> pod) [<.ws> \d]?} = "\n\=begin$0";
+    $cleaned-source ~~ s:g{\n+\=begin (<hws> pod) [<hws> \d]?} = "\n\=begin$0";
 
 =begin pod
 =comment 1
