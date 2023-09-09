@@ -23,12 +23,16 @@ SOURCES          := $(wildcard ./source/*.sl)
 HTML_TARGETS     := $(patsubst ./source/%.sl, ./docs/html/%.html,   $(SOURCES))
 MARKDOWN_TARGETS := $(patsubst ./source/%.sl, ./docs/markdown/%.md, $(SOURCES))
 PDF_TARGETS      := $(patsubst ./source/%.sl, ./docs/pdf/%.pdf,     $(SOURCES))
+TEXT_TARGETS     := $(patsubst ./source/%.sl, ./docs/text/%.txt,    $(SOURCES))
 
 docs: html markdown pdf
 html: $(HTML_TARGETS)
 markdown: $(MARKDOWN_TARGETS)
 pdf: $(PDF_TARGETS)
+text: $(TEXT_TARGETS)
 
+touch-sources:
+	@touch source/*
 view:
 	@open README.md
 	@open README.html
@@ -43,43 +47,43 @@ temporary:
 	@chmod -R a-w lib/
 	@echo "\e[32mOK\e[0m"
 
-Literate.rakumod: Literate.sl
+Literate.rakumod: source/Literate.sl
 	@chmod -R a+w lib/
 	@echo -n "> Compiling the Semi::Literate module..."
 	@sl-tangle source/Literate.sl  > lib/Semi/Literate.rakumod
 	@chmod -R a-w lib/
 	@echo "\e[32mOK\e[0m"
 
-module-install:
+module-install: lib/Semi/Literate.rakumod
 	@echo -n "> Installing the newly created module with zef..."
 	@zef install --force-build --force-install --force-test . >/dev/null
 	@echo "\e[32mOK\e[0m"
 
-sl-tangle: Literate.rakumod sl-tangle.sl
+sl-tangle: source/sl-tangle.sl
 	@chmod -R a+w bin/
 	@echo -n "> Creating the sl-tangle executable..."
 	@pod-tangle source/sl-tangle.sl > bin/sl-tangle
 	@chmod -R a-w,a+x bin/
 	@echo "\e[32mOK\e[0m"
 
-sl-weave: Literate.rakumod sl-weave.sl
+sl-weave: source/sl-weave.sl
 	@chmod -R a+w bin/
 	@echo -n "> Creating the sl-weave executable..."
 	@bin/sl-tangle source/sl-weave.sl  > bin/sl-weave
 	@chmod -R a-w,a+x bin/
 	@echo "\e[32mOK\e[0m"
 
-executable-install:
+executable-install: bin/sl-tangle bin/sl-weave
 	@echo -n "> Installing the newly created executables with zef..."
 	@zef install --force-build --force-install --force-test . >/dev/null
 	@echo "\e[32mOK\e[0m"
 
-install:
+install: lib/Semi/Literate.rakumod bin/sl-tangle bin/sl-weave
 	@echo -n "> Installing the module and the executables with zef..."
 	@zef install --force-build --force-install --force-test . >/dev/null
 	@echo "\e[32mOK\e[0m"
 
-test: ${LITERATE} executables
+test:
 	@echo -n "> Running the tests..."
 	@prove6 -l -v
 	@echo "\e[32mOK\e[0m"
@@ -102,7 +106,7 @@ sanity-tests:
 
 clean:
 	@echo "> Deleting the intermediate files..."
-	@rm -rf deleteme.p6 deleteme.raku deleteme.md
+	@rm -rf deleteme.*
 	@echo -n "> Setting permissions..."
 	@chmod -R a+x,a-w bin/; chmod -R a-w docs/; chmod -R a-w lib/
 	@echo "\e[32mOK\e[0m"
@@ -113,6 +117,7 @@ create_doc_dirs:
 	mkdir -p $(DOCDIR)/html
 	mkdir -p $(DOCDIR)/markdown
 	mkdir -p $(DOCDIR)/pdf
+	mkdir -p $(DOCDIR)/text
 	@echo "\e[32mOK\e[0m"
 
 ./docs/html/%.html: ./source/%.sl
@@ -132,4 +137,11 @@ create_doc_dirs:
 	@echo -n "> Creating a PDF document for $<..."
 	@sl-weave --format=pdf --/verbose --output-file=$@ $<
 	@echo "\e[32mOK\e[0m"
+
+./docs/text/%.txt: ./source/%.sl
+	@mkdir -p $(@D)
+	@echo -n "> Creating a text document for $<..."
+	@sl-weave --format=text --/verbose --output-file=$@ $<
+	@echo "\e[32mOK\e[0m"
+
 
