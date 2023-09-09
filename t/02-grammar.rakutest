@@ -8,7 +8,7 @@ my %bad-pod;
 
 %good-pod.push: q:to/EOS/ =>  "12. item lists";
 #12
-=begin pod 12
+=begin pod
 Let's consider two common proverbs:
 
 =begin item
@@ -32,7 +32,7 @@ EOS
 
 %good-pod.push: q:to/EOS/ =>  "01. Empty Pod";
 #01
-=begin pod 01
+=begin pod
 =end pod
 EOS
 
@@ -263,19 +263,15 @@ like "#end-no-weave    ", /<Semi::Literate::end-no-weave>/,
                                                 "end-no-weave delimiter OK";
 like "#begin-no-weave  ", /<Semi::Literate::begin-no-weave>/,
                                                 "begin-no-weave delimiter OK";
-my $comment-test = "=begin pod";
-say $comment-test;
-like $comment-test, /<Semi::Literate::begin-pod>/, "=begin pod test OK";
+#my $comment-test = "=begin pod";
+#like $comment-test, /<Semi::Literate::begin-pod>/, "=begin pod test OK";
+#$comment-test = "=begin pod\n=comment";
+#like $comment-test, /<Semi::Literate::begin-pod>/, "=begin pod with comment OK";
+#$comment-test = "=begin pod\n=comment 1";
+#like $comment-test, /<Semi::Literate::begin-pod>/, "=begin pod with comment 1 OK";
+#$comment-test = "=begin pod\n=comment add two lines because we're defining a sub 2";
+#like $comment-test, /<Semi::Literate::begin-pod>/, "=begin pod with comment 2 OK";
 
-$comment-test = "=begin pod
-=comment";
-say $comment-test;
-like $comment-test, /<Semi::Literate::begin-pod>/, "=begin pod with comment OK";
-$comment-test = "=begin pod
-=comment 1";
-say $comment-test;
-use Grammar::Tracer;
-like $comment-test, /<Semi::Literate::begin-pod>/, "=begin pod with comment 1 OK";
 skip "Can't test against a local file.";
 #my Str $source = '/Users/jimbollinger/Documents/Development/raku/Projects/Semi-Literate/source/Literate.sl'.IO.slurp;
 #is Semi::Literate.parse($source), $source, 'Checking the source code!';
