@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Fri 08 Sep 2023 07:21:52 PM EDT
+# Last modified: Sat 09 Sep 2023 04:50:08 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -25,15 +25,6 @@ C<.sl>. Then, I will I<weave> it to generate a readable file in formats like
 Markdown, PDF, HTML, and more. Additionally, I will I<tangle> it to create source
 code without any Pod6.
 
-To do this, I need to divide the file into C<Pod> and C<Code> sections by parsing
-it. For this purpose, I will create a dedicated Grammar.
-
-
-=head1 The Grammar
-
-=end pod
-
-=begin pod
 =head2 Convenient tokens
 
 Let's create four tokens for convenience.
@@ -41,11 +32,19 @@ Let's create four tokens for convenience.
 =end pod
 
 
-    my token hws          {    <!ww>\h*        }
+    my token hws          {    <!ww>\h*        } # Horizontal White Space
     my token rest-of-line {    \N*   [\n | $]  }
-    my token ws-till-EOL  {    <hws> [\n | $]  }
+    my token ws-till-EOL  {    <hws> [\n | $]  } # no-weave-this-line
     my token blank-line   { ^^ <ws-till-EOL>   }
 
+=begin pod
+To do this, I need to divide the file into C<Pod> and C<Code> sections by parsing
+it. For this purpose, I will create a dedicated Grammar.
+
+
+=head1 The Grammar
+
+=end pod
 
 #use Grammar::Tracer;
 grammar Semi::Literate is export {
@@ -85,26 +84,9 @@ So let's define those tokens.
 
 =end pod
 
+
     token begin-pod {
         ^^ <hws> '=' begin <hws> pod <ws-till-EOL>
-=begin pod
-=comment 1
-
-Most programming applications do not focus on the structure of the executable
-file, which is not meant to be easily read by humans.  Our tangle would replace
-all the Pod6 blocks with a single C<\n>.  That can clump code together that is
-easier read if there were one or more blank lines.
-
-However, we can provide the option for users to specify the number of empty
-lines that should replace a C<pod> block. To do this, simply add a number at
-the end of the C<=begin> directive. For example, C<=begin  pod>. N<This is
-non-standard Pod6 and will not compile until woven!>
-
-=end pod
-
-        # an optional number to specify the number of blank lines
-        # to replace the C<Pod> blocks when tangling.
-        [ '=' comment $<num-blank-lines>=(\d+) ]?
     } # end of token begin-pod
 
 =begin pod
@@ -117,6 +99,31 @@ The C<end-pod> token is much simpler.
 =end pod
 
     token end-pod { ^^ <hws> '=' end <hws> pod <ws-till-EOL> }
+
+=begin pod
+=comment 1
+
+=head3 Replacing Pod6 sections with blank lines
+Most programming applications do not focus on the structure of the executable
+file, which is not meant to be easily read by humans.  Our tangle would replace
+all the Pod6 blocks with a single C<\n>.  That can clump code together that is
+easier read if there were one or more blank lines.
+
+However, we can provide the option for users to specify the number of empty
+lines that should replace a C<pod> block. To do this, simply add a Pod6 comment
+immediately after the C<=begin  pod> statement.  The comment can say anything
+you like, but must end with a digit specifying the number of blank lines with
+which to replace the Pod6 section.
+
+=end pod
+
+    token blank-line-comment {
+        ^^ <hws>
+        '=' comment
+        \N*?
+        $<num-blank-lines> = (\d+)?
+        <ws-till-EOL>
+    } # end of token comment
 
 =begin pod
 =comment 1
@@ -136,6 +143,7 @@ possibility of having no lines in the block.
 
     token pod {
         <begin-pod>
+        <blank-line-comment>?
             [<pod> | <plain-line>]*
         <end-pod>
     } # end of token pod
@@ -355,9 +363,9 @@ and obtain a list of submatches (that's what the C<caps> method does) ...
 
 
         when .key eq 'pod' {
-            my $num-blank-lines = .value.hash<begin-pod><num-blank-lines>;
-#            pd .value.hash<begin-pod>; exit;
-            "####\n" x $num-blank-lines with $num-blank-lines;
+            my $num-blank-lines =
+                .value.hash<blank-line-comment><num-blank-lines>;
+            "\n" x $num-blank-lines with $num-blank-lines;
         }
 
         # begin-no-weave
@@ -378,9 +386,12 @@ and obtain a list of submatches (that's what the C<caps> method does) ...
 
 =end pod
 
-    $source ~~ s:g{ ^^ \h*   '#' <hws> 'begin-no-weave' <rest-of-line> } = '';
-    $source ~~ s:g{ ^^ (.*?) '#' <hws> 'begin-no-weave' <rest-of-line> } = "$0\n";
-    $source ~~ s:g{ ^^ \h*   '#' <hws> 'end-no-weave' <rest-of-line>   } = '';
+    $raku-code ~~ s:g{ ^^ <hws> '#' <hws> 'begin-no-weave'     <rest-of-line> }
+        = '';
+    $raku-code ~~ s:g{ ^^ <hws> '#' <hws> 'no-weave-this-line' <rest-of-line> }
+        = "$0\n";
+    $raku-code ~~ s:g{ ^^ <hws> '#' <hws> 'end-no-weave'       <rest-of-line> }
+        = '';
 
 =begin pod
 =comment 1
@@ -527,7 +538,6 @@ insert the C<code> sections into the Pod6...
             EOCB
 
         when .key eq 'non-woven-code' {
-#            note 'not-weaving';
           ''; # do nothing
         } # end of when .key eq 'non-woven'
 
