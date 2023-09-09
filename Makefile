@@ -50,26 +50,26 @@ Literate.rakumod: Literate.sl
 	@chmod -R a-w lib/
 	@echo "\e[32mOK\e[0m"
 
-module-install:
+module-install: lib/Semi/Literate.rakumod
 	@echo -n "> Installing the newly created module with zef..."
 	@zef install --force-build --force-install --force-test . >/dev/null
 	@echo "\e[32mOK\e[0m"
 
-sl-tangle: Literate.rakumod sl-tangle.sl
+sl-tangle: sl-tangle.sl
 	@chmod -R a+w bin/
 	@echo -n "> Creating the sl-tangle executable..."
 	@pod-tangle source/sl-tangle.sl > bin/sl-tangle
 	@chmod -R a-w,a+x bin/
 	@echo "\e[32mOK\e[0m"
 
-sl-weave: Literate.rakumod sl-weave.sl
+sl-weave: sl-weave.sl
 	@chmod -R a+w bin/
 	@echo -n "> Creating the sl-weave executable..."
 	@bin/sl-tangle source/sl-weave.sl  > bin/sl-weave
 	@chmod -R a-w,a+x bin/
 	@echo "\e[32mOK\e[0m"
 
-executable-install:
+executable-install: bin/sl-tangle bin/sl-weave
 	@echo -n "> Installing the newly created executables with zef..."
 	@zef install --force-build --force-install --force-test . >/dev/null
 	@echo "\e[32mOK\e[0m"
@@ -79,7 +79,7 @@ install:
 	@zef install --force-build --force-install --force-test . >/dev/null
 	@echo "\e[32mOK\e[0m"
 
-test: ${LITERATE} executables
+test: lib/Semi/Literate.rakumod executables
 	@echo -n "> Running the tests..."
 	@prove6 -l -v
 	@echo "\e[32mOK\e[0m"
@@ -102,7 +102,7 @@ sanity-tests:
 
 clean:
 	@echo "> Deleting the intermediate files..."
-	@rm -rf deleteme.p6 deleteme.raku deleteme.md
+	@rm -rf deleteme.*
 	@echo -n "> Setting permissions..."
 	@chmod -R a+x,a-w bin/; chmod -R a-w docs/; chmod -R a-w lib/
 	@echo "\e[32mOK\e[0m"
