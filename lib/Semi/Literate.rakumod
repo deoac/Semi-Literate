@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Sat 09 Sep 2023 04:32:24 PM EDT
+# Last modified: Sat 09 Sep 2023 07:48:51 PM EDT
 # Version 0.0.1
 
 # always use the latest version of Raku
@@ -12,15 +12,15 @@ use Data::Dump::Tree;
 
     my token hws          {    <!ww>\h*        } # Horizontal White Space
     my token rest-of-line {    \N*   [\n | $]  }
-    my token ws-till-EOL  {    <hws> [\n | $]  } # no-weave-this-line
+    my token ws-till-EOL  {    <hws> [\n | $]  }
     my token blank-line   { ^^ <ws-till-EOL>   }
 #use Grammar::Tracer;
 grammar Semi::Literate is export {
     token TOP {
         [
-          | <non-woven-code>
           | <pod>
           | <woven-code>
+          | <non-woven-code>
         ]*
     } # end of token TOP
 
@@ -36,7 +36,7 @@ grammar Semi::Literate is export {
         \N*?
         $<num-blank-lines> = (\d+)?
         <ws-till-EOL>
-    } # end of token comment
+    } # end of token blank-line-comment
 
     token pod {
         <begin-pod>
@@ -45,12 +45,19 @@ grammar Semi::Literate is export {
         <end-pod>
     } # end of token pod
 
-    token woven-code { <plain-line>+ }
+    token woven-code  {
+        [
+            | <code-comments> { $*EXCEPTION = True }
+            | <plain-line>+
+        ]
+        <?{ !$*EXCEPTION }>
+    } # end of token woven-code
 
     token non-woven-code {
         [
           | <one-line-no-weave>
           | <delimited-no-weave>
+          | <code-comments>
         ]+
     } # end of token non-woven
 
@@ -78,6 +85,11 @@ grammar Semi::Literate is export {
         <end-no-weave>
     } # end of token delimited-no-weave
 
+    token code-comments {
+        ^^ <hws>
+        '#' <rest-of-line>
+    } # end of token code-comments
+
     token plain-line {
         :my $*EXCEPTION = False;
         [
@@ -96,9 +108,7 @@ grammar Semi::Literate is export {
 
 #TODO multi sub to accept Str & IO::PatGh
 sub tangle (
-
     Str $input-file!,
-
         --> Str ) is export {
 
     my Str $source = $input-file.IO.slurp;
@@ -150,11 +160,9 @@ sub weave (
 
     Bool :l(:$line-numbers)  = True;
         #= Should line numbers be added to the embeded code?
-
         --> Str ) is export {
 
     my UInt $line-number = 1;
-
     my Str $source = $input-file.IO.slurp;
 
     my Str $cleaned-source = $source;
@@ -170,7 +178,7 @@ sub weave (
             .value
         } # end of when .key
 
-        when .key eq 'woven-code' { qq:to/EOCB/; }
+        when .key eq 'woven-code' {qq:to/EOCB/; }
             \=begin pod
             \=begin code :lang<raku>
              { my $fmt = ($line-numbers ?? "%3s| " !! '') ~ "%s\n";
@@ -180,7 +188,7 @@ sub weave (
                         ?? {"%4s| %s\n".sprintf($line-number++, $_) }
                         !! {     "%s\n".sprintf(                $_) }
                     )
-                .chomp;
+                .chomp # get rid of the last \n
              }
             \=end code
             \=end pod
@@ -188,10 +196,11 @@ sub weave (
 
         when .key eq 'non-woven-code' {
           ''; # do nothing
-        } # end of when .key eq 'non-woven'
+          #TODO don't insert a newline here.
+        } # end of when .key eq 'non-woven-code'
 
         default { die "Weave: should never get here. .key == {.key}" }
-    } # end of my $weave = Semi::Literate.parse($source).caps.map
+    } # end of my Str $weave = @submatches.map(
     ).join;
 
     $weave ~~ s{\n  <blank-line>* $ } = '';

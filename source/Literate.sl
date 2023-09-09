@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Sat 09 Sep 2023 04:50:08 PM EDT
+# Last modified: Sat 09 Sep 2023 07:48:51 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -34,7 +34,7 @@ Let's create four tokens for convenience.
 
     my token hws          {    <!ww>\h*        } # Horizontal White Space
     my token rest-of-line {    \N*   [\n | $]  }
-    my token ws-till-EOL  {    <hws> [\n | $]  } # no-weave-this-line
+    my token ws-till-EOL  {    <hws> [\n | $]  }
     my token blank-line   { ^^ <ws-till-EOL>   }
 
 =begin pod
@@ -60,9 +60,9 @@ C<TOP> token clearly indicates this.
 
     token TOP {
         [
-          | <non-woven-code>
           | <pod>
           | <woven-code>
+          | <non-woven-code>
         ]*
     } # end of token TOP
 
@@ -104,6 +104,7 @@ The C<end-pod> token is much simpler.
 =comment 1
 
 =head3 Replacing Pod6 sections with blank lines
+
 Most programming applications do not focus on the structure of the executable
 file, which is not meant to be easily read by humans.  Our tangle would replace
 all the Pod6 blocks with a single C<\n>.  That can clump code together that is
@@ -123,7 +124,7 @@ which to replace the Pod6 section.
         \N*?
         $<num-blank-lines> = (\d+)?
         <ws-till-EOL>
-    } # end of token comment
+    } # end of token blank-line-comment
 
 =begin pod
 =comment 1
@@ -165,7 +166,14 @@ They are just one or more C<plain-line>s.
 
 =end pod
 
-    token woven-code { <plain-line>+ }
+
+    token woven-code  {
+        [
+            | <code-comments> { $*EXCEPTION = True }
+            | <plain-line>+
+        ]
+        <?{ !$*EXCEPTION }>
+    } # end of token woven-code
 
 =begin pod
 =comment 1
@@ -181,6 +189,7 @@ code.  By individual lines or by delimited blocks of code.
         [
           | <one-line-no-weave>
           | <delimited-no-weave>
+          | <code-comments>
         ]+
     } # end of token non-woven
 =begin pod
@@ -226,6 +235,12 @@ code you want ignored in the formatted document.
             <plain-line>*
         <end-no-weave>
     } # end of token delimited-no-weave
+
+    token code-comments {
+        ^^ <hws>
+        '#' <rest-of-line>
+    } # end of token code-comments
+
 
 =begin pod
 =comment 1
@@ -277,14 +292,13 @@ This subroutine will remove all the Pod6 code from a semi-literate file
 sub tangle (
 
 =begin pod
-=comment 1
+
 The subroutine has a single parameter, which is the input filename. The
 filename is required.  Typically, this parameter is obtained from the command
 line or passed from the subroutine C<MAIN>.
 =end pod
     Str $input-file!,
 =begin pod
-=comment 1
 
 The subroutine will return a C<Str>, which will be a working Raku program.
 =end pod
@@ -461,20 +475,14 @@ defaults to True.
 
 
 =begin pod
-=comment 1
 C<sub weave> returns a Str.
 =end pod
 
         --> Str ) is export {
-=begin pod
-=comment 1
-#TODO
-=end pod
 
     my UInt $line-number = 1;
 
 =begin pod
-=comment 1
 First we will get the entire C<.sl> file...
 =end pod
 
@@ -496,6 +504,7 @@ B<EXPLAIN THIS!>
 =comment 1
 
 =head2 Interesting stuff
+
 ...Next, we parse it using the C<Semi::Literate> grammar
 and obtain a list of submatches (that's what the C<caps> method does) ...
 =end pod
@@ -516,12 +525,8 @@ insert the C<code> sections into the Pod6...
         when .key eq 'pod' {
             .value
         } # end of when .key
-=begin pod
-=comment 1
-#TODO
-=end pod
 
-        when .key eq 'woven-code' { qq:to/EOCB/; }
+        when .key eq 'woven-code' {qq:to/EOCB/; }
             \=begin pod
             \=begin code :lang<raku>
              { my $fmt = ($line-numbers ?? "%3s| " !! '') ~ "%s\n";
@@ -531,7 +536,7 @@ insert the C<code> sections into the Pod6...
                         ?? {"%4s| %s\n".sprintf($line-number++, $_) }
                         !! {     "%s\n".sprintf(                $_) }
                     )
-                .chomp;
+                .chomp # get rid of the last \n
              }
             \=end code
             \=end pod
@@ -539,12 +544,13 @@ insert the C<code> sections into the Pod6...
 
         when .key eq 'non-woven-code' {
           ''; # do nothing
-        } # end of when .key eq 'non-woven'
+          #TODO don't insert a newline here.
+        } # end of when .key eq 'non-woven-code'
 
         # begin-no-weave
         default { die "Weave: should never get here. .key == {.key}" }
         # end-no-weave
-    } # end of my $weave = Semi::Literate.parse($source).caps.map
+    } # end of my Str $weave = @submatches.map(
     ).join;
 
 =begin pod
