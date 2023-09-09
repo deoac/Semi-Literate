@@ -23,29 +23,30 @@
     4| # © 2023 Shimon Bollinger. All rights reserved.
     5| # Last modified: Wed 06 Sep 2023 03:47:56 PM EDT
     6| # Version 0.0.1
-
-```
-
-
-
-
-```
     7| 
-    8| use Semi::Literate;
-    9| 
-   10| #| The actual program starts here.
-   11| multi MAIN (
-   12|     Str $input-file;
-   13|     Str :o(:$output-file) = '';
-   14| ) {
-   15|     my Str $raku-source = tangle $input-file;
-   16| 
-   17|     my $output-file-handle = $output-file              ??
-   18|                                 open(:w, $output-file) !!
-   19|                                 $*OUT;
-   20| 
-   21|     $output-file-handle.spurt: $raku-source;
-   22| } # end of multi MAIN ( )
+
+```
+
+
+
+
+```
+    8| 
+    9| use Semi::Literate;
+   10| 
+   11| #| The actual program starts here.
+   12| multi MAIN (
+   13|     Str $input-file;
+   14|     Str :o(:$output-file) = '';
+   15| ) {
+   16|     my Str $raku-source = tangle $input-file;
+   17| 
+   18|     my $output-file-handle = $output-file              ??
+   19|                                 open(:w, $output-file) !!
+   20|                                 $*OUT;
+   21| 
+   22|     $output-file-handle.spurt: $raku-source;
+   23| } # end of multi MAIN ( )
 
 ```
 
@@ -114,7 +115,7 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 
 ```
-   23| 
+   24| 
 
 ```
 
@@ -124,4 +125,4 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 
 ----
-Rendered from  at 2023-09-06T20:29:04Z
+Rendered from  at 2023-09-09T20:46:32Z
