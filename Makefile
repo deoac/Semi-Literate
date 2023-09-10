@@ -29,7 +29,7 @@ RAKU_MODULE_TARGET   := /usr/local/Cellar/rakudo-star/2023.08/share/perl6/site/s
 TANGLE_BINARY_TARGET := /usr/local/Cellar/rakudo-star/2023.08/share/perl6/site/bin/sl-tangle
 WEAVE_BINARY_TARGET  := /usr/local/Cellar/rakudo-star/2023.08/share/perl6/site/bin/sl-weave
 
-it: 		 module html markdown view
+it: 		 module html view
 all: 		 module executables docs
 module: 	 lib/Semi/Literate.rakumod $(RAKU_MODULE_TARGET)
 binaries: 	 bin/sl-tangle bin/sl-weave
@@ -47,7 +47,7 @@ touch_sources:
 	@touch source/*
 
 view:
-	@open README.md
+#	@open README.md
 	@open README.html
 
 temporary:

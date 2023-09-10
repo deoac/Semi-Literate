@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Sat 09 Sep 2023 07:48:51 PM EDT
+# Last modified: Sun 10 Sep 2023 06:13:47 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -19,6 +19,7 @@ use Data::Dump::Tree;
 =TITLE A grammar to parse a file into C<Pod> and C<Code> sections.
 
 =head1 INTRODUCTION
+=comment 2
 
 I want to create a semi-literate Raku source file with the extension
 C<.sl>. Then, I will I<weave> it to generate a readable file in formats like
@@ -27,15 +28,23 @@ code without any Pod6.
 
 =head2 Convenient tokens
 
-Let's create four tokens for convenience.
+Let's create some tokens for convenience.
 
 =end pod
 
-
-    my token hws          {    <!ww>\h*        } # Horizontal White Space
-    my token rest-of-line {    \N*   [\n | $]  }
-    my token ws-till-EOL  {    <hws> [\n | $]  }
-    my token blank-line   { ^^ <ws-till-EOL>   }
+    #TODO put these in a Role
+    my token hws            {    <!ww>\h*       } # Horizontal White Space
+    my token leading-ws     { ^^ <hws>          } # Whitespace at start of line
+    my token optional-chars {    \N*?           }
+    my token rest-of-line   {    \N*   [\n | $] } #no-weave-this-line
+    my token ws-till-EOL    {    <hws> [\n | $] } #no-weave-this-line
+    my token blank-line     { ^^ <ws-till-EOL>  } #no-weave-this-line
+    my token opening-quote { <
+                              :Ps +
+                              :Pi +
+                              [\' \" \\]
+                             >
+    } # end of my token opening-quote
 
 =begin pod
 To do this, I need to divide the file into C<Pod> and C<Code> sections by parsing
@@ -60,9 +69,9 @@ C<TOP> token clearly indicates this.
 
     token TOP {
         [
-          | <pod>
-          | <woven-code>
-          | <non-woven-code>
+          || <pod>
+          || <non-woven-code>
+          || <woven-code>
         ]*
     } # end of token TOP
 
@@ -169,10 +178,8 @@ They are just one or more C<plain-line>s.
 
     token woven-code  {
         [
-            | <code-comments> { $*EXCEPTION = True }
-            | <plain-line>+
-        ]
-        <?{ !$*EXCEPTION }>
+            || <plain-line>
+        ]+
     } # end of token woven-code
 
 =begin pod
@@ -187,9 +194,8 @@ code.  By individual lines or by delimited blocks of code.
 
     token non-woven-code {
         [
-          | <one-line-no-weave>
-          | <delimited-no-weave>
-          | <code-comments>
+          || <one-line-no-weave>
+          || <delimited-no-weave>
         ]+
     } # end of token non-woven
 =begin pod
@@ -218,6 +224,7 @@ Simply add comments C<# begin-no-weave> and C<#end-no-weave> before and after th
 code you want ignored in the formatted document.
 
 =end pod
+
     token begin-no-weave {
         ^^ <hws>                    # optional leading whitespace
         '#' <hws> 'begin-no-weave'  # the delimiter itself (# begin-no-weave)
@@ -236,11 +243,6 @@ code you want ignored in the formatted document.
         <end-no-weave>
     } # end of token delimited-no-weave
 
-    token code-comments {
-        ^^ <hws>
-        '#' <rest-of-line>
-    } # end of token code-comments
-
 
 =begin pod
 =comment 1
@@ -255,6 +257,22 @@ Check|https://docs.raku.org/language/regexes\#Regex_Boolean_condition_check>.
 
 =end pod
 
+    my token full-line-comment {
+        $<the-code>=(<leading-ws>)
+        '#'
+        <rest-of-line>
+    } # end of my token full-line-comment
+
+    #TODO this regex is not robust.  It will tag lines with a # in a string,
+    #unless the string delimiter is immediately before the #
+    my regex code-comment {
+        $<the-code>=(<leading-ws> \N*?)  # optional code
+        <!after <opening-quote>>         #
+        '#'                              # comment marker
+        $<the-comment>=<-[#]>*           # the actual comment
+        <ws-till-EOL>
+    } # end of my regex comment
+
     token plain-line {
         :my $*EXCEPTION = False;
         [
@@ -263,7 +281,7 @@ Check|https://docs.raku.org/language/regexes\#Regex_Boolean_condition_check>.
           ||  <begin-no-weave>    { $*EXCEPTION = True }
           ||  <end-no-weave>      { $*EXCEPTION = True }
           ||  <one-line-no-weave> { $*EXCEPTION = True }
-          || $<plain-line> = [^^ <rest-of-line>]
+          || [^^ <rest-of-line>]
         ]
         <?{ !$*EXCEPTION }>
     } # end of token plain-line

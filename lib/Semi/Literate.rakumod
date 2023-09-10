@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Sat 09 Sep 2023 07:48:51 PM EDT
+# Last modified: Sun 10 Sep 2023 06:12:31 PM EDT
 # Version 0.0.1
 
 # always use the latest version of Raku
@@ -10,17 +10,26 @@ use v6.*;
 use PrettyDump;
 use Data::Dump::Tree;
 
-    my token hws          {    <!ww>\h*        } # Horizontal White Space
-    my token rest-of-line {    \N*   [\n | $]  }
-    my token ws-till-EOL  {    <hws> [\n | $]  }
-    my token blank-line   { ^^ <ws-till-EOL>   }
+    #TODO put these in a Role
+    my token hws            {    <!ww>\h*       } # Horizontal White Space
+    my token leading-ws     { ^^ <hws>          } # Whitespace at start of line
+    my token optional-chars {    \N*?           }
+    my token rest-of-line   {    \N*   [\n | $] } #no-weave-this-line
+    my token ws-till-EOL    {    <hws> [\n | $] } #no-weave-this-line
+    my token blank-line     { ^^ <ws-till-EOL>  } #no-weave-this-line
+    my token opening-quote { <
+                              :Ps +
+                              :Pi +
+                              [\' \" \\]
+                             >
+    } # end of my token opening-quote
 #use Grammar::Tracer;
 grammar Semi::Literate is export {
     token TOP {
         [
-          | <pod>
-          | <woven-code>
-          | <non-woven-code>
+          || <pod>
+          || <non-woven-code>
+          || <woven-code>
         ]*
     } # end of token TOP
 
@@ -47,17 +56,14 @@ grammar Semi::Literate is export {
 
     token woven-code  {
         [
-            | <code-comments> { $*EXCEPTION = True }
-            | <plain-line>+
-        ]
-        <?{ !$*EXCEPTION }>
+            || <plain-line>
+        ]+
     } # end of token woven-code
 
     token non-woven-code {
         [
-          | <one-line-no-weave>
-          | <delimited-no-weave>
-          | <code-comments>
+          || <one-line-no-weave>
+          || <delimited-no-weave>
         ]+
     } # end of token non-woven
 
@@ -85,10 +91,21 @@ grammar Semi::Literate is export {
         <end-no-weave>
     } # end of token delimited-no-weave
 
-    token code-comments {
-        ^^ <hws>
-        '#' <rest-of-line>
-    } # end of token code-comments
+    my token full-line-comment {
+        $<the-code>=(<leading-ws>)
+        '#'
+        <rest-of-line>
+    } # end of my token full-line-comment
+
+    #TODO this regex is not robust.  It will tag lines with a # in a string,
+    #unless the string delimiter is immediately before the #
+    my regex code-comment {
+        $<the-code>=(<leading-ws> \N*?)  # optional code
+        <!after <opening-quote>>         #
+        '#'                              # comment marker
+        $<the-comment>=<-[#]>*           # the actual comment
+        <ws-till-EOL>
+    } # end of my regex comment
 
     token plain-line {
         :my $*EXCEPTION = False;
@@ -98,7 +115,7 @@ grammar Semi::Literate is export {
           ||  <begin-no-weave>    { $*EXCEPTION = True }
           ||  <end-no-weave>      { $*EXCEPTION = True }
           ||  <one-line-no-weave> { $*EXCEPTION = True }
-          || $<plain-line> = [^^ <rest-of-line>]
+          || [^^ <rest-of-line>]
         ]
         <?{ !$*EXCEPTION }>
     } # end of token plain-line
