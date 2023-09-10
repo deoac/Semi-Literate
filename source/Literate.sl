@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Sat 09 Sep 2023 07:48:51 PM EDT
+# Last modified: Sun 10 Sep 2023 01:46:38 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -27,17 +27,21 @@ code without any Pod6.
 
 =head2 Convenient tokens
 
-Let's create four tokens for convenience.
+Let's create some tokens for convenience.
 
 =end pod
 
 
-    my token hws          {    <!ww>\h*        } # Horizontal White Space
-    my token rest-of-line {    \N*   [\n | $]  }
-    my token ws-till-EOL  {    <hws> [\n | $]  }
-    my token blank-line   { ^^ <ws-till-EOL>   }
+#TODO Put these into a Role
+    my token hws            {    <!ww>\h*       } # Horizontal White Space
+    my token leading-ws     { ^^ <hws>          } # Whitespace at start of line
+    my token optional-chars {    \N*?           }
+    my token rest-of-line   {    \N*   [\n | $] } #no-weave-this-line
+    my token ws-till-EOL    {    <hws> [\n | $] } #no-weave-this-line
+    my token blank-line     { ^^ <ws-till-EOL>  } #no-weave-this-line
 
 =begin pod
+=comment 2
 To do this, I need to divide the file into C<Pod> and C<Code> sections by parsing
 it. For this purpose, I will create a dedicated Grammar.
 
@@ -60,9 +64,9 @@ C<TOP> token clearly indicates this.
 
     token TOP {
         [
-          | <pod>
-          | <woven-code>
-          | <non-woven-code>
+          || <pod>
+          || <woven-code>
+          || <non-woven-code>
         ]*
     } # end of token TOP
 
@@ -86,7 +90,9 @@ So let's define those tokens.
 
 
     token begin-pod {
-        ^^ <hws> '=' begin <hws> pod <ws-till-EOL>
+        <leading-ws>
+        '=' begin <hws> pod
+        <ws-till-EOL>
     } # end of token begin-pod
 
 =begin pod
@@ -98,7 +104,7 @@ The C<end-pod> token is much simpler.
 
 =end pod
 
-    token end-pod { ^^ <hws> '=' end <hws> pod <ws-till-EOL> }
+    token end-pod { <leading-ws> '=' end <hws> pod <ws-till-EOL> }
 
 =begin pod
 =comment 1
@@ -118,13 +124,13 @@ which to replace the Pod6 section.
 
 =end pod
 
-    token blank-line-comment {
-        ^^ <hws>
+    token num-blank-line-comment {
+        <leading-ws>
         '=' comment
-        \N*?
+        <optional-chars>
         $<num-blank-lines> = (\d+)?
         <ws-till-EOL>
-    } # end of token blank-line-comment
+    } # end of token num-blank-line-comment
 
 =begin pod
 =comment 1
@@ -144,8 +150,8 @@ possibility of having no lines in the block.
 
     token pod {
         <begin-pod>
-        <blank-line-comment>?
-            [<pod> | <plain-line>]*
+        <num-blank-line-comment>?
+            [<pod> || <plain-line>]*
         <end-pod>
     } # end of token pod
 
@@ -169,10 +175,9 @@ They are just one or more C<plain-line>s.
 
     token woven-code  {
         [
-            | <code-comments> { $*EXCEPTION = True }
-            | <plain-line>+
-        ]
-        <?{ !$*EXCEPTION }>
+            || <comment> { note $/.Str }
+            || <plain-line>
+        ]+
     } # end of token woven-code
 
 =begin pod
@@ -187,9 +192,8 @@ code.  By individual lines or by delimited blocks of code.
 
     token non-woven-code {
         [
-          | <one-line-no-weave>
-          | <delimited-no-weave>
-          | <code-comments>
+          || <one-line-no-weave>
+          || <delimited-no-weave>
         ]+
     } # end of token non-woven
 =begin pod
@@ -219,13 +223,13 @@ code you want ignored in the formatted document.
 
 =end pod
     token begin-no-weave {
-        ^^ <hws>                    # optional leading whitespace
+        <leading-ws>                    # optional leading whitespace
         '#' <hws> 'begin-no-weave'  # the delimiter itself (# begin-no-weave)
         <ws-till-EOL>               # optional trailing whitespace or comment
     } # end of token <begin-no-weave>
 
     token end-no-weave {
-        ^^ <hws>                    # optional leading whitespace
+        <leading-ws>                    # optional leading whitespace
         '#' <hws> 'end-no-weave'    # the delimiter itself (#end-no-weave)
         <ws-till-EOL>               # optional trailing whitespace or comment
     } # end of token <end--no-weave>
@@ -237,8 +241,9 @@ code you want ignored in the formatted document.
     } # end of token delimited-no-weave
 
     token code-comments {
-        ^^ <hws>
-        '#' <rest-of-line>
+            <leading-ws>
+            '#' <rest-of-line>
+        <!{ / <begin-no-weave> | <end-no-weave> / }>
     } # end of token code-comments
 
 
@@ -378,7 +383,7 @@ and obtain a list of submatches (that's what the C<caps> method does) ...
 
         when .key eq 'pod' {
             my $num-blank-lines =
-                .value.hash<blank-line-comment><num-blank-lines>;
+                .value.hash<num-blank-line-comment><num-blank-lines>;
             "\n" x $num-blank-lines with $num-blank-lines;
         }
 
@@ -400,11 +405,11 @@ and obtain a list of submatches (that's what the C<caps> method does) ...
 
 =end pod
 
-    $raku-code ~~ s:g{ ^^ <hws> '#' <hws> 'begin-no-weave'     <rest-of-line> }
+    $raku-code ~~ s:g{ <leading-ws> '#' <hws> 'begin-no-weave'     <rest-of-line> }
         = '';
-    $raku-code ~~ s:g{ ^^ <hws> '#' <hws> 'no-weave-this-line' <rest-of-line> }
+    $raku-code ~~ s:g{ <leading-ws> '#' <hws> 'no-weave-this-line' <rest-of-line> }
         = "$0\n";
-    $raku-code ~~ s:g{ ^^ <hws> '#' <hws> 'end-no-weave'       <rest-of-line> }
+    $raku-code ~~ s:g{ <leading-ws> '#' <hws> 'end-no-weave'       <rest-of-line> }
         = '';
 
 =begin pod
@@ -548,7 +553,8 @@ insert the C<code> sections into the Pod6...
         } # end of when .key eq 'non-woven-code'
 
         # begin-no-weave
-        default { die "Weave: should never get here. .key == {.key}" }
+        default {
+            die "Weave: should never get here. .key == {.key}" }
         # end-no-weave
     } # end of my Str $weave = @submatches.map(
     ).join;

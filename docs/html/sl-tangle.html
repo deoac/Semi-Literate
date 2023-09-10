@@ -6,8 +6,8 @@
 
 <link href="/asset_files/images/favicon.ico" rel="icon" type="image/x-icon"/>
 <link rel="stylesheet" type="text/css" href="asset_files/css/rakudoc-extra.css" />
-<link rel="stylesheet" type="text/css" href="asset_files/css/font-awesome.min.css" />
 <link rel="stylesheet" type="text/css" href="asset_files/css/rakudoc-styling.css" />
+<link rel="stylesheet" type="text/css" href="asset_files/css/font-awesome.min.css" />
 
 </head>
 	<body class="pod">
@@ -29,29 +29,30 @@
  <tr class="toc-level-1"><td class="toc-text"><a href="#LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT</a></td></tr>
 </table></div>
 </nav><div id=""></div><div class="pod-body">
-<section name="___top"><pre class="pod-block-code">    1| 
-    2| # Tangle a Semi-literate file into a working Raku file.
-    3| # © 2023 Shimon Bollinger. All rights reserved.
-    4| # Last modified: Wed 06 Sep 2023 03:47:56 PM EDT
-    5| # Version 0.0.1
-    6| 
+<section name="___top"><pre class="pod-block-code">    1| #! /usr/bin/env raku
+    2| 
+    3| # Tangle a Semi-literate file into a working Raku file.
+    4| # © 2023 Shimon Bollinger. All rights reserved.
+    5| # Last modified: Wed 06 Sep 2023 03:47:56 PM EDT
+    6| # Version 0.0.1
+    7| 
 </pre></section>
-<section name="___top"><pre class="pod-block-code">    7| 
-    8| use Semi::Literate;
-    9| 
-   10| #| The actual program starts here.
-   11| multi MAIN (
-   12|     Str $input-file;
-   13|     Str :o(:$output-file) = '';
-   14| ) {
-   15|     my Str $raku-source = tangle $input-file;
-   16| 
-   17|     my $output-file-handle = $output-file              ??
-   18|                                 open(:w, $output-file) !!
-   19|                                 $*OUT;
-   20| 
-   21|     $output-file-handle.spurt: $raku-source;
-   22| } # end of multi MAIN ( )
+<section name="___top"><pre class="pod-block-code">    8| 
+    9| use Semi::Literate;
+   10| 
+   11| #| The actual program starts here.
+   12| multi MAIN (
+   13|     Str $input-file;
+   14|     Str :o(:$output-file) = '';
+   15| ) {
+   16|     my Str $raku-source = tangle $input-file;
+   17| 
+   18|     my $output-file-handle = $output-file              ??
+   19|                                 open(:w, $output-file) !!
+   20|                                 $*OUT;
+   21| 
+   22|     $output-file-handle.spurt: $raku-source;
+   23| } # end of multi MAIN ( )
 </pre></section>
 <section name="___top">
 <h1 id="NAME"><a href="#___top" class="u" title="go to top of document">NAME</a></h1>
@@ -83,9 +84,9 @@
 <p>Shimon Bollinger (deoac.shimon@gmail.com)</p>
 <h1 id="LICENCE_AND_COPYRIGHT"><a href="#___top" class="u" title="go to top of document">LICENCE AND COPYRIGHT</a></h1>
 <p>© 2023 Shimon Bollinger. All rights reserved.</p><p>This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself. See <a href="http://perldoc.perl.org/perlartistic.html">perlartistic</a>.</p><p>This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.</p></section>
-<section name="___top"><pre class="pod-block-code">   23| 
+<section name="___top"><pre class="pod-block-code">   24| 
 </pre></section>		</div>
-</div><footer><div>Rendered from <span class="path"></span></div><div>at <span class="time">2023-09-09T23:49:40Z</span></div></footer>
+</div><footer><div>Rendered from <span class="path"></span></div><div>at <span class="time">2023-09-10T01:11:18Z</span></div></footer>
 	</body>
 </html>
 

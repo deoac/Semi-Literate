@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Sat 09 Sep 2023 07:48:51 PM EDT
+# Last modified: Sun 10 Sep 2023 01:43:53 PM EDT
 # Version 0.0.1
 
 # always use the latest version of Raku
@@ -10,54 +10,56 @@ use v6.*;
 use PrettyDump;
 use Data::Dump::Tree;
 
-    my token hws          {    <!ww>\h*        } # Horizontal White Space
-    my token rest-of-line {    \N*   [\n | $]  }
-    my token ws-till-EOL  {    <hws> [\n | $]  }
-    my token blank-line   { ^^ <ws-till-EOL>   }
+#TODO Put these into a Role
+    my token hws            {    <!ww>\h*       } # Horizontal White Space
+    my token leading-ws     { ^^ <hws>          } # Whitespace at start of line
+    my token optional-chars {    \N*?           }
+    my token rest-of-line   {    \N*   [\n | $] } #no-weave-this-line
+    my token ws-till-EOL    {    <hws> [\n | $] } #no-weave-this-line
+    my token blank-line     { ^^ <ws-till-EOL>  } #no-weave-this-line
 #use Grammar::Tracer;
 grammar Semi::Literate is export {
     token TOP {
         [
-          | <pod>
-          | <woven-code>
-          | <non-woven-code>
+          || <pod>
+          || <woven-code>
+          || <non-woven-code>
         ]*
     } # end of token TOP
 
     token begin-pod {
-        ^^ <hws> '=' begin <hws> pod <ws-till-EOL>
+        <leading-ws>
+        '=' begin <hws> pod
+        <ws-till-EOL>
     } # end of token begin-pod
 
-    token end-pod { ^^ <hws> '=' end <hws> pod <ws-till-EOL> }
+    token end-pod { <leading-ws> '=' end <hws> pod <ws-till-EOL> }
 
-    token blank-line-comment {
-        ^^ <hws>
+    token num-blank-line-comment {
+        <leading-ws>
         '=' comment
-        \N*?
+        <optional-chars>
         $<num-blank-lines> = (\d+)?
         <ws-till-EOL>
-    } # end of token blank-line-comment
+    } # end of token num-blank-line-comment
 
     token pod {
         <begin-pod>
-        <blank-line-comment>?
-            [<pod> | <plain-line>]*
+        <num-blank-line-comment>?
+            [<pod> || <plain-line>]*
         <end-pod>
     } # end of token pod
 
     token woven-code  {
         [
-            | <code-comments> { $*EXCEPTION = True }
-            | <plain-line>+
-        ]
-        <?{ !$*EXCEPTION }>
+            || <plain-line>
+        ]+
     } # end of token woven-code
 
     token non-woven-code {
         [
-          | <one-line-no-weave>
-          | <delimited-no-weave>
-          | <code-comments>
+          || <one-line-no-weave>
+          || <delimited-no-weave>
         ]+
     } # end of token non-woven
 
@@ -68,13 +70,13 @@ grammar Semi::Literate is export {
     } # end of token one-line-no-weave
 
     token begin-no-weave {
-        ^^ <hws>                    # optional leading whitespace
+        <leading-ws>                    # optional leading whitespace
         '#' <hws> 'begin-no-weave'  # the delimiter itself (# begin-no-weave)
         <ws-till-EOL>               # optional trailing whitespace or comment
     } # end of token <begin-no-weave>
 
     token end-no-weave {
-        ^^ <hws>                    # optional leading whitespace
+        <leading-ws>                    # optional leading whitespace
         '#' <hws> 'end-no-weave'    # the delimiter itself (#end-no-weave)
         <ws-till-EOL>               # optional trailing whitespace or comment
     } # end of token <end--no-weave>
@@ -86,8 +88,9 @@ grammar Semi::Literate is export {
     } # end of token delimited-no-weave
 
     token code-comments {
-        ^^ <hws>
-        '#' <rest-of-line>
+            <leading-ws>
+            '#' <rest-of-line>
+        <!{ / <begin-no-weave> | <end-no-weave> / }>
     } # end of token code-comments
 
     token plain-line {
@@ -129,7 +132,7 @@ sub tangle (
 
         when .key eq 'pod' {
             my $num-blank-lines =
-                .value.hash<blank-line-comment><num-blank-lines>;
+                .value.hash<num-blank-line-comment><num-blank-lines>;
             "\n" x $num-blank-lines with $num-blank-lines;
         }
 
@@ -138,11 +141,11 @@ sub tangle (
     } # end of my Str $raku-code = @submatches.map(
     ).join;
 
-    $raku-code ~~ s:g{ ^^ <hws> '#' <hws> 'begin-no-weave'     <rest-of-line> }
+    $raku-code ~~ s:g{ <leading-ws> '#' <hws> 'begin-no-weave'     <rest-of-line> }
         = '';
-    $raku-code ~~ s:g{ ^^ <hws> '#' <hws> 'no-weave-this-line' <rest-of-line> }
+    $raku-code ~~ s:g{ <leading-ws> '#' <hws> 'no-weave-this-line' <rest-of-line> }
         = "$0\n";
-    $raku-code ~~ s:g{ ^^ <hws> '#' <hws> 'end-no-weave'       <rest-of-line> }
+    $raku-code ~~ s:g{ <leading-ws> '#' <hws> 'end-no-weave'       <rest-of-line> }
         = '';
 
     $raku-code ~~ s{\n  <blank-line>* $ } = '';
@@ -199,7 +202,8 @@ sub weave (
           #TODO don't insert a newline here.
         } # end of when .key eq 'non-woven-code'
 
-        default { die "Weave: should never get here. .key == {.key}" }
+        default {
+            die "Weave: should never get here. .key == {.key}" }
     } # end of my Str $weave = @submatches.map(
     ).join;
 

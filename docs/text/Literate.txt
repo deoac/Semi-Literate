@@ -1,9 +1,10 @@
-        1| 
-        2| # Get the Pod vs. Code structure of a Raku/Pod6 file.
-        3| # © 2023 Shimon Bollinger. All rights reserved.
-        4| # Last modified: Sat 09 Sep 2023 07:48:51 PM EDT
-        5| # Version 0.0.1
-        6| 
+        1| #! /usr/bin/env raku
+        2| 
+        3| # Get the Pod vs. Code structure of a Raku/Pod6 file.
+        4| # © 2023 Shimon Bollinger. All rights reserved.
+        5| # Last modified: Sun 10 Sep 2023 01:27:36 PM EDT
+        6| # Version 0.0.1
+        7| 
 
 
 TITLE
@@ -20,10 +21,12 @@ without any Pod6.
 
 Let's create four tokens for convenience.
 
-        7|     my token hws          {    <!ww>\h*        } # Horizontal White Space
-        8|     my token rest-of-line {    \N*   [\n | $]  }
-        9|     my token ws-till-EOL  {    <hws> [\n | $]  }
-       10|     my token blank-line   { ^^ <ws-till-EOL>   }
+        8|     my token hws            {    <!ww>\h*       } # Horizontal White Space
+        9|     my token leading-ws     { ^^ <hws>          } # Whitespace at start of line
+       10|     my token optional-chars {    \N*?           }
+       11|     my token rest-of-line   {    \N*   [\n | $] }
+       12|     my token ws-till-EOL    {    <hws> [\n | $] }
+       13|     my token blank-line     { ^^ <ws-till-EOL>  }
 
 
 To do this, I need to divide the file into Pod and Code sections by parsing
@@ -31,7 +34,8 @@ it. For this purpose, I will create a dedicated Grammar.
 
 The Grammar
 
-       11| grammar Semi::Literate is export {
+       14| #use Grammar::Tracer;
+       15| grammar Semi::Literate is export {
 
 
 Our file will exclusively consist of Pod or Code sections, and nothing
@@ -39,13 +43,13 @@ else. The Code sections are of two types, a) code that is woven into the
 documentation, and b) code that is not woven into the documentation. The
 TOP token clearly indicates this.
 
-       12|     token TOP {
-       13|         [
-       14|           | <pod>
-       15|           | <woven-code>
-       16|           | <non-woven-code>
-       17|         ]*
-       18|     } # end of token TOP
+       16|     token TOP {
+       17|         [
+       18|           || <pod>
+       19|           || <woven-code>
+       20|           || <non-woven-code>
+       21|         ]*
+       22|     } # end of token TOP
 
 
   The Pod6 delimiters
@@ -59,16 +63,18 @@ So let's define those tokens.
 
     The begin-pod token
 
-       19|     token begin-pod {
-       20|         ^^ <hws> '=' begin <hws> pod <ws-till-EOL>
-       21|     } # end of token begin-pod
+       23|     token begin-pod {
+       24|         <leading-ws>
+       25|         '=' begin <hws> pod
+       26|         <ws-till-EOL>
+       27|     } # end of token begin-pod
 
 
     The end-pod token
 
 The end-pod token is much simpler.
 
-       22|     token end-pod { ^^ <hws> '=' end <hws> pod <ws-till-EOL> }
+       28|     token end-pod { <leading-ws> '=' end <hws> pod <ws-till-EOL> }
 
 
     Replacing Pod6 sections with blank lines
@@ -84,13 +90,13 @@ comment immediately after the =begin pod statement. The comment can say
 anything you like, but must end with a digit specifying the number of blank
 lines with which to replace the Pod6 section.
 
-       23|     token blank-line-comment {
-       24|         ^^ <hws>
-       25|         '=' comment
-       26|         \N*?
-       27|         $<num-blank-lines> = (\d+)?
-       28|         <ws-till-EOL>
-       29|     } # end of token blank-line-comment
+       29|     token num-blank-line-comment {
+       30|         <leading-ws>
+       31|         '=' comment
+       32|         \N*?
+       33|         $<num-blank-lines> = (\d+)?
+       34|         <ws-till-EOL>
+       35|     } # end of token num-blank-line-comment
 
 
   The Pod token
@@ -104,12 +110,12 @@ It is also permissible for the block to be empty. Therefore, we will use
 the 'zero-or-more' quantifier on the lines of documentation, allowing for
 the possibility of having no lines in the block.
 
-       30|     token pod {
-       31|         <begin-pod>
-       32|         <blank-line-comment>?
-       33|             [<pod> | <plain-line>]*
-       34|         <end-pod>
-       35|     } # end of token pod
+       36|     token pod {
+       37|         <begin-pod>
+       38|         <num-blank-line-comment>?
+       39|             [<pod> || <plain-line>]*
+       40|         <end-pod>
+       41|     } # end of token pod
 
 
   The Code tokens
@@ -123,13 +129,11 @@ below for why some code would not be included in the woven code.
 These sections are trivially defined. They are just one or more
 plain-lines.
 
-       36|     token woven-code  {
-       37|         [
-       38|             | <code-comments> { $*EXCEPTION = True }
-       39|             | <plain-line>+
-       40|         ]
-       41|         <?{ !$*EXCEPTION }>
-       42|     } # end of token woven-code
+       42|     token woven-code  {
+       43|         [
+       44|             || <plain-line>
+       45|         ]+
+       46|     } # end of token woven-code
 
 
     Non-woven sections
@@ -138,24 +142,23 @@ Sometimes there will be code you do not want woven into the document, such
 as boilerplate code like use v6.d;. You have two options to mark such code.
 By individual lines or by delimited blocks of code.
 
-       43|     token non-woven-code {
-       44|         [
-       45|           | <one-line-no-weave>
-       46|           | <delimited-no-weave>
-       47|           | <code-comments>
-       48|         ]+
-       49|     } # end of token non-woven
+       47|     token non-woven-code {
+       48|         [
+       49|           || <one-line-no-weave>
+       50|           || <delimited-no-weave>
+       51|         ]+
+       52|     } # end of token non-woven
 
 
     One line of code
 
 Simply append # begin-no-weave at the end of the line!
 
-       50|     token one-line-no-weave {
-       51|         ^^ \N*?
-       52|         '#' <hws> 'no-weave-this-line'
-       53|         <ws-till-EOL>
-       54|     } # end of token one-line-no-weave
+       53|     token one-line-no-weave {
+       54|         ^^ \N*?
+       55|         '#' <hws> 'no-weave-this-line'
+       56|         <ws-till-EOL>
+       57|     } # end of token one-line-no-weave
 
 
     Delimited blocks of code
@@ -163,28 +166,29 @@ Simply append # begin-no-weave at the end of the line!
 Simply add comments # begin-no-weave and #end-no-weave before and after the
 code you want ignored in the formatted document.
 
-       55|     token begin-no-weave {
-       56|         ^^ <hws>                    # optional leading whitespace
-       57|         '#' <hws> 'begin-no-weave'  # the delimiter itself (# begin-no-weave)
-       58|         <ws-till-EOL>               # optional trailing whitespace or comment
-       59|     } # end of token <begin-no-weave>
-       60| 
-       61|     token end-no-weave {
-       62|         ^^ <hws>                    # optional leading whitespace
-       63|         '#' <hws> 'end-no-weave'    # the delimiter itself (#end-no-weave)
-       64|         <ws-till-EOL>               # optional trailing whitespace or comment
-       65|     } # end of token <end--no-weave>
-       66| 
-       67|     token delimited-no-weave {
-       68|         <begin-no-weave>
-       69|             <plain-line>*
-       70|         <end-no-weave>
-       71|     } # end of token delimited-no-weave
-       72| 
-       73|     token code-comments {
-       74|         ^^ <hws>
-       75|         '#' <rest-of-line>
-       76|     } # end of token code-comments
+       58|     token begin-no-weave {
+       59|         <leading-ws>                    # optional leading whitespace
+       60|         '#' <hws> 'begin-no-weave'  # the delimiter itself (# begin-no-weave)
+       61|         <ws-till-EOL>               # optional trailing whitespace or comment
+       62|     } # end of token <begin-no-weave>
+       63| 
+       64|     token end-no-weave {
+       65|         <leading-ws>                    # optional leading whitespace
+       66|         '#' <hws> 'end-no-weave'    # the delimiter itself (#end-no-weave)
+       67|         <ws-till-EOL>               # optional trailing whitespace or comment
+       68|     } # end of token <end--no-weave>
+       69| 
+       70|     token delimited-no-weave {
+       71|         <begin-no-weave>
+       72|             <plain-line>*
+       73|         <end-no-weave>
+       74|     } # end of token delimited-no-weave
+       75| 
+       76|     token code-comments {
+       77|             <leading-ws>
+       78|             '#' <rest-of-line>
+       79|         <!{ / <begin-no-weave> | <end-no-weave> / }>
+       80|     } # end of token code-comments
 
 
     The plain-line token
@@ -193,23 +197,23 @@ The plain-line token is, really, any line at all... ... except for one
 subtlety. They it can't be one of the begin/end delimiters. We can specify
 that with a Regex Boolean Condition Check.
 
-       77|     token plain-line {
-       78|         :my $*EXCEPTION = False;
-       79|         [
-       80|           ||  <begin-pod>         { $*EXCEPTION = True }
-       81|           ||  <end-pod>           { $*EXCEPTION = True }
-       82|           ||  <begin-no-weave>    { $*EXCEPTION = True }
-       83|           ||  <end-no-weave>      { $*EXCEPTION = True }
-       84|           ||  <one-line-no-weave> { $*EXCEPTION = True }
-       85|           || $<plain-line> = [^^ <rest-of-line>]
-       86|         ]
-       87|         <?{ !$*EXCEPTION }>
-       88|     } # end of token plain-line
+       81|     token plain-line {
+       82|         :my $*EXCEPTION = False;
+       83|         [
+       84|           ||  <begin-pod>         { $*EXCEPTION = True }
+       85|           ||  <end-pod>           { $*EXCEPTION = True }
+       86|           ||  <begin-no-weave>    { $*EXCEPTION = True }
+       87|           ||  <end-no-weave>      { $*EXCEPTION = True }
+       88|           ||  <one-line-no-weave> { $*EXCEPTION = True }
+       89|           || $<plain-line> = [^^ <rest-of-line>]
+       90|         ]
+       91|         <?{ !$*EXCEPTION }>
+       92|     } # end of token plain-line
 
 
 And that concludes the grammar for separating Pod from Code!
 
-       89| } # end of grammar Semi::Literate
+       93| } # end of grammar Semi::Literate
 
 
 The Tangle subroutine
@@ -217,24 +221,25 @@ The Tangle subroutine
 This subroutine will remove all the Pod6 code from a semi-literate file
 (.sl) and keep only the Raku code.
 
-       90| sub tangle (
+       94| #TODO multi sub to accept Str & IO::PatGh
+       95| sub tangle (
 
 
 The subroutine has a single parameter, which is the input filename. The
 filename is required. Typically, this parameter is obtained from the
 command line or passed from the subroutine MAIN.
 
-       91|     Str $input-file!,
+       96|     Str $input-file!,
 
 
 The subroutine will return a Str, which will be a working Raku program.
 
-       92|         --> Str ) is export {
+       97|         --> Str ) is export {
 
 
 First we will get the entire Semi-Literate .sl file...
 
-       93|     my Str $source = $input-file.IO.slurp;
+       98|     my Str $source = $input-file.IO.slurp;
 
 
   Clean the source
@@ -257,9 +262,9 @@ that you don't want to see in the tangled working code. For example:
 So we'll remove the blank lines immediately outside the beginning and end
 of the Pod6 sections.
 
-       94|     my Str $cleaned-source = $source;
-       95|     $cleaned-source ~~ s:g{\=end (\N*)\n+} =   "\=end$0\n";
-       96|     $cleaned-source ~~ s:g{\n+\=begin (<hws> pod) [<hws> \d]?} = "\n\=begin$0";
+       99|     my Str $cleaned-source = $source;
+      100|     $cleaned-source ~~ s:g{\=end (\N*)\n+} =   "\=end$0\n";
+      101|     $cleaned-source ~~ s:g{\n+\=begin (<hws> pod) [<hws> \d]?} = "\n\=begin$0";
 
 
   The interesting stuff
@@ -267,53 +272,54 @@ of the Pod6 sections.
 We parse it using the Semi::Literate grammar and obtain a list of
 submatches (that's what the caps method does) ...
 
-       97|     my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
+      102|     my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
 
 
 ...and iterate through the submatches and keep only the code sections...
 
-       98|     my Str $raku-code = @submatches.map( {
-       99| #        note .key;
-      100|         when .key eq 'woven-code'|'non-woven-code' {
-      101|             .value;
-      102|         }
+      103| #    note "submatches.elems: {@submatches.elems}";
+      104|     my Str $raku-code = @submatches.map( {
+      105| #        note .key;
+      106|         when .key eq 'woven-code'|'non-woven-code' {
+      107|             .value;
+      108|         }
 
 
     Replace Pod6 sections with blank lines
 
-      103|         when .key eq 'pod' {
-      104|             my $num-blank-lines =
-      105|                 .value.hash<blank-line-comment><num-blank-lines>;
-      106|             "\n" x $num-blank-lines with $num-blank-lines;
-      107|         }
-      108| 
+      109|         when .key eq 'pod' {
+      110|             my $num-blank-lines =
+      111|                 .value.hash<num-blank-line-comment><num-blank-lines>;
+      112|             "\n" x $num-blank-lines with $num-blank-lines;
+      113|         }
+      114| 
 
 
 ... and we will join all the code sections together...
 
-      109|     } # end of my Str $raku-code = @submatches.map(
-      110|     ).join;
+      115|     } # end of my Str $raku-code = @submatches.map(
+      116|     ).join;
 
 
     Remove the no-weave delimiters
 
-      111|     $raku-code ~~ s:g{ ^^ <hws> '#' <hws> 'begin-no-weave'     <rest-of-line> }
-      112|         = '';
-      113|     $raku-code ~~ s:g{ ^^ <hws> '#' <hws> 'no-weave-this-line' <rest-of-line> }
-      114|         = "$0\n";
-      115|     $raku-code ~~ s:g{ ^^ <hws> '#' <hws> 'end-no-weave'       <rest-of-line> }
-      116|         = '';
+      117|     $raku-code ~~ s:g{ <leading-ws> '#' <hws> 'begin-no-weave'     <rest-of-line> }
+      118|         = '';
+      119|     $raku-code ~~ s:g{ <leading-ws> '#' <hws> 'no-weave-this-line' <rest-of-line> }
+      120|         = "$0\n";
+      121|     $raku-code ~~ s:g{ <leading-ws> '#' <hws> 'end-no-weave'       <rest-of-line> }
+      122|         = '';
 
 
     remove blank lines at the end
 
-      117|     $raku-code ~~ s{\n  <blank-line>* $ } = '';
+      123|     $raku-code ~~ s{\n  <blank-line>* $ } = '';
 
 
 And that's the end of the tangle subroutine!
 
-      118|     return $raku-code;
-      119| } # end of sub tangle (
+      124|     return $raku-code;
+      125| } # end of sub tangle (
 
 
 The Weave subroutine
@@ -322,7 +328,7 @@ The Weave subroutine will weave the .sl file into a readable Markdown,
 HTML, or other format. It is a little more complicated than sub tangle
 because it has to include the code sections.
 
-      120| sub weave (
+      126| sub weave (
 
 
   The parameters of Weave
@@ -334,7 +340,7 @@ sub weave will have several parameters.
 The input filename is required. Typically, this parameter is obtained from
 the command line through a wrapper subroutine MAIN.
 
-      121|     Str $input-file!;
+      127|     Str $input-file!;
 
 
     $format
@@ -343,8 +349,8 @@ The output of the weave can (currently) be Markdown, Text, or HTML. It
 defaults to Markdown. The variable is case-insensitive, so 'markdown' also
 works.
 
-      122|     Str :f(:$format) is copy = 'markdown';
-      123|         #= The output format for the woven file.
+      128|     Str :f(:$format) is copy = 'markdown';
+      129|         #= The output format for the woven file.
 
 
     $line-numbers
@@ -352,29 +358,29 @@ works.
 It can be useful to print line numbers in the code listing. It currently
 defaults to True.
 
-      124|     Bool :l(:$line-numbers)  = True;
-      125|         #= Should line numbers be added to the embeded code?
+      130|     Bool :l(:$line-numbers)  = True;
+      131|         #= Should line numbers be added to the embeded code?
 
 
 sub weave returns a Str.
 
-      126|         --> Str ) is export {
-      127| 
-      128|     my UInt $line-number = 1;
+      132|         --> Str ) is export {
+      133| 
+      134|     my UInt $line-number = 1;
 
 
 First we will get the entire .sl file...
 
-      129|     my Str $source = $input-file.IO.slurp;
+      135|     my Str $source = $input-file.IO.slurp;
 
 
     Remove blank lines at the begining and end of the code
 
 EXPLAIN THIS!
 
-      130|     my Str $cleaned-source = $source;
-      131|     $cleaned-source ~~ s:g{\=end (\N*)\n+} =   "\=end$0\n";
-      132|     $cleaned-source ~~ s:g{\n+\=begin (<hws> pod) [<hws> \d]?} = "\n\=begin$0";
+      136|     my Str $cleaned-source = $source;
+      137|     $cleaned-source ~~ s:g{\=end (\N*)\n+} =   "\=end$0\n";
+      138|     $cleaned-source ~~ s:g{\n+\=begin (<hws> pod) [<hws> \d]?} = "\n\=begin$0";
 
 
   Interesting stuff
@@ -382,53 +388,55 @@ EXPLAIN THIS!
 ...Next, we parse it using the Semi::Literate grammar and obtain a list of
 submatches (that's what the caps method does) ...
 
-      133|     my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
+      139|     my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
 
 
 ...And now begins the interesting part. We iterate through the submatches
 and insert the code sections into the Pod6...
 
-      134|     my Str $weave = @submatches.map( {
-      135|         when .key eq 'pod' {
-      136|             .value
-      137|         } # end of when .key
-      138| 
-      139|         when .key eq 'woven-code' {qq:to/EOCB/; }
-      140|             \=begin pod
-      141|             \=begin code :lang<raku>
-      142|              { my $fmt = ($line-numbers ?? "%3s| " !! '') ~ "%s\n";
-      143|                 .value
-      144|                 .lines
-      145|                 .map($line-numbers
-      146|                         ?? {"%4s| %s\n".sprintf($line-number++, $_) }
-      147|                         !! {     "%s\n".sprintf(                $_) }
-      148|                     )
-      149|                 .chomp # get rid of the last \n
-      150|              }
-      151|             \=end code
-      152|             \=end pod
-      153|             EOCB
-      154| 
-      155|         when .key eq 'non-woven-code' {
-      156|           ''; # do nothing
-      157|           #TODO don't insert a newline here.
-      158|         } # end of when .key eq 'non-woven-code'
-      159| 
+      140| #    note "weave submatches.elems: {@submatches.elems}";
+      141| #    note "submatches keys: {@submatches».keys}";
+      142|     my Str $weave = @submatches.map( {
+      143|         when .key eq 'pod' {
+      144|             .value
+      145|         } # end of when .key
+      146| 
+      147|         when .key eq 'woven-code' {qq:to/EOCB/; }
+      148|             \=begin pod
+      149|             \=begin code :lang<raku>
+      150|              { my $fmt = ($line-numbers ?? "%3s| " !! '') ~ "%s\n";
+      151|                 .value
+      152|                 .lines
+      153|                 .map($line-numbers
+      154|                         ?? {"%4s| %s\n".sprintf($line-number++, $_) }
+      155|                         !! {     "%s\n".sprintf(                $_) }
+      156|                     )
+      157|                 .chomp # get rid of the last \n
+      158|              }
+      159|             \=end code
+      160|             \=end pod
+      161|             EOCB
+      162| 
+      163|         when .key eq 'non-woven-code' {
+      164|           ''; # do nothing
+      165|           #TODO don't insert a newline here.
+      166|         } # end of when .key eq 'non-woven-code'
+      167| 
 
 
-      160|     } # end of my Str $weave = @submatches.map(
-      161|     ).join;
+      168|     } # end of my Str $weave = @submatches.map(
+      169|     ).join;
 
 
     remove blank lines at the end
 
-      162|     $weave ~~ s{\n  <blank-line>* $ } = '';
+      170|     $weave ~~ s{\n  <blank-line>* $ } = '';
 
 
 And that's the end of the tangle subroutine!
 
-      163|     return $weave
-      164| } # end of sub weave (
+      171|     return $weave
+      172| } # end of sub weave (
 
 
 NAME
