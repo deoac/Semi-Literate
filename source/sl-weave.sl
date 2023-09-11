@@ -2,7 +2,7 @@
 
 # Weave a Semi-literate file into Text, Markdown, HTML, etc.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Mon 11 Sep 2023 05:52:27 PM EDT
+# Last modified: Mon 11 Sep 2023 06:10:44 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -90,7 +90,8 @@ sub MAIN($input-file,
         die "$format is not a supported output format"
     } # end of if ::("Pod::To::$_") ~~ Failure
 
-    my ($pod-file, $fh) = tempfile(suffix =>  '.rakudoc', unlink =>  !$verbose);
+    my ($pod-file, $fh) = tempfile(suffix =>  '.rakudoc', :!unlink);
+    note "Temp file: $pod-file" if $verbose;
 
     $pod-file.IO.spurt: $woven;
 
