@@ -2,7 +2,7 @@
 
 # Weave a Semi-literate file into Text, Markdown, HTML, etc.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Mon 11 Sep 2023 05:12:21 PM EDT
+# Last modified: Mon 11 Sep 2023 05:52:27 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -17,7 +17,6 @@ use Semi::Literate;
 
 
 =end pod
-
 
 #| Weave Markdown documentation from Raku code
 sub MAIN($input-file,
@@ -78,7 +77,7 @@ sub MAIN($input-file,
                                 $*OUT
                             unless $no-output-file;
 
-    if $format = 'Pod6' {
+    if $format eq 'Pod6' {
         $output-file-handle.spurt: $woven;
         return;
     } # end of if $format = 'Pod6'
