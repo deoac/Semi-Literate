@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Sun 10 Sep 2023 06:12:31 PM EDT
+# Last modified: Mon 11 Sep 2023 01:14:39 PM EDT
 # Version 0.0.1
 
 # always use the latest version of Raku
@@ -188,23 +188,53 @@ sub weave (
 
     my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
 
+    sub remove-comments (Str $line is rw) {
+        #TODO Add a parameter to sub weave()
+#        return !{my $remove-comments = False};
+
+        return True;
+        # don't print full line comments
+        return False if $line ~~ /<leading-ws> '#'/;
+
+        # remove comments that are at the end of a line.
+        # The code will almost always end with a ';' or a '}'.
+        $line = $0
+            if $line ~~ / ^^ (<optional-chars> <[;}]> ) <hws> '#'/;
+
+        return True;
+    } # end of sub remove-comments {Pair $p is rw}
+
+    # The code below will occur wherever non-woven-code appeared.
+    # We'll need to remove it from the woven Pod6.  Otherwise, it
+    # creates an unseemly blank line.
+    my Str $unnecessary-pod6 = qq:to/EOQ/;
+    \=end code
+    \=end pod
+    \=begin pod
+    \=begin code :lang<raku>
+    EOQ
+
 #    note "weave submatches.elems: {@submatches.elems}";
 #    note "submatches keys: {@submatches».keys}";
+    my $fmt = ($line-numbers ?? "%3s| " !! '') ~ "%s\n";
+
     my Str $weave = @submatches.map( {
         when .key eq 'pod' {
             .value
         } # end of when .key
 
-        when .key eq 'woven-code' {qq:to/EOCB/; }
+        #TODO refactor that line out of this code
+        when .key eq 'woven-code' { qq:to/EOCB/; }
             \=begin pod
             \=begin code :lang<raku>
-             { my $fmt = ($line-numbers ?? "%3s| " !! '') ~ "%s\n";
+             {
                 .value
                 .lines
-                .map($line-numbers
-                        ?? {"%4s| %s\n".sprintf($line-number++, $_) }
-                        !! {     "%s\n".sprintf(                $_) }
-                    )
+                .map(
+                            $line-numbers
+                                ?? {"%4s| %s\n".sprintf($line-number++, $_) }
+                                !! {     "%s\n".sprintf(                $_) }
+                )
                 .chomp # get rid of the last \n
              }
             \=end code
@@ -212,13 +242,16 @@ sub weave (
             EOCB
 
         when .key eq 'non-woven-code' {
-          ''; # do nothing
-          #TODO don't insert a newline here.
+            ''; # don't add any text to the Pod6
         } # end of when .key eq 'non-woven-code'
 
         default { die "Weave: should never get here. .key == {.key}" }
     } # end of my Str $weave = @submatches.map(
-    ).join;
+    ).join
+    .subst($unnecessary-pod6, :g);
+
+
+"deleteme.rakudoc".IO.spurt: $weave;
 
     $weave ~~ s{\n  <blank-line>* $ } = '';
 

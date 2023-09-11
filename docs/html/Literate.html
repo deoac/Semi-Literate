@@ -56,7 +56,7 @@
     2| 
     3| # Get the Pod vs. Code structure of a Raku/Pod6 file.
     4| # © 2023 Shimon Bollinger. All rights reserved.
-    5| # Last modified: Sun 10 Sep 2023 06:12:31 PM EDT
+    5| # Last modified: Mon 11 Sep 2023 01:14:39 PM EDT
     6| # Version 0.0.1
     7| 
 </pre></section>
@@ -69,8 +69,7 @@
     9|     my token hws            {    &lt;!ww&gt;\h*       } # Horizontal White Space
    10|     my token leading-ws     { ^^ &lt;hws&gt;          } # Whitespace at start of line
    11|     my token optional-chars {    \N*?           }
-</pre></section>
-<section name="pod"><pre class="pod-block-code">   12|     my token opening-quote { &lt;
+   12|     my token opening-quote { &lt;
    13|                               :Ps +
    14|                               :Pi +
    15|                               [\' \&quot; \\]
@@ -339,46 +338,79 @@
 <section name="pod"><pre class="pod-block-code">  151|     my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
 </pre></section>
 <section name="pod"><p>...And now begins the interesting part. We iterate through the submatches and insert the <code>code</code> sections into the Pod6...</p></section>
-<section name="pod"><pre class="pod-block-code">  152| #    note &quot;weave submatches.elems: {@submatches.elems}&quot;;
-  153| #    note &quot;submatches keys: {@submatches».keys}&quot;;
-  154|     my Str $weave = @submatches.map( {
-  155|         when .key eq 'pod' {
-  156|             .value
-  157|         } # end of when .key
-  158| 
-  159|         when .key eq 'woven-code' {qq:to/EOCB/; }
-  160|             \=begin pod
-  161|             \=begin code :lang&lt;raku&gt;
-  162|              { my $fmt = ($line-numbers ?? &quot;%3s| &quot; !! '') ~ &quot;%s\n&quot;;
-  163|                 .value
-  164|                 .lines
-  165|                 .map($line-numbers
-  166|                         ?? {&quot;%4s| %s\n&quot;.sprintf($line-number++, $_) }
-  167|                         !! {     &quot;%s\n&quot;.sprintf(                $_) }
-  168|                     )
-  169|                 .chomp # get rid of the last \n
-  170|              }
-  171|             \=end code
-  172|             \=end pod
-  173|             EOCB
-  174| 
-  175|         when .key eq 'non-woven-code' {
-  176|           ''; # do nothing
-  177|           #TODO don't insert a newline here.
-  178|         } # end of when .key eq 'non-woven-code'
-  179| 
-</pre></section>
-<section name="pod"><pre class="pod-block-code">  180|     } # end of my Str $weave = @submatches.map(
-  181|     ).join;
+<section name="pod"><p>This function checks if the line of code is a full line comment. If so, return False, so nothing will be printed for this line.</p><p>If it's a line of code with a comment at the end, remove the comment from the line and return True</p><p>Otherwise return True</p></section>
+<section name="pod"><pre class="pod-block-code">  152|     sub remove-comments (Str $line is rw) {
+  153|         #TODO Add a parameter to sub weave()
+  154| #        return !{my $remove-comments = False};
+  155| 
+  156|         return True;
+  157|         # don't print full line comments
+  158|         return False if $line ~~ /&lt;leading-ws&gt; '#'/;
+  159| 
+  160|         # remove comments that are at the end of a line.
+  161|         # The code will almost always end with a ';' or a '}'.
+  162|         $line = $0
+  163|             if $line ~~ / ^^ (&lt;optional-chars&gt; &lt;[;}]&gt; ) &lt;hws&gt; '#'/;
+  164| 
+  165|         return True;
+  166|     } # end of sub remove-comments {Pair $p is rw}
+  167| 
+  168|     # The code below will occur wherever non-woven-code appeared.
+  169|     # We'll need to remove it from the woven Pod6.  Otherwise, it
+  170|     # creates an unseemly blank line.
+  171|     my Str $unnecessary-pod6 = qq:to/EOQ/;
+  172|     \=end code
+  173|     \=end pod
+  174|     \=begin pod
+  175|     \=begin code :lang&lt;raku&gt;
+  176|     EOQ
+  177| 
+  178| #    note &quot;weave submatches.elems: {@submatches.elems}&quot;;
+  179| #    note &quot;submatches keys: {@submatches».keys}&quot;;
+  180|     my $fmt = ($line-numbers ?? &quot;%3s| &quot; !! '') ~ &quot;%s\n&quot;;
+  181| 
+  182|     my Str $weave = @submatches.map( {
+  183|         when .key eq 'pod' {
+  184|             .value
+  185|         } # end of when .key
+  186| 
+  187|         #TODO refactor that line out of this code
+  188|         when .key eq 'woven-code' { qq:to/EOCB/; }
+  189|             \=begin pod
+  190|             \=begin code :lang&lt;raku&gt;
+  191|              {
+  192|                 .value
+  193|                 .lines
+  194|                 .map(
+  195|                             $line-numbers
+  196|                                 ?? {&quot;%4s| %s\n&quot;.sprintf($line-number++, $_) }
+  197|                                 !! {     &quot;%s\n&quot;.sprintf(                $_) }
+  198|                 )
+  199|                 .chomp # get rid of the last \n
+  200|              }
+  201|             \=end code
+  202|             \=end pod
+  203|             EOCB
+  204| 
+  205|         when .key eq 'non-woven-code' {
+  206|             ''; # don't add any text to the Pod6
+  207|         } # end of when .key eq 'non-woven-code'
+  208| 
+  209|     } # end of my Str $weave = @submatches.map(
+  210|     ).join
+  211|     .subst($unnecessary-pod6, :g);
+  212| 
+  213| 
+  214| &quot;deleteme.rakudoc&quot;.IO.spurt: $weave;
 </pre></section>
 <section name="pod">
 <h3 id="remove_blank_lines_at_the_end"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">remove blank lines at the end</a></h3>
 </section>
-<section name="pod"><pre class="pod-block-code">  182|     $weave ~~ s{\n  &lt;blank-line&gt;* $ } = '';
+<section name="pod"><pre class="pod-block-code">  215|     $weave ~~ s{\n  &lt;blank-line&gt;* $ } = '';
 </pre></section>
 <section name="pod"><p>And that's the end of the <code>tangle</code> subroutine!</p></section>
-<section name="pod"><pre class="pod-block-code">  183|     return $weave
-  184| } # end of sub weave (
+<section name="pod"><pre class="pod-block-code">  216|     return $weave
+  217| } # end of sub weave (
 </pre></section>
 <section name="pod">
 <h1 id="NAME"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">NAME</a></h1>
@@ -401,7 +433,7 @@
 <p>Shimon Bollinger (deoac.bollinger@gmail.com)</p>
 <h1 id="LICENSE_AND_COPYRIGHT"><a href="#A_grammar_to_parse_a_file_into_Pod_and_Code_sections." class="u" title="go to top of document">LICENSE AND COPYRIGHT</a></h1>
 <p>© 2023 Shimon Bollinger. All rights reserved.</p><p>This module is free software; you can redistribute it and/or modify it under the same terms as Raku itself. See <a href="https://opensource.org/licenses/Artistic-2.0">The Artistic License 2.0</a>.</p><p>This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.</p></section>		</div>
-</div><footer><div>Rendered from <span class="path"></span></div><div>at <span class="time">2023-09-10T22:13:14Z</span></div></footer>
+</div><footer><div>Rendered from <span class="path"></span></div><div>at <span class="time">2023-09-11T17:15:10Z</span></div></footer>
 	</body>
 </html>
 

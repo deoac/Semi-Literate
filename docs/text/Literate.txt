@@ -2,7 +2,7 @@
         2| 
         3| # Get the Pod vs. Code structure of a Raku/Pod6 file.
         4| # © 2023 Shimon Bollinger. All rights reserved.
-        5| # Last modified: Sun 10 Sep 2023 06:09:13 PM EDT
+        5| # Last modified: Mon 11 Sep 2023 01:11:01 PM EDT
         6| # Version 0.0.1
         7| 
 
@@ -51,8 +51,8 @@ TOP token clearly indicates this.
 
        20|     token TOP {
        21|         [
-       22|           || <non-woven-code>
-       23|           || <pod>
+       22|           || <pod>
+       23|           || <non-woven-code>
        24|           || <woven-code>
        25|         ]*
        26|     } # end of token TOP
@@ -133,7 +133,7 @@ below for why some code would not be included in the woven code.
 These sections are trivially defined. They are just one or more
 plain-lines.
 
-       44|     regex woven-code  {
+       44|     token woven-code  {
        45|         [
        46|             || <plain-line>
        47|         ]+
@@ -408,49 +408,90 @@ submatches (that's what the caps method does) ...
 ...And now begins the interesting part. We iterate through the submatches
 and insert the code sections into the Pod6...
 
-      152| #    note "weave submatches.elems: {@submatches.elems}";
-      153| #    note "submatches keys: {@submatches».keys}";
-      154|     my Str $weave = @submatches.map( {
-      155|         when .key eq 'pod' {
-      156|             .value
-      157|         } # end of when .key
-      158| 
-      159|         when .key eq 'woven-code' {qq:to/EOCB/; }
-      160|             \=begin pod
-      161|             \=begin code :lang<raku>
-      162|              { my $fmt = ($line-numbers ?? "%3s| " !! '') ~ "%s\n";
-      163|                 .value
-      164|                 .lines
-      165|                 .map($line-numbers
-      166|                         ?? {"%4s| %s\n".sprintf($line-number++, $_) }
-      167|                         !! {     "%s\n".sprintf(                $_) }
-      168|                     )
-      169|                 .chomp # get rid of the last \n
-      170|              }
-      171|             \=end code
-      172|             \=end pod
-      173|             EOCB
-      174| 
-      175|         when .key eq 'non-woven-code' {
-      176|           ''; # do nothing
-      177|           #TODO don't insert a newline here.
-      178|         } # end of when .key eq 'non-woven-code'
-      179| 
+This function checks if the line of code is a full line comment. If so,
+return False, so nothing will be printed for this line.
+
+If it's a line of code with a comment at the end, remove the comment from
+the line and return True
+
+Otherwise return True
+
+      152|     sub remove-comments (Str $line is rw) {
+      153|         #TODO Add a parameter to sub weave()
+      154| #        return !{my $remove-comments = False};
+      155| 
+      156|         return True;
+      157|         # don't print full line comments
+      158|         return False if $line ~~ /<leading-ws> '#'/;
+      159| 
+      160|         # remove comments that are at the end of a line.
+      161|         # The code will almost always end with a ';' or a '}'.
+      162|         $line = $0
+      163|             if $line ~~ / ^^ (<optional-chars> <[;}]> ) <hws> '#'/;
+      164| 
+      165|         return True;
+      166|     } # end of sub remove-comments {Pair $p is rw}
+      167| 
+      168|     # The code below will occur wherever non-woven-code appeared.
+      169|     # We'll need to remove it from the woven Pod6.  Otherwise, it
+      170|     # creates an unseemly blank line.
+      171|     my Str $unnecessary-pod6 = q:to/EOQ/;
+      172|     \=end code
+      173|     \=end pod
+      174|     \=begin pod
+      175|     \=begin code :lang<raku>
+      176|     EOQ
+      177| 
+      178| #    note "weave submatches.elems: {@submatches.elems}";
+      179| #    note "submatches keys: {@submatches».keys}";
+      180|     my $fmt = ($line-numbers ?? "%3s| " !! '') ~ "%s\n";
+      181| 
+      182|     my Str $weave = @submatches.map( {
+      183|         when .key eq 'pod' {
+      184|             .value
+      185|         } # end of when .key
+      186| 
+      187|         #TODO refactor that line out of this code
+      188|         when .key eq 'woven-code' { qq:to/EOCB/; }
+      189|             \=begin pod
+      190|             \=begin code :lang<raku>
+      191|              {
+      192|                 .value
+      193|                 .lines
+      194|                 .map(
+      195|                             $line-numbers
+      196|                                 ?? {"%4s| %s\n".sprintf($line-number++, $_) }
+      197|                                 !! {     "%s\n".sprintf(                $_) }
+      198|                 )
+      199|                 .chomp # get rid of the last \n
+      200|              }
+      201|             \=end code
+      202|             \=end pod
+      203|             EOCB
+      204| 
+      205|         when .key eq 'non-woven-code' {
+      206|             ''; # don't add any text to the Pod6
+      207|         } # end of when .key eq 'non-woven-code'
+      208| 
 
 
-      180|     } # end of my Str $weave = @submatches.map(
-      181|     ).join;
+      209|     } # end of my Str $weave = @submatches.map(
+      210|     ).join
+      211|     .subst($unnecessary-pod6, :g);
+      212| 
+      213| 
+      214| "deleteme.rakudoc".IO.spurt: $weave;
 
 
     remove blank lines at the end
 
-      182|     $weave ~~ s{\n  <blank-line>* $ } = '';
+      215|     $weave ~~ s{\n  <blank-line>* $ } = '';
 
 
 And that's the end of the tangle subroutine!
 
-      183|     return $weave
-      184| } # end of sub weave (
+      216|     return $weave
+      217| } # end of sub weave (
 
 
 NAME
