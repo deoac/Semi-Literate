@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Sun 10 Sep 2023 06:13:47 PM EDT
+# Last modified: Mon 11 Sep 2023 12:34:25 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -537,23 +537,53 @@ insert the C<code> sections into the Pod6...
 =end pod
 
 
+=begin pod
+This function checks if the line of code is a full line comment. If so,
+return False, so nothing will be printed for this line.
+
+If it's a line of code with a comment at the end, remove the comment from the
+line and return True
+
+Otherwise return True
+=end pod
+
+    sub remove-comments (Str $line is rw) {
+        #TODO Add a parameter to sub weave()
+#        return !{my $remove-comments = False};
+
+        return True;
+        # don't print full line comments
+        return False if $line ~~ /<leading-ws> '#'/;
+
+        # remove comments that are at the end of a line.
+        # The code will almost always end with a ';' or a '}'.
+        $line = $0
+            if $line ~~ / ^^ (<optional-chars> <[;}]> ) <hws> '#'/;
+
+        return True;
+    } # end of sub remove-comments {Pair $p is rw}
+
 #    note "weave submatches.elems: {@submatches.elems}";
 #    note "submatches keys: {@submatches».keys}";
+    my $fmt = ($line-numbers ?? "%3s| " !! '') ~ "%s\n";
+
     my Str $weave = @submatches.map( {
         when .key eq 'pod' {
             .value
         } # end of when .key
 
-        when .key eq 'woven-code' {qq:to/EOCB/; }
+        #TODO refactor that line out of this code
+        when .key eq 'woven-code' { qq:to/EOCB/; }
             \=begin pod
             \=begin code :lang<raku>
-             { my $fmt = ($line-numbers ?? "%3s| " !! '') ~ "%s\n";
+             {
                 .value
                 .lines
-                .map($line-numbers
-                        ?? {"%4s| %s\n".sprintf($line-number++, $_) }
-                        !! {     "%s\n".sprintf(                $_) }
-                    )
+                .map(
+                            $line-numbers
+                                ?? {"%4s| %s\n".sprintf($line-number++, $_) }
+                                !! {     "%s\n".sprintf(                $_) }
+                )
                 .chomp # get rid of the last \n
              }
             \=end code
@@ -569,7 +599,10 @@ insert the C<code> sections into the Pod6...
         default { die "Weave: should never get here. .key == {.key}" }
         # end-no-weave
     } # end of my Str $weave = @submatches.map(
-    ).join;
+    ).join
+    .subst(/:sigspace ^^<.ws>\=end code\n\=end pod\n\=begin pod\n\=begin code \:lang\<raku\>\n/);
+
+"deleteme.rakudoc".IO.spurt: $weave;
 
 =begin pod
 =comment 1
