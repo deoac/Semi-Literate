@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Mon 11 Sep 2023 12:34:25 PM EDT
+# Last modified: Mon 11 Sep 2023 04:50:35 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -470,18 +470,6 @@ C<MAIN>.
     Str $input-file!;
 =begin pod
 =comment 1
-=head3 C<$format>
-
-The output of the weave can (currently) be Markdown, Text, or HTML.  It
-defaults to Markdown. The variable is case-insensitive, so 'markdown' also
-works.
-=end pod
-
-    Str :f(:$format) is copy = 'markdown';
-        #= The output format for the woven file.
-
-=begin pod
-=comment 1
 =head3 C<$line-numbers>
 
 It can be useful to print line numbers in the code listing.  It currently
@@ -563,6 +551,16 @@ Otherwise return True
         return True;
     } # end of sub remove-comments {Pair $p is rw}
 
+    # The code below will occur wherever non-woven-code appeared.
+    # We'll need to remove it from the woven Pod6.  Otherwise, it
+    # creates an unseemly blank line.
+    my Str $unnecessary-pod6 = qq:to/EOQ/;
+    \=end code
+    \=end pod
+    \=begin pod
+    \=begin code :lang<raku>
+    EOQ
+
 #    note "weave submatches.elems: {@submatches.elems}";
 #    note "submatches keys: {@submatches».keys}";
     my $fmt = ($line-numbers ?? "%3s| " !! '') ~ "%s\n";
@@ -591,8 +589,7 @@ Otherwise return True
             EOCB
 
         when .key eq 'non-woven-code' {
-          ''; # do nothing
-          #TODO don't insert a newline here.
+            ''; # don't add any text to the Pod6
         } # end of when .key eq 'non-woven-code'
 
         # begin-no-weave
@@ -600,7 +597,8 @@ Otherwise return True
         # end-no-weave
     } # end of my Str $weave = @submatches.map(
     ).join
-    .subst(/:sigspace ^^<.ws>\=end code\n\=end pod\n\=begin pod\n\=begin code \:lang\<raku\>\n/);
+    .subst($unnecessary-pod6, :g);
+
 
 "deleteme.rakudoc".IO.spurt: $weave;
 
