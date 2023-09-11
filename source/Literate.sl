@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Mon 11 Sep 2023 04:50:35 PM EDT
+# Last modified: Mon 11 Sep 2023 05:31:00 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -576,13 +576,14 @@ Otherwise return True
             \=begin code :lang<raku>
              {
                 .value
-                .lines
-                .map(
+                ==> lines()
+                ==> map(
+
                             $line-numbers
                                 ?? {"%4s| %s\n".sprintf($line-number++, $_) }
                                 !! {     "%s\n".sprintf(                $_) }
                 )
-                .chomp # get rid of the last \n
+                ==> chomp() # get rid of the last \n
              }
             \=end code
             \=end pod
