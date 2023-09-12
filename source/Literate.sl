@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Mon 11 Sep 2023 05:31:00 PM EDT
+# Last modified: Mon 11 Sep 2023 09:51:53 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -35,15 +35,17 @@ Let's create some tokens for convenience.
     #TODO put these in a Role
     my token hws            {    <!ww>\h*       } # Horizontal White Space
     my token leading-ws     { ^^ <hws>          } # Whitespace at start of line
-    my token optional-chars {    \N*?           }
-    my token rest-of-line   {    \N*   [\n | $] } #no-weave-this-line
+    my regex optional-chars {    \N*?           }
+    # deleteme
+    my token rest-of-line   {    \N*   [\n | $] }
     my token ws-till-EOL    {    <hws> [\n | $] } #no-weave-this-line
-    my token blank-line     { ^^ <ws-till-EOL>  } #no-weave-this-line
-    my token opening-quote { <
-                              :Ps +
-                              :Pi +
-                              [\' \" \\]
-                             >
+    my token blank-line     { ^^ <ws-till-EOL>  }
+    my token opening-quote  { <
+                               :Ps +      # Unicode Open_Punctuation
+                               :Pi +      # Unicode Initial_Punctuation
+                               [\' \" \\]
+                              >
+                    # test comment
     } # end of my token opening-quote
 
 =begin pod
@@ -535,31 +537,53 @@ line and return True
 Otherwise return True
 =end pod
 
-    sub remove-comments (Str $line is rw) {
+    sub remove-comments (Seq $lines --> Seq) {
         #TODO Add a parameter to sub weave()
-#        return !{my $remove-comments = False};
+    #        return !{my $remove-comments = False};
 
-        return True;
-        # don't print full line comments
-        return False if $line ~~ /<leading-ws> '#'/;
+#        note "Seq has {$lines.elems} lines";
 
-        # remove comments that are at the end of a line.
-        # The code will almost always end with a ';' or a '}'.
-        $line = $0
-            if $line ~~ / ^^ (<optional-chars> <[;}]> ) <hws> '#'/;
+        my @retval = ();
+        for $lines.List -> $line {
+            given $line {
+#            note "» $line: {so $line ~~ /<leading-ws> '#'/}";
+                # don't print full line comments
+                when /<leading-ws> '#'/
+                    {; #`[[do nothing]] }
 
-        return True;
+                # remove comments that are at the end of a line.
+                # The code will almost always end with a ';' or a '}'.
+                when / (^^ <optional-chars> [\; | \}]) <hws> '#'/
+                    {#`[[note ">> ending comment ($0)";]] @retval.push: $0}
+
+                default
+                    {#`[[note ">> normal line";]] @retval.push: $line}
+            } # end of given $line
+#            note "---> ", @retval.join("\n\t");
+        } # end of for $lines -> $line
+
+
+#        note "» Returning: ", @retval.join("\n\t"), "\n";
+        return @retval.Seq;
     } # end of sub remove-comments {Pair $p is rw}
 
     # The code below will occur wherever non-woven-code appeared.
     # We'll need to remove it from the woven Pod6.  Otherwise, it
     # creates an unseemly blank line.
-    my Str $unnecessary-pod6 = qq:to/EOQ/;
-    \=end code
-    \=end pod
-    \=begin pod
-    \=begin code :lang<raku>
-    EOQ
+    my Str $non-woven-blank-lines = qq:to/EOQ/;
+        \=end code
+        \=end pod
+        \=begin pod
+        \=begin code :lang<raku>
+        EOQ
+
+    my Regex $full-comment-blank-lines = rx[
+        '=begin code'               <ws-till-EOL>
+        '=begin pod'                <ws-till-EOL>
+        [<leading-ws> [\d+ | '|']?  <ws-till-EOL>]*
+        '=end pod'                  <ws-till-EOL>
+        '=end code :lang            <raku>' <ws-till-EOL>
+    ];
 
 #    note "weave submatches.elems: {@submatches.elems}";
 #    note "submatches keys: {@submatches».keys}";
@@ -577,11 +601,11 @@ Otherwise return True
              {
                 .value
                 ==> lines()
+                ==> remove-comments()
                 ==> map(
-
-                            $line-numbers
-                                ?? {"%4s| %s\n".sprintf($line-number++, $_) }
-                                !! {     "%s\n".sprintf(                $_) }
+                        $line-numbers
+                            ?? {"%4s| %s\n".sprintf($line-number++, $_) }
+                            !! {     "%s\n".sprintf(                $_) }
                 )
                 ==> chomp() # get rid of the last \n
              }
@@ -597,11 +621,16 @@ Otherwise return True
         default { die "Weave: should never get here. .key == {.key}" }
         # end-no-weave
     } # end of my Str $weave = @submatches.map(
-    ).join
-    .subst($unnecessary-pod6, :g);
+    ).join;
+
+=begin pod
+=comment 1
+=head3 Remove unseemly blank lines
+=end pod
+
+    $weave ~~ s:g{ $non-woven-blank-lines | <$full-comment-blank-lines> } = '';
 
 
-"deleteme.rakudoc".IO.spurt: $weave;
 
 =begin pod
 =comment 1
@@ -614,9 +643,10 @@ Otherwise return True
 =begin pod
 =comment 1
 
-And that's the end of the C<tangle> subroutine!
+And that's the end of the C<weave> subroutine!
 =end pod
 
+    "deleteme.rakudoc".IO.spurt: $weave;
     return $weave
 } # end of sub weave (
 
