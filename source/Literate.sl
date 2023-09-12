@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Mon 11 Sep 2023 09:51:53 PM EDT
+# Last modified: Tue 12 Sep 2023 01:38:58 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -578,11 +578,11 @@ Otherwise return True
         EOQ
 
     my Regex $full-comment-blank-lines = rx[
-        '=begin code'               <ws-till-EOL>
-        '=begin pod'                <ws-till-EOL>
-        [<leading-ws> [\d+ | '|']?  <ws-till-EOL>]*
-        '=end pod'                  <ws-till-EOL>
-        '=end code :lang            <raku>' <ws-till-EOL>
+        '=begin pod'              <ws-till-EOL>
+        '=begin code :lang<raku>' <ws-till-EOL>
+        [<leading-ws> \d+ | '|'?  <ws-till-EOL>]*
+        '=end code'               <ws-till-EOL>
+        '=end pod'                <ws-till-EOL>
     ];
 
 #    note "weave submatches.elems: {@submatches.elems}";
