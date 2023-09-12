@@ -5,6 +5,7 @@
   ],
   "build-depends": [
       "File::Temp",
+      "Useful::Regexes",
       "PrettyDump",
       "Data::Dump::Tree",
       "Grammar::Tracer"
