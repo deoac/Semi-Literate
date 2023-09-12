@@ -2,31 +2,18 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Tue 12 Sep 2023 01:38:58 PM EDT
+# Last modified: Tue 12 Sep 2023 04:49:59 PM EDT
 # Version 0.0.1
 
 # always use the latest version of Raku
 use v6.*;
+use Useful::Regexes;
+
 use PrettyDump;
 use Data::Dump::Tree;
 
-    #TODO put these in a Role
-    my token hws            {    <!ww>\h*       } # Horizontal White Space
-    my token leading-ws     { ^^ <hws>          } # Whitespace at start of line
-    my regex optional-chars {    \N*?           }
-    # deleteme
-    my token rest-of-line   {    \N*   [\n | $] }
-    my token ws-till-EOL    {    <hws> [\n | $] } #no-weave-this-line
-    my token blank-line     { ^^ <ws-till-EOL>  }
-    my token opening-quote  { <
-                               :Ps +      # Unicode Open_Punctuation
-                               :Pi +      # Unicode Initial_Punctuation
-                               [\' \" \\]
-                              >
-                    # test comment
-    } # end of my token opening-quote
 #use Grammar::Tracer;
-grammar Semi::Literate is export {
+grammar Semi::Literate is export does Useful::Regexes {
     token TOP {
         [
           || <pod>
@@ -36,13 +23,19 @@ grammar Semi::Literate is export {
     } # end of token TOP
 
     token begin-pod {
-        ^^ <hws> '=' begin <hws> pod <ws-till-EOL>
+        <leading-ws>
+        '=' begin <hws> pod
+        <ws-till-EOL>
     } # end of token begin-pod
 
-    token end-pod { ^^ <hws> '=' end <hws> pod <ws-till-EOL> }
+    token end-pod  {
+        <leading-ws>
+        '=' end <hws> pod
+        <ws-till-EOL>
+    } # end of token end-pod
 
     token blank-line-comment {
-        ^^ <hws>
+        <leading-ws>
         '=' comment
         \N*?
         $<num-blank-lines> = (\d+)?
@@ -70,21 +63,21 @@ grammar Semi::Literate is export {
     } # end of token non-woven
 
     token one-line-no-weave {
-        ^^ \N*?
+        <leading-ws> \N*?
         '#' <hws> 'no-weave-this-line'
         <ws-till-EOL>
     } # end of token one-line-no-weave
 
     token begin-no-weave {
-        ^^ <hws>                    # optional leading whitespace
-        '#' <hws> 'begin-no-weave'  # the delimiter itself (# begin-no-weave)
-        <ws-till-EOL>               # optional trailing whitespace or comment
+        <leading-ws>
+        '#' <hws> 'begin-no-weave'
+        <ws-till-EOL>
     } # end of token <begin-no-weave>
 
     token end-no-weave {
-        ^^ <hws>                    # optional leading whitespace
-        '#' <hws> 'end-no-weave'    # the delimiter itself (#end-no-weave)
-        <ws-till-EOL>               # optional trailing whitespace or comment
+        <leading-ws>
+        '#' <hws> 'end-no-weave'
+        <ws-till-EOL>
     } # end of token <end--no-weave>
 
     token delimited-no-weave {
@@ -92,22 +85,6 @@ grammar Semi::Literate is export {
             <plain-line>*
         <end-no-weave>
     } # end of token delimited-no-weave
-
-    my token full-line-comment {
-        $<the-code>=(<leading-ws>)
-        '#'
-        <rest-of-line>
-    } # end of my token full-line-comment
-
-    #TODO this regex is not robust.  It will tag lines with a # in a string,
-    #unless the string delimiter is immediately before the #
-    my regex code-comment {
-        $<the-code>=(<leading-ws> \N*?)  # optional code
-        <!after <opening-quote>>         #
-        '#'                              # comment marker
-        $<the-comment>=<-[#]>*           # the actual comment
-        <ws-till-EOL>
-    } # end of my regex comment
 
     token plain-line {
         :my $*EXCEPTION = False;
@@ -187,24 +164,35 @@ sub weave (
 
     my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
 
+    my token full-line-comment {
+        $<the-code>=(<leading-ws>)
+        '#'
+        <rest-of-line>
+    } # end of my token full-line-comment
+
+    #TODO this regex is not robust.  It will tag lines with a # in a string,
+    #unless the string delimiter is immediately before the #
+    my regex partial-line-comment {
+        $<the-code>=(<leading-ws> <optional-chars>)  # optional code
+        <!after <opening-quote>>         #
+        '#'                              # comment marker
+        $<the-comment>=<-[#]>*           # the actual comment
+        <ws-till-EOL>
+    } # end of my regex comment
+
     sub remove-comments (Seq $lines --> Seq) {
         #TODO Add a parameter to sub weave()
-    #        return !{my $remove-comments = False};
-
-#        note "Seq has {$lines.elems} lines";
 
         my @retval = ();
         for $lines.List -> $line {
             given $line {
-#            note "» $line: {so $line ~~ /<leading-ws> '#'/}";
                 # don't print full line comments
-                when /<leading-ws> '#'/
-                    {; #`[[do nothing]] }
+                when /<full-line-comment>/ {; #`[[do nothing]] }
 
                 # remove comments that are at the end of a line.
                 # The code will almost always end with a ';' or a '}'.
-                when / (^^ <optional-chars> [\; | \}]) <hws> '#'/
-                    {#`[[note ">> ending comment ($0)";]] @retval.push: $0}
+#                when / (^^ <optional-chars> [\; | \}]) <hws> '#'/
+                when /<partial-line-comment>/ { @retval.push: $0}
 
                 default
                     {#`[[note ">> normal line";]] @retval.push: $line}
