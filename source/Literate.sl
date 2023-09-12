@@ -2,12 +2,14 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Tue 12 Sep 2023 01:38:58 PM EDT
+# Last modified: Tue 12 Sep 2023 04:49:59 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
 # always use the latest version of Raku
 use v6.*;
+use Useful::Regexes;
+
 use PrettyDump;
 use Data::Dump::Tree;
 #end-no-weave
@@ -16,7 +18,7 @@ use Data::Dump::Tree;
 =comment 1
 
 
-=TITLE A grammar to parse a file into C<Pod> and C<Code> sections.
+=TITLE An implementation of Semi-Literate programming for Raku with Pod6
 
 =head1 INTRODUCTION
 =comment 2
@@ -26,39 +28,19 @@ C<.sl>. Then, I will I<weave> it to generate a readable file in formats like
 Markdown, PDF, HTML, and more. Additionally, I will I<tangle> it to create source
 code without any Pod6.
 
-=head2 Convenient tokens
-
-Let's create some tokens for convenience.
-
-=end pod
-
-    #TODO put these in a Role
-    my token hws            {    <!ww>\h*       } # Horizontal White Space
-    my token leading-ws     { ^^ <hws>          } # Whitespace at start of line
-    my regex optional-chars {    \N*?           }
-    # deleteme
-    my token rest-of-line   {    \N*   [\n | $] }
-    my token ws-till-EOL    {    <hws> [\n | $] } #no-weave-this-line
-    my token blank-line     { ^^ <ws-till-EOL>  }
-    my token opening-quote  { <
-                               :Ps +      # Unicode Open_Punctuation
-                               :Pi +      # Unicode Initial_Punctuation
-                               [\' \" \\]
-                              >
-                    # test comment
-    } # end of my token opening-quote
-
-=begin pod
 To do this, I need to divide the file into C<Pod> and C<Code> sections by parsing
 it. For this purpose, I will create a dedicated Grammar.
 
+(See L<Useful::Regexes|https://github.com/deoac/Useful-Regexes> for the
+definitions of the named regexes used here. (<hws> == Horizontal WhiteSpace))
 
 =head1 The Grammar
-
+=comment 2
 =end pod
 
+
 #use Grammar::Tracer;
-grammar Semi::Literate is export {
+grammar Semi::Literate is export does Useful::Regexes {
 
 =begin pod
 
@@ -86,7 +68,7 @@ According to the L<documentation|https://docs.raku.org/language/pod>,
 
 =begin defn
 
-    Every Pod6 document has to begin with =begin pod and end with =end pod.
+    Every Pod6 document has to begin with C<=begin pod> and end with C<=end> pod.
 
 =end defn
 
@@ -97,7 +79,9 @@ So let's define those tokens.
 
 
     token begin-pod {
-        ^^ <hws> '=' begin <hws> pod <ws-till-EOL>
+        <leading-ws>
+        '=' begin <hws> pod
+        <ws-till-EOL>
     } # end of token begin-pod
 
 =begin pod
@@ -109,28 +93,38 @@ The C<end-pod> token is much simpler.
 
 =end pod
 
-    token end-pod { ^^ <hws> '=' end <hws> pod <ws-till-EOL> }
+    token end-pod  {
+        <leading-ws>
+        '=' end <hws> pod
+        <ws-till-EOL>
+    } # end of token end-pod
 
 =begin pod
 =comment 1
 
-=head3 Replacing Pod6 sections with blank lines
+=head2 Replacing Pod6 sections with blank lines
 
-Most programming applications do not focus on the structure of the executable
-file, which is not meant to be easily read by humans.  Our tangle would replace
-all the Pod6 blocks with a single C<\n>.  That can clump code together that is
-easier read if there were one or more blank lines.
-
-However, we can provide the option for users to specify the number of empty
+When we I<tangle> the semi-literate code, all the Pod6 will be removed.  This
+would leave a lot of blank lines in the Raku code.  So we'll clean it up.
+We provide the option for users to specify the number of empty
 lines that should replace a C<pod> block. To do this, simply add a Pod6 comment
 immediately after the C<=begin  pod> statement.  The comment can say anything
 you like, but must end with a digit specifying the number of blank lines with
 which to replace the Pod6 section.
 
+=begin code :lang<raku>
+
+    =begin pod
+    =comment I want this pod block replaced by only one line 1
+    ...
+    =end pod
+
+=end code
+Here's the relevant regex:
 =end pod
 
     token blank-line-comment {
-        ^^ <hws>
+        <leading-ws>
         '=' comment
         \N*?
         $<num-blank-lines> = (\d+)?
@@ -166,9 +160,7 @@ possibility of having no lines in the block.
 =head2 The C<Code> tokens
 
 The C<Code> sections are similarly easily defined.  There are two types of
-C<Code> sections, depending on whether they will appear in the woven code. See
-L<below> for why some code would not be included in the woven
-code.
+C<Code> sections, depending on whether they will appear in the woven code.
 
 =head3 Woven sections
 
@@ -189,9 +181,10 @@ They are just one or more C<plain-line>s.
 
 =head3 Non-woven sections
 
-Sometimes there will be code you do not want woven into the document, such
-as boilerplate code like C<use v6.d;>.  You have two options to mark such
-code.  By individual lines or by delimited blocks of code.
+Sometimes there will be code you do not want woven into the documentation, such
+as boilerplate code like C<use v6.d;>.  You have two options to mark such code.
+By individual lines or by a delimited block of code.
+
 =end pod
 
     token non-woven-code {
@@ -205,12 +198,12 @@ code.  By individual lines or by delimited blocks of code.
 
 =head4 One line of code
 
-Simply append C<# begin-no-weave> at the end of the line!
+Simply append C<# no-weave-this-line> at the end of the line!
 
 =end pod
 
     token one-line-no-weave {
-        ^^ \N*?
+        <leading-ws> \N*?
         '#' <hws> 'no-weave-this-line'
         <ws-till-EOL>
     } # end of token one-line-no-weave
@@ -222,21 +215,21 @@ Simply append C<# begin-no-weave> at the end of the line!
 
 =head4 Delimited blocks of code
 
-Simply add comments C<# begin-no-weave> and C<#end-no-weave> before and after the
-code you want ignored in the formatted document.
+Simply add comments C<# begin-no-weave> and C<#end-no-weave> before and after
+the code you want ignored in the formatted document.
 
 =end pod
 
     token begin-no-weave {
-        ^^ <hws>                    # optional leading whitespace
-        '#' <hws> 'begin-no-weave'  # the delimiter itself (# begin-no-weave)
-        <ws-till-EOL>               # optional trailing whitespace or comment
+        <leading-ws>
+        '#' <hws> 'begin-no-weave'
+        <ws-till-EOL>
     } # end of token <begin-no-weave>
 
     token end-no-weave {
-        ^^ <hws>                    # optional leading whitespace
-        '#' <hws> 'end-no-weave'    # the delimiter itself (#end-no-weave)
-        <ws-till-EOL>               # optional trailing whitespace or comment
+        <leading-ws>
+        '#' <hws> 'end-no-weave'
+        <ws-till-EOL>
     } # end of token <end--no-weave>
 
     token delimited-no-weave {
@@ -258,22 +251,6 @@ Check|https://docs.raku.org/language/regexes\#Regex_Boolean_condition_check>.
 
 
 =end pod
-
-    my token full-line-comment {
-        $<the-code>=(<leading-ws>)
-        '#'
-        <rest-of-line>
-    } # end of my token full-line-comment
-
-    #TODO this regex is not robust.  It will tag lines with a # in a string,
-    #unless the string delimiter is immediately before the #
-    my regex code-comment {
-        $<the-code>=(<leading-ws> \N*?)  # optional code
-        <!after <opening-quote>>         #
-        '#'                              # comment marker
-        $<the-comment>=<-[#]>*           # the actual comment
-        <ws-till-EOL>
-    } # end of my regex comment
 
     token plain-line {
         :my $*EXCEPTION = False;
@@ -537,24 +514,35 @@ line and return True
 Otherwise return True
 =end pod
 
+    my token full-line-comment {
+        $<the-code>=(<leading-ws>)
+        '#'
+        <rest-of-line>
+    } # end of my token full-line-comment
+
+    #TODO this regex is not robust.  It will tag lines with a # in a string,
+    #unless the string delimiter is immediately before the #
+    my regex partial-line-comment {
+        $<the-code>=(<leading-ws> <optional-chars>)  # optional code
+        <!after <opening-quote>>         #
+        '#'                              # comment marker
+        $<the-comment>=<-[#]>*           # the actual comment
+        <ws-till-EOL>
+    } # end of my regex comment
+
     sub remove-comments (Seq $lines --> Seq) {
         #TODO Add a parameter to sub weave()
-    #        return !{my $remove-comments = False};
-
-#        note "Seq has {$lines.elems} lines";
 
         my @retval = ();
         for $lines.List -> $line {
             given $line {
-#            note "» $line: {so $line ~~ /<leading-ws> '#'/}";
                 # don't print full line comments
-                when /<leading-ws> '#'/
-                    {; #`[[do nothing]] }
+                when /<full-line-comment>/ {; #`[[do nothing]] }
 
                 # remove comments that are at the end of a line.
                 # The code will almost always end with a ';' or a '}'.
-                when / (^^ <optional-chars> [\; | \}]) <hws> '#'/
-                    {#`[[note ">> ending comment ($0)";]] @retval.push: $0}
+#                when / (^^ <optional-chars> [\; | \}]) <hws> '#'/
+                when /<partial-line-comment>/ { @retval.push: $0}
 
                 default
                     {#`[[note ">> normal line";]] @retval.push: $line}
@@ -672,7 +660,13 @@ use Semi::Literate;
 =end code
 =head1 DESCRIPTION
 
-C<Semi::Literate> is based on Daniel Sockwell's Pod::Literate module
+=head2 Influences
+
+C<Semi::Literate> is based on Daniel Sockwell's
+L<Pod::Literate|https://www.codesections.com/blog/weaving-raku/>.
+
+Also influenced by zyedidia's <Literate|https://zyedidia.github.io/literate/>
+program. Especially the idea of not weaving some portions of the code.
 
 A full description of the module and its features.
 May include numerous subsections (i.e. =head2, =head2, etc.)
