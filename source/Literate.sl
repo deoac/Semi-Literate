@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Tue 12 Sep 2023 04:49:59 PM EDT
+# Last modified: Tue 12 Sep 2023 06:54:20 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -542,10 +542,12 @@ Otherwise return True
                 # remove comments that are at the end of a line.
                 # The code will almost always end with a ';' or a '}'.
 #                when / (^^ <optional-chars> [\; | \}]) <hws> '#'/
-                when /<partial-line-comment>/ { @retval.push: $0}
+                when /<partial-line-comment>/ {
+                    @retval.push: $<partial-line-comment><the-code>;
+                }
 
                 default
-                    {#`[[note ">> normal line";]] @retval.push: $line}
+                    { @retval.push: $line; }
             } # end of given $line
 #            note "---> ", @retval.join("\n\t");
         } # end of for $lines -> $line
@@ -670,6 +672,10 @@ program. Especially the idea of not weaving some portions of the code.
 
 A full description of the module and its features.
 May include numerous subsections (i.e. =head2, =head2, etc.)
+
+=head1 DEPENDENCIES
+
+    Useful::Regexes
 
 =head1 BUGS AND LIMITATIONS
 
