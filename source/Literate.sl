@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Tue 12 Sep 2023 06:54:20 PM EDT
+# Last modified: Tue 12 Sep 2023 07:07:29 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -32,7 +32,7 @@ To do this, I need to divide the file into C<Pod> and C<Code> sections by parsin
 it. For this purpose, I will create a dedicated Grammar.
 
 (See L<Useful::Regexes|https://github.com/deoac/Useful-Regexes> for the
-definitions of the named regexes used here. (<hws> == Horizontal WhiteSpace))
+definitions of the named regexes used here. (C<<hws>> == Horizontal WhiteSpace))
 
 =head1 The Grammar
 =comment 2

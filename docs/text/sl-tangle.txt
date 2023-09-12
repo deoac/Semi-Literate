@@ -12,7 +12,7 @@
        14|                                 $*OUT;
        15| 
        16|     $output-file-handle.spurt: $raku-source;
-       17| 
+       17| } 
 
 
 NAME
