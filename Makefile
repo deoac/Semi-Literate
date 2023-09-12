@@ -47,7 +47,7 @@ touch_sources:
 	@touch source/*
 
 view:
-#	@open README.md
+	@open README.md
 	@open README.html
 
 temporary:
@@ -171,4 +171,9 @@ create_doc_dirs:
 	@chmod -R a-w $(@D)
 	@echo "\e[32mOK\e[0m"
 
+write:
+	@chmod a+w **/*
+
+lock:
+	@chmod a-w **/*
 
