@@ -1,39 +1,58 @@
-#! /usr/bin/env raku
-
-# Get the Pod vs. Code structure of a Raku/Pod6 file.
-# © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Tue 12 Sep 2023 06:54:20 PM EDT
-# Version 0.0.1
-
+# B---
 # always use the latest version of Raku
 use v6.*;
 use Useful::Regexes;
 
 use PrettyDump;
 use Data::Dump::Tree;
+# E---
+# B---
+#! /usr/bin/env raku
 
+# Get the Pod vs. Code structure of a Raku/Pod6 file.
+# © 2023 Shimon Bollinger. All rights reserved.
+# Last modified: Wed 13 Sep 2023 08:30:28 PM EDT
+# Version 0.0.1
+
+# E---
+
+# B---
 #use Grammar::Tracer;
 grammar Semi::Literate is export does Useful::Regexes {
+# E---
+# B---
     token TOP {
         [
           || <pod>
-          || <non-woven-code>
-          || <woven-code>
+          || <code>
         ]*
     } # end of token TOP
 
+    token code  {
+        [
+          || <non-woven>
+          || <woven>
+        ]+
+    } # end of token code
+# E---
+
+# B---
     token begin-pod {
         <leading-ws>
         '=' begin <hws> pod
         <ws-till-EOL>
     } # end of token begin-pod
+# E---
 
+# B---
     token end-pod  {
         <leading-ws>
         '=' end <hws> pod
         <ws-till-EOL>
     } # end of token end-pod
+# E---
 
+# B---
     token blank-line-comment {
         <leading-ws>
         '=' comment
@@ -41,33 +60,43 @@ grammar Semi::Literate is export does Useful::Regexes {
         $<num-blank-lines> = (\d+)?
         <ws-till-EOL>
     } # end of token blank-line-comment
+# E---
 
+# B---
     token pod {
         <begin-pod>
         <blank-line-comment>?
             [<pod> | <plain-line>]*
         <end-pod>
     } # end of token pod
+# E---
 
-    token woven-code  {
+# B---
+    token woven  {
         [
             || <plain-line>
         ]+
-    } # end of token woven-code
+    } # end of token woven
+# E---
 
-    token non-woven-code {
+# B---
+    token non-woven {
         [
           || <one-line-no-weave>
           || <delimited-no-weave>
         ]+
     } # end of token non-woven
+# E---
 
+# B---
     token one-line-no-weave {
         <leading-ws> \N*?
         '#' <hws> 'no-weave-this-line'
         <ws-till-EOL>
     } # end of token one-line-no-weave
+# E---
 
+# B---
     token begin-no-weave {
         <leading-ws>
         '#' <hws> 'begin-no-weave'
@@ -85,7 +114,9 @@ grammar Semi::Literate is export does Useful::Regexes {
             <plain-line>*
         <end-no-weave>
     } # end of token delimited-no-weave
+# E---
 
+# B---
     token plain-line {
         :my $*EXCEPTION = False;
         [
@@ -98,72 +129,139 @@ grammar Semi::Literate is export does Useful::Regexes {
         ]
         <?{ !$*EXCEPTION }>
     } # end of token plain-line
+# E---
 
+# B---
 } # end of grammar Semi::Literate
+# E---
 
 
+# B---
 #TODO multi sub to accept Str & IO::PatGh
 sub tangle (
+# E---
+# B---
     Str $input-file!,
+# E---
+# B---
         --> Str ) is export {
+# E---
 
+# B---
     my Str $source = $input-file.IO.slurp;
+# E---
 
 
+# B---
     my Str $cleaned-source = $source;
     $cleaned-source ~~ s:g{\=end (\N*)\n+} =   "\=end$0\n";
     $cleaned-source ~~ s:g{\n+\=begin (<hws> pod) [<hws> \d]?} = "\n\=begin$0";
+# E---
 
+# B---
     my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
 
 #    note "submatches.elems: {@submatches.elems}";
     my Str $raku-code = @submatches.map( {
-#        note .key;
-        when .key eq 'woven-code'|'non-woven-code' {
-            .value;
-        }
+# E---
 
+# B---
         when .key eq 'pod' {
             my $num-blank-lines =
                 .value.hash<blank-line-comment><num-blank-lines>;
             "\n" x $num-blank-lines with $num-blank-lines;
         }
+# E---
 
-        default { die "Tangle: should never get here. .key == {.key}" }
+# B---
+        default { die "Tangle: should never get here.
+                    .key ==> {.key} .{.key}.keys => {.{.key}.keys}";
+        } # end of default
+# E---
+# B---
+        when .key eq 'code' {
+#                note $_<code>.^name;
+                note $_<code>.keys;
+#                note $_<code><woven>.^name;
+#                note $_<code><woven>.elems;
+#                note $_<code><non-woven>.^name;
+#                note $_<code><non-woven>.elems;
+                my Str $code = '';
+                my Str $keys = '';
+                for $_<code>.keys.reverse -> $key {
+                    $keys ~= "$key, " if $key;
+                    $code ~= "# B---\n" ~ $_<code>{$key} ~ "# E---\n" if $_<code>{$key};
+                } # end of for $_<code>.keys --> $key
+#                $code ~=     $_<code><woven>.join if $_<code><woven>;
+#                $code ~= $_<code><non-woven>.join if $_<code><non-woven>;
+                note $keys;
+                $code;
+        } # end of when .key eq 'code'
 
+# E---
+
+# B---
     } # end of my Str $raku-code = @submatches.map(
     ).join;
+# E---
 
-    $raku-code ~~ s:g{ ^^ <hws> '#' <hws> 'begin-no-weave'     <rest-of-line> }
+# B---
+    $raku-code ~~ s:g{ <leading-ws> '#' <hws> 'begin-no-weave'     <rest-of-line> }
         = '';
-    $raku-code ~~ s:g{ ^^ <hws> '#' <hws> 'no-weave-this-line' <rest-of-line> }
+    $raku-code ~~ s:g{ <leading-ws> '#' <hws> 'no-weave-this-line' <rest-of-line> }
         = "$0\n";
-    $raku-code ~~ s:g{ ^^ <hws> '#' <hws> 'end-no-weave'       <rest-of-line> }
+    $raku-code ~~ s:g{ <leading-ws> '#' <hws> 'end-no-weave'       <rest-of-line> }
         = '';
+# E---
 
+# B---
+    # remove blank lines at the end
     $raku-code ~~ s{\n  <blank-line>* $ } = '';
+# E---
 
+# B---
     return $raku-code;
 } # end of sub tangle (
+# E---
 
 
+# B---
 sub weave (
+# E---
 
+# B---
     Str $input-file!;
+# E---
 
+# B---
     Bool :l(:$line-numbers)  = True;
         #= Should line numbers be added to the embeded code?
+# E---
+# B---
         --> Str ) is export {
 
     my UInt $line-number = 1;
+# E---
+# B---
     my Str $source = $input-file.IO.slurp;
+# E---
 
+# B---
     my Str $cleaned-source = $source;
     $cleaned-source ~~ s:g{\=end (\N*)\n+} =   "\=end$0\n";
     $cleaned-source ~~ s:g{\n+\=begin (<hws> pod) [<hws> \d]?} = "\n\=begin$0";
+# E---
 
+# B---
     my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
+# E---
 
+# B---
+        default { die "Weave: should never get here.";
+#                    .key ==> {.key} .{.key}.keys => {.{.key}.keys}";
+        } # end of default
+# E---
+# B---
     my token full-line-comment {
         $<the-code>=(<leading-ws>)
         '#'
@@ -207,7 +305,7 @@ sub weave (
         return @retval.Seq;
     } # end of sub remove-comments {Pair $p is rw}
 
-    # The code below will occur wherever non-woven-code appeared.
+    # The code below will occur wherever non-woven appeared.
     # We'll need to remove it from the woven Pod6.  Otherwise, it
     # creates an unseemly blank line.
     my Str $non-woven-blank-lines = qq:to/EOQ/;
@@ -232,14 +330,14 @@ sub weave (
     my Str $weave = @submatches.map( {
         when .key eq 'pod' {
             .value
-        } # end of when .key
+        } # end of when .key eq 'pod'
 
-        #TODO refactor that line out of this code
-        when .key eq 'woven-code' { qq:to/EOCB/; }
+        when .key eq 'code' {
+            { qq:to/EOCB/ if .<code><woven>; }
             \=begin pod
             \=begin code :lang<raku>
              {
-                .value
+                $_<code><woven>
                 ==> lines()
                 ==> remove-comments()
                 ==> map(
@@ -252,23 +350,27 @@ sub weave (
             \=end code
             \=end pod
             EOCB
+        } # end of when .key eq 'code'
 
-        when .key eq 'non-woven-code' {
-            ''; # don't add any text to the Pod6
-        } # end of when .key eq 'non-woven-code'
-
-        default { die "Weave: should never get here. .key == {.key}" }
-    } # end of my Str $weave = @submatches.map(
+     } # end of my Str $weave = @submatches.map(
     ).join;
+# E---
 
+# B---
     $weave ~~ s:g{ $non-woven-blank-lines | <$full-comment-blank-lines> } = '';
+# E---
 
+# B---
     $weave ~~ s{\n  <blank-line>* $ } = '';
+# E---
 
+# B---
     "deleteme.rakudoc".IO.spurt: $weave;
     return $weave
 } # end of sub weave (
+# E---
 
+# B---
 my %*SUB-MAIN-OPTS =
   :named-anywhere,             # allow named variables at any location
   :bundling,                   # allow bundling of named arguments
@@ -302,3 +404,5 @@ multi MAIN(Bool :$testt!) {
 multi MAIN(Bool :$testw!) {
     say weave($semi-literate-file);
 } # end of multi MAIN(Bool :$test!)
+
+# E---

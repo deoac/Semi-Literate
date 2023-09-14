@@ -1,14 +1,19 @@
+# B---
+use v6.d;
+# E---
+# B---
 #!/usr/bin/env raku
 
 # Weave a Semi-literate file into Text, Markdown, HTML, etc.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Mon 11 Sep 2023 06:10:44 PM EDT
+# Last modified: Wed 13 Sep 2023 04:57:38 PM EDT
 # Version 0.0.1
 
-use v6.d;
-
+ 
 use File::Temp;
 use Semi::Literate;
+# E---
+# B---
 #| Weave Markdown documentation from Raku code
 sub MAIN($input-file,
          Bool :l(:$line-numbers)  = True;
@@ -93,3 +98,5 @@ sub MAIN($input-file,
         :out($output-file-handle);
 
 } # end of sub MAIN($input-file,
+
+# E---
