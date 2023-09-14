@@ -31,20 +31,21 @@ WEAVE_BINARY_TARGET  := /usr/local/Cellar/rakudo-star/2023.08/share/perl6/site/b
 
 it: 		 module html view
 all: 		 module executables docs
-module: 	 lib/Semi/Literate.rakumod $(RAKU_MODULE_TARGET)
+module: 	 $(RAKU_MODULE_TARGET)
 binaries: 	 bin/sl-tangle bin/sl-weave
-executables: binaries $(TANGLE_BINARY_TARGET) $(WEAVE_BINARY_TARGET)
+executables: binaries install-all
 docs: 		 text html markdown pdf
 html:  	     $(HTML_TARGETS)
 markdown:    $(MARKDOWN_TARGETS)
 pdf: 		 $(PDF_TARGETS)
 text: 		 $(TEXT_TARGETS)
 
-temp: 		 temporary module_install all
+temp: 		 temporary module executables
 debug:       touch_sources all view
 
 touch_sources:
 	@touch source/*
+	@del docs
 
 view:
 	@open README.md
@@ -67,14 +68,14 @@ lib/Semi/Literate.rakumod: source/Literate.sl
 	@chmod -R a-w lib/
 	@echo "\e[32mOK\e[0m"
 
-bin/sl-tangle: source/sl-tangle.sl
+bin/sl-tangle: source/sl-tangle.sl $(RAKU_MODULE_TARGET)
 	@chmod -R a+w bin/
 	@echo -n "> Creating the sl-tangle executable..."
 	@pod-tangle source/sl-tangle.sl > bin/sl-tangle
 	@chmod -R a-w,a+x bin/
 	@echo "\e[32mOK\e[0m"
 
-bin/sl-weave: source/sl-weave.sl
+bin/sl-weave: source/sl-weave.sl  $(RAKU_MODULE_TARGET)
 	@chmod -R a+w bin/
 	@echo -n "> Creating the sl-weave executable..."
 	@bin/sl-tangle source/sl-weave.sl  > bin/sl-weave
@@ -87,17 +88,17 @@ $(RAKU_MODULE_TARGET): lib/Semi/Literate.rakumod
 	@zef install --force-build --force-install --force-test . >/dev/null
 	@echo "\e[32mOK\e[0m"
 
-$(TANGLE_BINARY_TARGET): bin/sl-tangle
+$(TANGLE_BINARY_TARGET): bin/sl-tangle $(RAKU_MODULE_TARGET)
 	@echo -n "> Installing the newly created tangle executable with zef..."
 	@zef install --force-build --force-install --force-test . >/dev/null
 	@echo "\e[32mOK\e[0m"
 
-$(WEAVE_BINARY_TARGET): bin/sl-weave
+$(WEAVE_BINARY_TARGET): bin/sl-weave $(RAKU_MODULE_TARGET)
 	@echo -n "> Installing the newly created weave executable with zef..."
 	@zef install --force-build --force-install --force-test . >/dev/null
 	@echo "\e[32mOK\e[0m"
 
-install-all: /usr/local/Cellar/rakudo-star/2023.08/share/perl6/site/sources/A12861C6F020F7848C33E00652D93FCEB0ABE1C1 /usr/local/Cellar/rakudo-star/2023.08/share/perl6/site/bin/sl-tangle /usr/local/Cellar/rakudo-star/2023.08/share/perl6/site/bin/sl-weave
+install-all: $(RAKU_MODULE_TARGET)
 	@echo -n "> Installing the module and the executables with zef..."
 	@zef install --force-build --force-install --force-test . >/dev/null
 	@echo "\e[32mOK\e[0m"
