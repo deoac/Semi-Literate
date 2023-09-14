@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Tue 12 Sep 2023 07:07:29 PM EDT
+# Last modified: Wed 13 Sep 2023 08:30:28 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -32,7 +32,7 @@ To do this, I need to divide the file into C<Pod> and C<Code> sections by parsin
 it. For this purpose, I will create a dedicated Grammar.
 
 (See L<Useful::Regexes|https://github.com/deoac/Useful-Regexes> for the
-definitions of the named regexes used here. (C<<hws>> == Horizontal WhiteSpace))
+    definitions of the named regexes used here. (C<<hws>> == Horizontal WhiteSpace))
 
 =head1 The Grammar
 =comment 2
@@ -54,10 +54,16 @@ C<TOP> token clearly indicates this.
     token TOP {
         [
           || <pod>
-          || <non-woven-code>
-          || <woven-code>
+          || <code>
         ]*
     } # end of token TOP
+
+    token code  {
+        [
+          || <non-woven>
+          || <woven>
+        ]+
+    } # end of token code
 
 =begin pod
 =comment 1
@@ -170,11 +176,11 @@ They are just one or more C<plain-line>s.
 =end pod
 
 
-    token woven-code  {
+    token woven  {
         [
             || <plain-line>
         ]+
-    } # end of token woven-code
+    } # end of token woven
 
 =begin pod
 =comment 1
@@ -187,7 +193,7 @@ By individual lines or by a delimited block of code.
 
 =end pod
 
-    token non-woven-code {
+    token non-woven {
         [
           || <one-line-no-weave>
           || <delimited-no-weave>
@@ -353,18 +359,8 @@ and obtain a list of submatches (that's what the C<caps> method does) ...
 
     my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
 
-=begin pod
-=comment 1
-
-...and iterate through the submatches and keep only the C<code> sections...
-=end pod
-
 #    note "submatches.elems: {@submatches.elems}";
     my Str $raku-code = @submatches.map( {
-#        note .key;
-        when .key eq 'woven-code'|'non-woven-code' {
-            .value;
-        }
 
 =begin pod
 =comment 1
@@ -379,8 +375,35 @@ and obtain a list of submatches (that's what the C<caps> method does) ...
             "\n" x $num-blank-lines with $num-blank-lines;
         }
 
+=begin pod
+=comment 1
+
+Add all the C<Code> sections.
+=end pod
+
+        when .key eq 'code' {
+#                note $_<code>.^name;
+                note $_<code>.keys;
+#                note $_<code><woven>.^name;
+#                note $_<code><woven>.elems;
+#                note $_<code><non-woven>.^name;
+#                note $_<code><non-woven>.elems;
+                my Str $code = '';
+                my Str $keys = '';
+                for $_<code>.keys.reverse -> $key {
+                    $keys ~= "$key, " if $key;
+                    $code ~= "# B---\n" ~ $_<code>{$key} ~ "# E---\n" if $_<code>{$key};
+                } # end of for $_<code>.keys --> $key
+#                $code ~=     $_<code><woven>.join if $_<code><woven>;
+#                $code ~= $_<code><non-woven>.join if $_<code><non-woven>;
+                note $keys;
+                $code;
+        } # end of when .key eq 'code'
+
         # begin-no-weave
-        default { die "Tangle: should never get here. .key == {.key}" }
+        default { die "Tangle: should never get here.
+                    .key ==> {.key} .{.key}.keys => {.{.key}.keys}";
+        } # end of default
         #end-no-weave
 =begin pod
 =comment 1
@@ -397,11 +420,11 @@ and obtain a list of submatches (that's what the C<caps> method does) ...
 
 =end pod
 
-    $raku-code ~~ s:g{ ^^ <hws> '#' <hws> 'begin-no-weave'     <rest-of-line> }
+    $raku-code ~~ s:g{ <leading-ws> '#' <hws> 'begin-no-weave'     <rest-of-line> }
         = '';
-    $raku-code ~~ s:g{ ^^ <hws> '#' <hws> 'no-weave-this-line' <rest-of-line> }
+    $raku-code ~~ s:g{ <leading-ws> '#' <hws> 'no-weave-this-line' <rest-of-line> }
         = "$0\n";
-    $raku-code ~~ s:g{ ^^ <hws> '#' <hws> 'end-no-weave'       <rest-of-line> }
+    $raku-code ~~ s:g{ <leading-ws> '#' <hws> 'end-no-weave'       <rest-of-line> }
         = '';
 
 =begin pod
@@ -409,7 +432,7 @@ and obtain a list of submatches (that's what the C<caps> method does) ...
 =head3 remove blank lines at the end
 
 =end pod
-
+    # remove blank lines at the end
     $raku-code ~~ s{\n  <blank-line>* $ } = '';
 
 =begin pod
@@ -557,7 +580,7 @@ Otherwise return True
         return @retval.Seq;
     } # end of sub remove-comments {Pair $p is rw}
 
-    # The code below will occur wherever non-woven-code appeared.
+    # The code below will occur wherever non-woven appeared.
     # We'll need to remove it from the woven Pod6.  Otherwise, it
     # creates an unseemly blank line.
     my Str $non-woven-blank-lines = qq:to/EOQ/;
@@ -582,14 +605,14 @@ Otherwise return True
     my Str $weave = @submatches.map( {
         when .key eq 'pod' {
             .value
-        } # end of when .key
+        } # end of when .key eq 'pod'
 
-        #TODO refactor that line out of this code
-        when .key eq 'woven-code' { qq:to/EOCB/; }
+        when .key eq 'code' {
+            { qq:to/EOCB/ if .<code><woven>; }
             \=begin pod
             \=begin code :lang<raku>
              {
-                .value
+                $_<code><woven>
                 ==> lines()
                 ==> remove-comments()
                 ==> map(
@@ -602,13 +625,12 @@ Otherwise return True
             \=end code
             \=end pod
             EOCB
-
-        when .key eq 'non-woven-code' {
-            ''; # don't add any text to the Pod6
-        } # end of when .key eq 'non-woven-code'
+        } # end of when .key eq 'code'
 
         # begin-no-weave
-        default { die "Weave: should never get here. .key == {.key}" }
+        default { die "Weave: should never get here.";
+#                    .key ==> {.key} .{.key}.keys => {.{.key}.keys}";
+        } # end of default
         # end-no-weave
     } # end of my Str $weave = @submatches.map(
     ).join;
