@@ -2,15 +2,15 @@
 
 # Weave a Semi-literate file into Text, Markdown, HTML, etc.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Mon 11 Sep 2023 06:10:44 PM EDT
+# Last modified: Wed 13 Sep 2023 04:57:38 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
 use v6.d;
+#end-no-weave
 
 use File::Temp;
 use Semi::Literate;
-#end-no-weave
 
 =begin pod
 =TITLE Weave a semi-literate program into Text, Markdown, etc. format
