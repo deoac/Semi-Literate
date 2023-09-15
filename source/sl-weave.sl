@@ -2,12 +2,13 @@
 
 # Weave a Semi-literate file into Text, Markdown, HTML, etc.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Wed 13 Sep 2023 04:57:38 PM EDT
+# Last modified: Thu 14 Sep 2023 06:39:50 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
-use v6.d;
-#end-no-weave
+# always use the latest version of Raku
+use v6.*;
+# end-no-weave
 
 use File::Temp;
 use Semi::Literate;
