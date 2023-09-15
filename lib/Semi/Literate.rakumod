@@ -2,17 +2,15 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Thu 14 Sep 2023 08:29:12 PM EDT
+# Last modified: Thu 14 Sep 2023 09:55:05 PM EDT
 # Version 0.0.1
 
-# begin-no-weave
 # always use the latest version of Raku
 use v6.*;
 use Useful::Regexes;
 
 use PrettyDump;
 use Data::Dump::Tree;
-#end-no-weave
 
 #use Grammar::Tracer;
 grammar Semi::Literate is export does Useful::Regexes {
@@ -70,8 +68,8 @@ grammar Semi::Literate is export does Useful::Regexes {
         ]+
     } # end of token non-woven
 
-    token one-line-no-weave {
-        $<the-code> = (<leading-ws> <optional-chars>)
+    regex one-line-no-weave {
+        $<the-code>=(<leading-ws> <optional-chars>)
         '#' <hws> 'no-weave-this-line'
         <ws-till-EOL>
     } # end of token one-line-no-weave
@@ -133,6 +131,7 @@ sub tangle (
             "\n" x $num-blank-lines with $num-blank-lines;
         }
 
+        #TODO simplify this
         when .key eq 'code' {
                 my Str $code = '';
 #                my Str $keys = '';
@@ -144,19 +143,20 @@ sub tangle (
                 $code;
         } # end of when .key eq 'code'
 
-        # begin-no-weave
         default { die "Tangle: should never get here.
                     .key ==> {.key} .{.key}.keys => {.{.key}.keys}";
         } # end of default
-        #end-no-weave
 
     } # end of my Str $raku-code = @submatches.map(
     ).join;
 
-    with Semi::Literate {
-        $raku-code ~~ s:g{ .<begin-no-weave> | .<end-no-weave> } = '';
-        $raku-code ~~ s:g{ .<one-line-no-weave> } = $<one-line-no-weave><the-code>;
-    } # end of with Semi::Literate
+    $raku-code ~~ s:g{
+                        | <Semi::Literate::begin-no-weave>
+                        | <Semi::Literate::end-no-weave>
+                  } = '';
+
+    $raku-code ~~ s:g{ <Semi::Literate::one-line-no-weave> }
+                    = "$<Semi::Literate::one-line-no-weave><the-code>\n";
 
     # remove blank lines at the end
     $raku-code ~~ s{\n  <blank-line>* $ } = '';
@@ -179,6 +179,9 @@ sub weave (
     my Str $cleaned-source = $source;
     $cleaned-source ~~ s:g{\=end (\N*)\n+} =   "\=end$0\n";
     $cleaned-source ~~ s:g{\n+\=begin (<hws> pod) [<hws> \d]?} = "\n\=begin$0";
+
+    # remove blank lines at the end
+    $cleaned-source ~~ s{\n  <blank-line>* $ } = '';
 
     my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
 
@@ -272,23 +275,20 @@ sub weave (
             EOCB
         } # end of when .key eq 'code'
 
-        # begin-no-weave
         default { die "Weave: should never get here.
                     .key ==> {.key} .{.key}.keys => {.{.key}.keys}";
         } # end of default
-        # end-no-weave
     } # end of my Str $weave = @submatches.map(
     ).join;
 
     $weave ~~ s:g{ $non-woven-blank-lines | <$full-comment-blank-lines> } = '';
 
-$weave ~~ s{\n  <blank-line>* $ } = '';
+#$weave ~~ s{\n  <blank-line>* $ } = '';
 
     "deleteme.rakudoc".IO.spurt: $weave;
     return $weave
 } # end of sub weave (
 
-# begin-no-weave
 my %*SUB-MAIN-OPTS =
   :named-anywhere,             # allow named variables at any location
   :bundling,                   # allow bundling of named arguments
@@ -322,5 +322,3 @@ multi MAIN(Bool :$testt!) {
 multi MAIN(Bool :$testw!) {
     say weave($semi-literate-file);
 } # end of multi MAIN(Bool :$test!)
-
-#end-no-weave

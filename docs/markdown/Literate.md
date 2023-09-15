@@ -482,10 +482,12 @@ Add all the `Code` sections.
 
 
 ```
-  111|     with Semi::Literate {
-  112|         $raku-code ~~ s:g{ .<begin-no-weave> | .<end-no-weave> } = '';
-  113|         $raku-code ~~ s:g{ .<one-line-no-weave> } = $<one-line-no-weave><the-code>;
-  114|     } 
+  111|     $raku-code ~~ s:g{
+  112|                         | <Semi::Literate::begin-no-weave>
+  113|                         | <Semi::Literate::end-no-weave>
+  114|                   } = '';
+  115|     $raku-code ~~ s:g{ <Semi::Literate::one-line-no-weave> }
+  116|                   = $<one-line-no-weave><the-code>;
 
 ```
 
@@ -498,7 +500,7 @@ Add all the `Code` sections.
 
 
 ```
-  115|     $raku-code ~~ s{\n  <blank-line>* $ } = '';
+  117|     $raku-code ~~ s{\n  <blank-line>* $ } = '';
 
 ```
 
@@ -512,8 +514,8 @@ And that's the end of the `tangle` subroutine!
 
 
 ```
-  116|     return $raku-code;
-  117| } 
+  118|     return $raku-code;
+  119| } 
 
 ```
 
@@ -528,7 +530,7 @@ The `Weave` subroutine will _weave_ the `.sl` file into a readable Markdown, HTM
 
 
 ```
-  118| sub weave (
+  120| sub weave (
 
 ```
 
@@ -546,7 +548,7 @@ The input filename is required. Typically, this parameter is obtained from the c
 
 
 ```
-  119|     Str $input-file!;
+  121|     Str $input-file!;
 
 ```
 
@@ -561,7 +563,7 @@ It can be useful to print line numbers in the code listing. It currently default
 
 
 ```
-  120|     Bool :l(:$line-numbers)  = True;
+  122|     Bool :l(:$line-numbers)  = True;
 
 ```
 
@@ -575,9 +577,9 @@ It can be useful to print line numbers in the code listing. It currently default
 
 
 ```
-  121|         --> Str ) is export {
-  122| 
-  123|     my UInt $line-number = 1;
+  123|         --> Str ) is export {
+  124| 
+  125|     my UInt $line-number = 1;
 
 ```
 
@@ -591,7 +593,7 @@ First we will get the entire `.sl` file...
 
 
 ```
-  124|     my Str $source = $input-file.IO.slurp;
+  126|     my Str $source = $input-file.IO.slurp;
 
 ```
 
@@ -606,9 +608,9 @@ First we will get the entire `.sl` file...
 
 
 ```
-  125|     my Str $cleaned-source = $source;
-  126|     $cleaned-source ~~ s:g{\=end (\N*)\n+} =   "\=end$0\n";
-  127|     $cleaned-source ~~ s:g{\n+\=begin (<hws> pod) [<hws> \d]?} = "\n\=begin$0";
+  127|     my Str $cleaned-source = $source;
+  128|     $cleaned-source ~~ s:g{\=end (\N*)\n+} =   "\=end$0\n";
+  129|     $cleaned-source ~~ s:g{\n+\=begin (<hws> pod) [<hws> \d]?} = "\n\=begin$0";
 
 ```
 
@@ -623,7 +625,7 @@ First we will get the entire `.sl` file...
 
 
 ```
-  128|     my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
+  130|     my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
 
 ```
 
@@ -647,84 +649,84 @@ Otherwise return True
 
 
 ```
-  129|     my token full-line-comment {
-  130|         $<the-code>=(<leading-ws>)
-  131|         '#'
-  132|         <rest-of-line>
-  133|     } 
-  134| 
-  135|     my regex partial-line-comment {
-  136|         $<the-code>=(<leading-ws> <optional-chars>)  
-  137|         <!after <opening-quote>>         
-  138|         '#'                              
-  139|         $<the-comment>=<-[#]>*           
-  140|         <ws-till-EOL>
-  141|     } 
-  142| 
-  143|     sub remove-comments (Seq $lines --> Seq) {
+  131|     my token full-line-comment {
+  132|         $<the-code>=(<leading-ws>)
+  133|         '#'
+  134|         <rest-of-line>
+  135|     } 
+  136| 
+  137|     my regex partial-line-comment {
+  138|         $<the-code>=(<leading-ws> <optional-chars>)  
+  139|         <!after <opening-quote>>         
+  140|         '#'                              
+  141|         $<the-comment>=<-[#]>*           
+  142|         <ws-till-EOL>
+  143|     } 
   144| 
-  145|         my @retval = ();
-  146|         for $lines.List -> $line {
-  147|             given $line {
-  148|                 when /<full-line-comment>/ {; 
-  149| 
-  150|                 when /<partial-line-comment>/ {
-  151|                     @retval.push: $<partial-line-comment><the-code>;
-  152|                 }
-  153| 
-  154|                 default
-  155|                     { @retval.push: $line; }
-  156|             } 
-  157|         } 
-  158| 
-  159| 
-  160|         return @retval.Seq;
-  161|     } 
-  162| 
-  163|     my Str $non-woven-blank-lines = qq:to/EOQ/;
-  164|         \=end code
-  165|         \=end pod
-  166|         \=begin pod
-  167|         \=begin code :lang<raku>
-  168|         EOQ
-  169| 
-  170|     my Regex $full-comment-blank-lines = rx[
-  171|         '=begin pod'              <ws-till-EOL>
-  172|         '=begin code :lang<raku>' <ws-till-EOL>
-  173|         [<leading-ws> \d+ | '|'?  <ws-till-EOL>]*
-  174|         '=end code'               <ws-till-EOL>
-  175|         '=end pod'                <ws-till-EOL>
-  176|     ];
-  177| 
-  178|     my $fmt = ($line-numbers ?? "%3s| " !! '') ~ "%s\n";
+  145|     sub remove-comments (Seq $lines --> Seq) {
+  146| 
+  147|         my @retval = ();
+  148|         for $lines.List -> $line {
+  149|             given $line {
+  150|                 when /<full-line-comment>/ {; 
+  151| 
+  152|                 when /<partial-line-comment>/ {
+  153|                     @retval.push: $<partial-line-comment><the-code>;
+  154|                 }
+  155| 
+  156|                 default
+  157|                     { @retval.push: $line; }
+  158|             } 
+  159|         } 
+  160| 
+  161| 
+  162|         return @retval.Seq;
+  163|     } 
+  164| 
+  165|     my Str $non-woven-blank-lines = qq:to/EOQ/;
+  166|         \=end code
+  167|         \=end pod
+  168|         \=begin pod
+  169|         \=begin code :lang<raku>
+  170|         EOQ
+  171| 
+  172|     my Regex $full-comment-blank-lines = rx[
+  173|         '=begin pod'              <ws-till-EOL>
+  174|         '=begin code :lang<raku>' <ws-till-EOL>
+  175|         [<leading-ws> \d+ | '|'?  <ws-till-EOL>]*
+  176|         '=end code'               <ws-till-EOL>
+  177|         '=end pod'                <ws-till-EOL>
+  178|     ];
   179| 
-  180|     my Str $weave = @submatches.map( {
-  181|         when .key eq 'pod' {
-  182|             .value
-  183|         } 
-  184| 
-  185|         when .key eq 'code' {
-  186|             { qq:to/EOCB/ if .<code><woven>; }
-  187|             \=begin pod
-  188|             \=begin code :lang<raku>
-  189|              {
-  190|                 $_<code><woven>
-  191|                 ==> lines()
-  192|                 ==> remove-comments()
-  193|                 ==> map(
-  194|                         $line-numbers
-  195|                             ?? {"%4s| %s\n".sprintf($line-number++, $_) }
-  196|                             !! {     "%s\n".sprintf(                $_) }
-  197|                 )
-  198|                 ==> chomp() 
-  199|              }
-  200|             \=end code
-  201|             \=end pod
-  202|             EOCB
-  203|         } 
-  204| 
-  205|     } 
-  206|     ).join;
+  180|     my $fmt = ($line-numbers ?? "%3s| " !! '') ~ "%s\n";
+  181| 
+  182|     my Str $weave = @submatches.map( {
+  183|         when .key eq 'pod' {
+  184|             .value
+  185|         } 
+  186| 
+  187|         when .key eq 'code' {
+  188|             { qq:to/EOCB/ if .<code><woven>; }
+  189|             \=begin pod
+  190|             \=begin code :lang<raku>
+  191|              {
+  192|                 $_<code><woven>
+  193|                 ==> lines()
+  194|                 ==> remove-comments()
+  195|                 ==> map(
+  196|                         $line-numbers
+  197|                             ?? {"%4s| %s\n".sprintf($line-number++, $_) }
+  198|                             !! {     "%s\n".sprintf(                $_) }
+  199|                 )
+  200|                 ==> chomp() 
+  201|              }
+  202|             \=end code
+  203|             \=end pod
+  204|             EOCB
+  205|         } 
+  206| 
+  207|     } 
+  208|     ).join;
 
 ```
 
@@ -737,7 +739,7 @@ Otherwise return True
 
 
 ```
-  207|     $weave ~~ s:g{ $non-woven-blank-lines | <$full-comment-blank-lines> } = '';
+  209|     $weave ~~ s:g{ $non-woven-blank-lines | <$full-comment-blank-lines> } = '';
 
 ```
 
@@ -750,7 +752,7 @@ Otherwise return True
 
 
 ```
-  208| $weave ~~ s{\n  <blank-line>* $ } = '';
+  210| $weave ~~ s{\n  <blank-line>* $ } = '';
 
 ```
 
@@ -764,9 +766,9 @@ And that's the end of the `weave` subroutine!
 
 
 ```
-  209|     "deleteme.rakudoc".IO.spurt: $weave;
-  210|     return $weave
-  211| } 
+  211|     "deleteme.rakudoc".IO.spurt: $weave;
+  212|     return $weave
+  213| } 
 
 ```
 
@@ -821,4 +823,4 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 
 ----
-Rendered from  at 2023-09-15T00:30:55Z
+Rendered from  at 2023-09-15T00:45:21Z
