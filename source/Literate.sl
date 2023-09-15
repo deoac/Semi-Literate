@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Thu 14 Sep 2023 08:29:12 PM EDT
+# Last modified: Thu 14 Sep 2023 09:48:24 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -208,8 +208,8 @@ Simply append C<# no-weave-this-line> at the end of the line!
 
 =end pod
 
-    token one-line-no-weave {
-        $<the-code> = (<leading-ws> <optional-chars>)
+    regex one-line-no-weave {
+        $<the-code>=(<leading-ws> <optional-chars>)
         '#' <hws> 'no-weave-this-line'
         <ws-till-EOL>
     } # end of token one-line-no-weave
@@ -381,6 +381,7 @@ and obtain a list of submatches (that's what the C<caps> method does) ...
 Add all the C<Code> sections.
 =end pod
 
+        #TODO simplify this
         when .key eq 'code' {
                 my Str $code = '';
 #                my Str $keys = '';
@@ -412,10 +413,13 @@ Add all the C<Code> sections.
 
 =end pod
 
-    with Semi::Literate {
-        $raku-code ~~ s:g{ .<begin-no-weave> | .<end-no-weave> } = '';
-        $raku-code ~~ s:g{ .<one-line-no-weave> } = $<one-line-no-weave><the-code>;
-    } # end of with Semi::Literate
+    $raku-code ~~ s:g{
+                        | <Semi::Literate::begin-no-weave>
+                        | <Semi::Literate::end-no-weave>
+                  } = '';
+
+    $raku-code ~~ s:g{ <Semi::Literate::one-line-no-weave> }
+                    = "$<Semi::Literate::one-line-no-weave><the-code>\n";
 
 =begin pod
 =comment 1
