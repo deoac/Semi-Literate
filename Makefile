@@ -98,7 +98,7 @@ $(WEAVE_BINARY_TARGET): bin/sl-weave $(RAKU_MODULE_TARGET)
 	@zef install --force-build --force-install --force-test . >/dev/null
 	@echo "\e[32mOK\e[0m"
 
-install-all: $(RAKU_MODULE_TARGET)
+install-all: $(RAKU_MODULE_TARGET) bin/sl-tangle bin/sl-weave
 	@echo -n "> Installing the module and the executables with zef..."
 	@zef install --force-build --force-install --force-test . >/dev/null
 	@echo "\e[32mOK\e[0m"
