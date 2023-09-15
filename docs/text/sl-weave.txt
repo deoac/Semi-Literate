@@ -1,6 +1,4 @@
-        1| 
-        2| 
-        3|  
+        3| 
         4| use File::Temp;
         5| use Semi::Literate;
 
