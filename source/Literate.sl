@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Thu 14 Sep 2023 09:48:24 PM EDT
+# Last modified: Thu 14 Sep 2023 09:57:35 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -504,6 +504,14 @@ B<EXPLAIN THIS!>
 
 =begin pod
 =comment 1
+=head3 remove blank lines at the end of the code
+
+=end pod
+    # remove blank lines at the end
+    $cleaned-source ~~ s{\n  <blank-line>* $ } = '';
+
+=begin pod
+=comment 1
 
 =head2 Interesting stuff
 
@@ -635,16 +643,6 @@ Otherwise return True
 =end pod
 
     $weave ~~ s:g{ $non-woven-blank-lines | <$full-comment-blank-lines> } = '';
-
-
-
-=begin pod
-=comment 1
-=head3 remove blank lines at the end
-
-=end pod
-
-$weave ~~ s{\n  <blank-line>* $ } = '';
 
 =begin pod
 =comment 1
