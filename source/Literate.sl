@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Wed 13 Sep 2023 08:30:28 PM EDT
+# Last modified: Thu 14 Sep 2023 08:29:12 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -60,9 +60,9 @@ C<TOP> token clearly indicates this.
 
     token code  {
         [
-          || <non-woven>
-          || <woven>
-        ]+
+          || <non-woven>+
+          || <woven>+
+        ]
     } # end of token code
 
 =begin pod
@@ -209,7 +209,7 @@ Simply append C<# no-weave-this-line> at the end of the line!
 =end pod
 
     token one-line-no-weave {
-        <leading-ws> \N*?
+        $<the-code> = (<leading-ws> <optional-chars>)
         '#' <hws> 'no-weave-this-line'
         <ws-till-EOL>
     } # end of token one-line-no-weave
@@ -382,21 +382,13 @@ Add all the C<Code> sections.
 =end pod
 
         when .key eq 'code' {
-#                note $_<code>.^name;
-                note $_<code>.keys;
-#                note $_<code><woven>.^name;
-#                note $_<code><woven>.elems;
-#                note $_<code><non-woven>.^name;
-#                note $_<code><non-woven>.elems;
                 my Str $code = '';
-                my Str $keys = '';
+#                my Str $keys = '';
                 for $_<code>.keys.reverse -> $key {
-                    $keys ~= "$key, " if $key;
-                    $code ~= "# B---\n" ~ $_<code>{$key} ~ "# E---\n" if $_<code>{$key};
+#                    $keys ~= "$key, " if $key;
+                    $code ~= $_<code>{$key} if $_<code>{$key};
                 } # end of for $_<code>.keys --> $key
-#                $code ~=     $_<code><woven>.join if $_<code><woven>;
-#                $code ~= $_<code><non-woven>.join if $_<code><non-woven>;
-                note $keys;
+#                note $keys;
                 $code;
         } # end of when .key eq 'code'
 
@@ -420,12 +412,10 @@ Add all the C<Code> sections.
 
 =end pod
 
-    $raku-code ~~ s:g{ <leading-ws> '#' <hws> 'begin-no-weave'     <rest-of-line> }
-        = '';
-    $raku-code ~~ s:g{ <leading-ws> '#' <hws> 'no-weave-this-line' <rest-of-line> }
-        = "$0\n";
-    $raku-code ~~ s:g{ <leading-ws> '#' <hws> 'end-no-weave'       <rest-of-line> }
-        = '';
+    with Semi::Literate {
+        $raku-code ~~ s:g{ .<begin-no-weave> | .<end-no-weave> } = '';
+        $raku-code ~~ s:g{ .<one-line-no-weave> } = $<one-line-no-weave><the-code>;
+    } # end of with Semi::Literate
 
 =begin pod
 =comment 1
@@ -628,8 +618,8 @@ Otherwise return True
         } # end of when .key eq 'code'
 
         # begin-no-weave
-        default { die "Weave: should never get here.";
-#                    .key ==> {.key} .{.key}.keys => {.{.key}.keys}";
+        default { die "Weave: should never get here.
+                    .key ==> {.key} .{.key}.keys => {.{.key}.keys}";
         } # end of default
         # end-no-weave
     } # end of my Str $weave = @submatches.map(
@@ -650,7 +640,7 @@ Otherwise return True
 
 =end pod
 
-    $weave ~~ s{\n  <blank-line>* $ } = '';
+$weave ~~ s{\n  <blank-line>* $ } = '';
 
 =begin pod
 =comment 1
