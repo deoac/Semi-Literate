@@ -45,7 +45,7 @@ debug:       touch_sources all view
 
 touch_sources:
 	@touch source/*
-	@del docs
+	@-del docs 2>/dev/null
 
 view:
 	@open README.md
@@ -54,7 +54,7 @@ view:
 temporary:
 	@chmod -R a+w lib/
 	@echo -n "> Uninstalling Semi::Literate..."
-	@-zef uninstall Semi::Literate >/dev/null
+	@-zef uninstall Semi::Literate 2>/dev/null
 	@echo "\e[32mOK\e[0m"
 	@echo -n "> pod-tangling Literate.sl..."
 	@pod-tangle source/Literate.sl > lib/Semi/Literate.rakumod
