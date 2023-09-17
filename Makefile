@@ -1,20 +1,22 @@
 SHELL := /bin/zsh
-.PHONY: Makefile all modules binaries executables \
-	    docs html markdown pdf text \
-		install module_install \
+.PHONY: Makefile all-code all-docs all module binaries executables \
+	    docs html markdown pdf text man pod latex \
+		install-all \
 		touch_sources clean test \
-		temp temporary debug
+		write lock del_docs \
+		temp temporary debug it
 
 
-SOURCEDIR     := ./source
-BINDIR        := ./bin
-DOCDIR        := ./docs
-MODULESDIR    := ./lib/Semi
-TESTSDIR      := ./t
-EXECUTABLES   := ${BINDIR}
-RAKU_MODULE   := /usr/local/Cellar/rakudo-star/2023.08/share/perl6/site/sources/A12861C6F020F7848C33E00652D93FCEB0ABE1C1
-TANGLE_BINARY := /usr/local/Cellar/rakudo-star/2023.08/share/perl6/site/bin/sl-tangle
-WEAVE_BINARY  := /usr/local/Cellar/rakudo-star/2023.08/share/perl6/site/bin/sl-weave
+SOURCEDIR        := ./source
+BINDIR           := ./bin
+DOCDIR           := ./docs
+MODULESDIR       := ./lib/Semi
+TESTSDIR         := ./t
+EXECUTABLES      := ${BINDIR}
+RAKU_MODULE      := /usr/local/Cellar/rakudo-star/2023.08/share/perl6/site/sources/A12861C6F020F7848C33E00652D93FCEB0ABE1C1
+WEAVE_EXECUTABLE := /usr/local/Cellar/rakudo-star/2023.08/share/perl6/site/resources/B341CB1403A58D057C239FBEBF2138FB5BAD8C15
+TANGLE_BINARY    := /usr/local/Cellar/rakudo-star/2023.08/share/perl6/site/bin/sl-tangle
+WEAVE_BINARY     := /usr/local/Cellar/rakudo-star/2023.08/share/perl6/site/bin/sl-weave
 
 vpath %.sl      ${ SOURCEDIR}
 vpath %.rakumod ${ MODULESDIR}
