@@ -291,8 +291,13 @@ This subroutine will remove all the Pod6 code from a semi-literate file
 
 =end pod
 
-#TODO multi sub to accept Str & IO::PatGh
-sub tangle (
+#begin-no-weave
+#multi tangle ( Str $input-file!, Bool :v(:$verbose) ) {
+#    tangle ($input-file.IO, :$verbose);
+#} # end of multi tangle ( Str $input-file!, Bool :v(:$verbose) )
+#end-no-weave
+
+multi tangle (
 
 =begin pod
 
