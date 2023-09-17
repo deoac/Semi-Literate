@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Thu 14 Sep 2023 09:55:05 PM EDT
+# Last modified: Sat 16 Sep 2023 08:17:26 PM EDT
 # Version 0.0.1
 
 # always use the latest version of Raku
@@ -49,22 +49,22 @@ grammar Semi::Literate is export does Useful::Regexes {
     } # end of token blank-line-comment
 
     token pod {
-        <begin-pod>
+        <.begin-pod>
         <blank-line-comment>?
-            [<pod> | <plain-line>]*
-        <end-pod>
+            [<pod> | <.plain-line>]*
+        <.end-pod>
     } # end of token pod
 
     token woven  {
         [
-            || <plain-line>
+            || <.plain-line>
         ]+
     } # end of token woven
 
     token non-woven {
         [
-          || <one-line-no-weave>
-          || <delimited-no-weave>
+          || <.one-line-no-weave>
+          || <.delimited-no-weave>
         ]+
     } # end of token non-woven
 
@@ -87,19 +87,19 @@ grammar Semi::Literate is export does Useful::Regexes {
     } # end of token <end--no-weave>
 
     token delimited-no-weave {
-        <begin-no-weave>
-            <plain-line>*
-        <end-no-weave>
+        <.begin-no-weave>
+            <.plain-line>*
+        <.end-no-weave>
     } # end of token delimited-no-weave
 
     token plain-line {
         :my $*EXCEPTION = False;
         [
-          ||  <begin-pod>         { $*EXCEPTION = True }
-          ||  <end-pod>           { $*EXCEPTION = True }
-          ||  <begin-no-weave>    { $*EXCEPTION = True }
-          ||  <end-no-weave>      { $*EXCEPTION = True }
-          ||  <one-line-no-weave> { $*EXCEPTION = True }
+          ||  <.begin-pod>         { $*EXCEPTION = True }
+          ||  <.end-pod>           { $*EXCEPTION = True }
+          ||  <.begin-no-weave>    { $*EXCEPTION = True }
+          ||  <.end-no-weave>      { $*EXCEPTION = True }
+          ||  <.one-line-no-weave> { $*EXCEPTION = True }
           || [^^ <rest-of-line>]
         ]
         <?{ !$*EXCEPTION }>
@@ -117,8 +117,8 @@ sub tangle (
 
 
     my Str $cleaned-source = $source;
-    $cleaned-source ~~ s:g{\=end (\N*)\n+} =   "\=end$0\n";
-    $cleaned-source ~~ s:g{\n+\=begin (<hws> pod) [<hws> \d]?} = "\n\=begin$0";
+    $cleaned-source ~~ s:g{    \=end (\N*) \n+}      =  "\=end$0\n";
+    $cleaned-source ~~ s:g{\n+ \=begin (<hws> pod) } = "\n\=begin$0";
 
     my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
 
@@ -133,14 +133,15 @@ sub tangle (
 
         #TODO simplify this
         when .key eq 'code' {
-                my Str $code = '';
+            .value;
+#                my Str $code = '';
 #                my Str $keys = '';
-                for $_<code>.keys.reverse -> $key {
+#                for $_<code>.keys.reverse -> $key {
 #                    $keys ~= "$key, " if $key;
-                    $code ~= $_<code>{$key} if $_<code>{$key};
-                } # end of for $_<code>.keys --> $key
+#                    $code ~= $_<code>{$key} if $_<code>{$key};
+#                } # end of for $_<code>.keys --> $key
 #                note $keys;
-                $code;
+#                $code;
         } # end of when .key eq 'code'
 
         default { die "Tangle: should never get here.
@@ -176,9 +177,10 @@ sub weave (
     my UInt $line-number = 1;
     my Str $source = $input-file.IO.slurp;
 
+#TODO create a subroutine since this is used in both tangle and weave
     my Str $cleaned-source = $source;
-    $cleaned-source ~~ s:g{\=end (\N*)\n+} =   "\=end$0\n";
-    $cleaned-source ~~ s:g{\n+\=begin (<hws> pod) [<hws> \d]?} = "\n\=begin$0";
+    $cleaned-source ~~ s:g{    \=end (\N*) \n+}      =  "\=end$0\n";
+    $cleaned-source ~~ s:g{\n+ \=begin (<hws> pod) } = "\n\=begin$0";
 
     # remove blank lines at the end
     $cleaned-source ~~ s{\n  <blank-line>* $ } = '';
@@ -282,8 +284,6 @@ sub weave (
     ).join;
 
     $weave ~~ s:g{ $non-woven-blank-lines | <$full-comment-blank-lines> } = '';
-
-#$weave ~~ s{\n  <blank-line>* $ } = '';
 
     "deleteme.rakudoc".IO.spurt: $weave;
     return $weave

@@ -12,44 +12,44 @@ Weave a semi-literate program into Text, Markdown, etc. format
         9|          Str :o(:$output-file);
        10|          Bool :v(:$verbose) = True;
        11|     ) {
-       12|     my Str $extension;
-       13|     my Str @options;
-       14|     my Bool $no-output-file = False;
-       15| 
-       16|     note "Input Format =>  $format" if $verbose;
-       17|     $format .= trim;
-       18|     given $format {
-       19|         when  /:i ^ markdown | md $ / {
-       20|             $format    = 'MarkDown2';
-       21|             $extension = 'md';
-       22|         };
-       23|         when  /:i ^ [[plain][\-|_]?]? t[e]?xt $ / {
-       24|             $format    = 'Text';
-       25|             $extension = 'txt';
-       26|         }
-       27|         when  /:i ^ [s]?htm[l]? $/ {
-       28|             $format    = 'HTML2';
-       29|             $extension = 'html';
-       30|         } 
-       31|         when /:i ^ pdf $ / {
-       32|             $format         = 'PDF';
-       33|             $extension      = '.pdf';
+       12|     my Str  @options;
+       13|     my Bool $no-output-file = False;
+       14| 
+       15|     note "Input Format =>  $format" if $verbose;
+       16|     $format .= trim;
+       17|     given $format {
+       18|         when  /:i ^ markdown | md $ / {
+       19|             $format    = 'MarkDown2';
+       20|         };
+       21|         when  /:i ^ [[plain][\-|_]?]? t[e]?xt $ / {
+       22|             $format    = 'Text';
+       23|         }
+       24|         when  /:i ^ [s]?htm[l]? $/ {
+       25|             $format    = 'HTML2';
+       26|         } 
+       27|         when /:i ^ pdf $ / {
+       28|             $format         = 'PDF';
+       29|             @options        = "--save-as=$output-file" if $output-file;
+       30|             $no-output-file = True;
+       31|         }
+       32|         when /:i ^ pdf[\-|_]?lite  $ / {
+       33|             $format         = 'PDF::Lite';
        34|             @options        = "--save-as=$output-file" if $output-file;
        35|             $no-output-file = True;
        36|         }
-       37|         when /:i ^ pdf[\-|_]?lite  $ / {
-       38|             $format         = 'PDF::Lite';
-       39|             $extension      = '.pdf';
-       40|             @options        = "--save-as=$output-file" if $output-file;
-       41|             $no-output-file = True;
-       42|         }
-       43|         when /:i ^ pod 6? $/ {
-       44|             $format    = 'Pod6';
-       45|             $extension = '.rakudoc';
+       37|         when /:i ^ pod 6? $/ {
+       38|             $format    = 'Pod6';
+       39|         } 
+       40|         when /:i ^ [la]? tex $/ {
+       41|             $format    = 'Latex';
+       42|         } 
+       43|         when /:i man [page]? $/ {
+       44|             print "\n\e[33mPod::To::Man may not support pod comment blocks...\e[0m";
+       45|             $format    = 'Man';
        46|         } 
        47| 
        48|         default {
-       49|             $extension = $format;
+       49|             ; 
        50|         } 
        51| 
        52|     } 
@@ -84,5 +84,4 @@ Weave a semi-literate program into Text, Markdown, etc. format
        81|         :out($output-file-handle);
        82| 
        83| } 
-       84| 
 
