@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Sat 16 Sep 2023 10:09:47 PM EDT
+# Last modified: Sat 16 Sep 2023 10:17:12 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -641,7 +641,7 @@ Otherwise return True
 And that's the end of the C<weave> subroutine!
 =end pod
 
-    "deleteme.rakudoc".IO.spurt($weave) if $verbose;
+    "deleteme.rakudoc".IO.spurt($weave) if $verbose; # no-weave-this-line
     return $weave
 } # end of sub weave (
 
