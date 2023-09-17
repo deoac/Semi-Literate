@@ -1,5 +1,5 @@
 .pc
-.TH Fyxj6Sjrdp.rakudoc 1 2023-09-16
+.TH 0GNM4Rc5XY.rakudoc 1 2023-09-16
 
 .RS 4m
 .EX
@@ -10,7 +10,7 @@
     7|     Str $input\-file;
     8|     Str :o(:$output\-file) = '';
     9| ) {
-   10|     my Str $raku\-source = tangle $input\-file;
+   10|     my Str $raku\-source = tangle $input\-file, :!verbose;
    11| 
    12|     my $output\-file\-handle = $output\-file              ??
    13|                                 open(:w, $output\-file) !!
