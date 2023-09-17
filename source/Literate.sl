@@ -540,31 +540,29 @@ insert the C<code> sections into the Pod6...
 This function checks if the line of code is a full line comment. If so,
 return False, so nothing will be printed for this line.
 
-If it's a line of code with a comment at the end, remove the comment from the
-line and return True
-
-Otherwise return True
+The function will return a C<Seq>uence of (possibly) modified lines.  It needs
+to be a C<Seq> because the return value will then be fed to a feed operator
+(C<==\>>)
 =end pod
 
-    my token full-line-comment {
-        $<the-code>=(<leading-ws>)
-        '#'
-        <rest-of-line>
-    } # end of my token full-line-comment
-
-    #TODO this regex is not robust.  It will tag lines with a # in a string,
-    #unless the string delimiter is immediately before the #
-    my regex partial-line-comment {
-        $<the-code>=(<leading-ws> <optional-chars>)  # optional code
-        <!after <opening-quote>>         #
-        '#'                              # comment marker
-        $<the-comment>=<-[#]>*           # the actual comment
-        <ws-till-EOL>
-    } # end of my regex comment
-
-    sub remove-comments (Seq $lines --> Seq) {
+    sub remove-comments (Seq $lines --> List) {
         #TODO Add a parameter to sub weave()
-        #TODO Explain Seq
+
+        my token full-line-comment {
+            $<the-code>=(<leading-ws>)
+            '#'
+            <rest-of-line>
+        } # end of my token full-line-comment
+
+        #TODO this regex is not robust.  It will tag lines with a # in a string,
+        #unless the string delimiter is immediately before the #
+        my regex partial-line-comment {
+            $<the-code>=(<leading-ws> <optional-chars>)  # optional code
+            <!after <opening-quote>>         #
+            '#'                              # comment marker
+            $<the-comment>=<-[#]>*           # the actual comment
+            <ws-till-EOL>
+        } # end of my regex comment
 
         my @retval = ();
         for $lines.List -> $line {
@@ -583,7 +581,7 @@ Otherwise return True
             } # end of given $line
         } # end of for $lines -> $line
 
-        return @retval.Seq;
+        return @retval;
     } # end of sub remove-comments {Pair $p is rw}
 
     my Str $weave = @submatches.map( {
