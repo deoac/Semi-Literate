@@ -7,7 +7,7 @@
     7|     Str $input-file;
     8|     Str :o(:$output-file) = '';
     9| ) {
-   10|     my Str $raku-source = tangle $input-file;
+   10|     my Str $raku-source = tangle $input-file, :!verbose;
    11| 
    12|     my $output-file-handle = $output-file              ??
    13|                                 open(:w, $output-file) !!
