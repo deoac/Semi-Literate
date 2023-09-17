@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Sat 16 Sep 2023 10:09:47 PM EDT
+# Last modified: Sat 16 Sep 2023 11:28:08 PM EDT
 # Version 0.0.1
 
 # always use the latest version of Raku
@@ -108,9 +108,15 @@ grammar Semi::Literate is export does Useful::Regexes {
 } # end of grammar Semi::Literate
 
 
-#TODO multi sub to accept Str & IO::PatGh
-sub tangle (
+#multi tangle ( Str $input-file!, Bool :v(:$verbose) ) {
+#    tangle ($input-file.IO, :$verbose);
+#} # end of multi tangle ( Str $input-file!, Bool :v(:$verbose) )
+
+multi tangle (
     Str $input-file!,
+#    IO::Path $input-file!,
+
+    Bool :v(:$verbose)      = False;
         --> Str ) is export {
 
     my Str $source = $input-file.IO.slurp;
@@ -131,7 +137,6 @@ sub tangle (
             "\n" x $num-blank-lines with $num-blank-lines;
         }
 
-        #TODO simplify this
         when .key eq 'code' {
             .value;
         } # end of when .key eq 'code'
@@ -181,25 +186,24 @@ sub weave (
 
     my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
 
-    my token full-line-comment {
-        $<the-code>=(<leading-ws>)
-        '#'
-        <rest-of-line>
-    } # end of my token full-line-comment
-
-    #TODO this regex is not robust.  It will tag lines with a # in a string,
-    #unless the string delimiter is immediately before the #
-    my regex partial-line-comment {
-        $<the-code>=(<leading-ws> <optional-chars>)  # optional code
-        <!after <opening-quote>>         #
-        '#'                              # comment marker
-        $<the-comment>=<-[#]>*           # the actual comment
-        <ws-till-EOL>
-    } # end of my regex comment
-
-    sub remove-comments (Seq $lines --> Seq) {
+    sub remove-comments (Seq $lines --> List) {
         #TODO Add a parameter to sub weave()
-        #TODO Explain Seq
+
+        my token full-line-comment {
+            $<the-code>=(<leading-ws>)
+            '#'
+            <rest-of-line>
+        } # end of my token full-line-comment
+
+        #TODO this regex is not robust.  It will tag lines with a # in a string,
+        #unless the string delimiter is immediately before the #
+        my regex partial-line-comment {
+            $<the-code>=(<leading-ws> <optional-chars>)  # optional code
+            <!after <opening-quote>>         #
+            '#'                              # comment marker
+            $<the-comment>=<-[#]>*           # the actual comment
+            <ws-till-EOL>
+        } # end of my regex comment
 
         my @retval = ();
         for $lines.List -> $line {
@@ -218,7 +222,7 @@ sub weave (
             } # end of given $line
         } # end of for $lines -> $line
 
-        return @retval.Seq;
+        return @retval;
     } # end of sub remove-comments {Pair $p is rw}
 
     my Str $weave = @submatches.map( {
@@ -272,7 +276,7 @@ sub weave (
 
     $weave ~~ s:g{ $non-woven-blank-lines | <$full-comment-blank-lines> } = '';
 
-    "deleteme.rakudoc".IO.spurt($weave) if $verbose;
+    "deleteme.rakudoc".IO.spurt($weave) if $verbose; 
     return $weave
 } # end of sub weave (
 

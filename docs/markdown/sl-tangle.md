@@ -24,7 +24,7 @@
     7|     Str $input-file;
     8|     Str :o(:$output-file) = '';
     9| ) {
-   10|     my Str $raku-source = tangle $input-file;
+   10|     my Str $raku-source = tangle $input-file, :!verbose;
    11| 
    12|     my $output-file-handle = $output-file              ??
    13|                                 open(:w, $output-file) !!
@@ -102,4 +102,4 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 
 ----
-Rendered from  at 2023-09-17T02:15:36Z
+Rendered from  at 2023-09-17T03:31:11Z
