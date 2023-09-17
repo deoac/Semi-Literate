@@ -22,22 +22,30 @@ vpath %.        ${ BINDIR}
 
 SOURCES              := $(wildcard ./source/*.sl)
 HTML_TARGETS         := $(patsubst ./source/%.sl, ./docs/html/%.html,   $(SOURCES))
+MAN_TARGETS          := $(patsubst ./source/%.sl, ./docs/man/%.1,       $(SOURCES))
 MARKDOWN_TARGETS     := $(patsubst ./source/%.sl, ./docs/markdown/%.md, $(SOURCES))
 PDF_TARGETS          := $(patsubst ./source/%.sl, ./docs/pdf/%.pdf,     $(SOURCES))
+POD_TARGETS          := $(patsubst ./source/%.sl, ./docs/pod/%.rakudoc, $(SOURCES))
 TEXT_TARGETS         := $(patsubst ./source/%.sl, ./docs/text/%.txt,    $(SOURCES))
+TEX_TARGETS          := $(patsubst ./source/%.sl, ./docs/tex/%.tex,     $(SOURCES))
 RAKU_MODULE_TARGET   := /usr/local/Cellar/rakudo-star/2023.08/share/perl6/site/sources/A12861C6F020F7848C33E00652D93FCEB0ABE1C1
 TANGLE_BINARY_TARGET := /usr/local/Cellar/rakudo-star/2023.08/share/perl6/site/bin/sl-tangle
 WEAVE_BINARY_TARGET  := /usr/local/Cellar/rakudo-star/2023.08/share/perl6/site/bin/sl-weave
 
-it: 		 module html view
-all: 		 module executables docs
+it: 		 module html markdown view
+docs:        html markdown text pod man
+all:         all-code all-docs
+all-code: 	 touch_sources module executables
+all-docs: 	 markdown text html pdf tex pod man
 module: 	 $(RAKU_MODULE_TARGET)
 binaries: 	 bin/sl-tangle bin/sl-weave
 executables: binaries install-all
-docs: 		 text html markdown pdf
 html:  	     $(HTML_TARGETS)
+man: 		 $(MAN_TARGETS)
 markdown:    $(MARKDOWN_TARGETS)
 pdf: 		 $(PDF_TARGETS)
+pod: 		 $(POD_TARGETS)
+tex: 		 $(TEX_TARGETS)
 text: 		 $(TEXT_TARGETS)
 
 temp: 		 temporary module executables
@@ -45,7 +53,7 @@ debug:       touch_sources all view
 
 touch_sources:
 	@touch source/*
-	@-del docs 2>/dev/null
+	@-del docs &>/dev/null
 
 view:
 	@open README.md
@@ -54,7 +62,7 @@ view:
 temporary:
 	@chmod -R a+w lib/
 	@echo -n "> Uninstalling Semi::Literate..."
-	@-zef uninstall Semi::Literate 2>/dev/null
+	@-zef uninstall Semi::Literate &> /dev/null
 	@echo "\e[32mOK\e[0m"
 	@echo -n "> pod-tangling Literate.sl..."
 	@pod-tangle source/Literate.sl > lib/Semi/Literate.rakumod
@@ -141,36 +149,60 @@ create_doc_dirs:
 	@echo "\e[32mOK\e[0m"
 
 ./docs/html/%.html: ./source/%.sl
-	@mkdir -p $(@D)
-	@chmod -R a+w $(@D)
-	@echo -n "> Creating an HTML document for $<..."
-	@sl-weave --format=html --/verbose --output-file=$@ $<
-	@chmod -R a-w $(@D)
-	@echo "\e[32mOK\e[0m"
+	@mkdir -p $(@D); \
+	chmod -R a+w $(@D); \
+	echo -n "> Creating an HTML document for $<..."; \
+	sl-weave --format=html --/verbose --output-file=$@ $< 2>/dev/null; \
+	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
+	chmod -R a-w $(@D); \
 
 ./docs/markdown/%.md: ./source/%.sl
-	@mkdir -p $(@D)
-	@chmod -R a+w $(@D)
-	@echo -n "> Creating a Markdown document for $<..."
-	@sl-weave --format=markdown --/verbose --output-file=$@ $<
-	@chmod -R a-w $(@D)
-	@echo "\e[32mOK\e[0m"
+	@mkdir -p $(@D); \
+	chmod -R a+w $(@D); \
+	echo -n "> Creating a Markdown document for $<..."; \
+	sl-weave --format=markdown --/verbose --output-file=$@ $< 2>/dev/null; \
+	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
+	chmod -R a-w $(@D); \
 
 ./docs/pdf/%.pdf: ./source/%.sl
-	@mkdir -p $(@D)
-	@chmod -R a+w $(@D)
-	@echo -n "> Creating a PDF document for $<..."
-	@sl-weave --format=pdf --/verbose --output-file=$@ $<
-	@chmod -R a-w $(@D)
-	@echo "\e[32mOK\e[0m"
+	@mkdir -p $(@D); \
+	chmod -R a+w $(@D); \
+	echo -n "> Creating a PDF document for $<..."; \
+	sl-weave --format=pdf --/verbose --output-file=$@ $< 2>/dev/null; \
+	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
+	chmod -R a-w $(@D); \
 
 ./docs/text/%.txt: ./source/%.sl
-	@mkdir -p $(@D)
-	@chmod -R a+w $(@D)
-	@echo -n "> Creating a text document for $<..."
-	@sl-weave --format=text --/verbose --output-file=$@ $<
-	@chmod -R a-w $(@D)
-	@echo "\e[32mOK\e[0m"
+	@mkdir -p $(@D); \
+	chmod -R a+w $(@D); \
+	echo -n "> Creating a text document for $<..."; \
+	sl-weave --format=text --/verbose --output-file=$@ $< 2>/dev/null; \
+	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
+	chmod -R a-w $(@D); \
+
+./docs/man/%.1: ./source/%.sl
+	@-mkdir -p $(@D); \
+	chmod -R a+w $(@D); \
+	echo -n "> Creating a man page for $<..."; \
+	sl-weave --format=Man --/verbose --output-file=$@ $< 2>/dev/null; \
+	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
+	chmod -R a-w $(@D)
+
+./docs/tex/%.tex: ./source/%.sl
+	@mkdir -p $(@D); \
+	chmod -R a+w $(@D); \
+	echo -n "> Creating a TᴇX page for $<..."; \
+	sl-weave --format=Latex --/verbose --output-file=$@ $< 2>/dev/null; \
+	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
+	chmod -R a-w $(@D); \
+
+./docs/pod/%.rakudoc: ./source/%.sl
+	@mkdir -p $(@D); \
+	chmod -R a+w $(@D); \
+	echo -n "> Creating a Pod6 page for $<..."; \
+	sl-weave --format=Pod --/verbose --output-file=$@ $< 2>/dev/null; \
+	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
+	chmod -R a-w $(@D); \
 
 write:
 	@chmod a+w **/*
@@ -178,3 +210,6 @@ write:
 lock:
 	@chmod a-w **/*
 
+del_docs:
+	@chmod a+w **/*
+	@rm -rf docs
