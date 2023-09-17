@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Sat 16 Sep 2023 10:17:12 PM EDT
+# Last modified: Sat 16 Sep 2023 11:28:08 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -301,6 +301,14 @@ filename is required.  Typically, this parameter is obtained from the command
 line or passed from the subroutine C<MAIN>.
 =end pod
     Str $input-file!,
+#    IO::Path $input-file!,
+
+=begin pod
+=comment 1
+=head3 C<$verbose>
+Use verbose only for debugging
+=end pod
+    Bool :v(:$verbose)      = False;
 =begin pod
 
 The subroutine will return a C<Str>, which will be a working Raku program.
@@ -381,7 +389,6 @@ and obtain a list of submatches (that's what the C<caps> method does) ...
 Add all the C<Code> sections.
 =end pod
 
-        #TODO simplify this
         when .key eq 'code' {
             .value;
         } # end of when .key eq 'code'
@@ -474,6 +481,7 @@ defaults to True.
 Use verbose only for debugging
 =end pod
     Bool :v(:$verbose)      = False;
+
 =begin pod
 C<sub weave> returns a Str.
 =end pod
