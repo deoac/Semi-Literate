@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Mon 18 Sep 2023 12:12:41 AM EDT
+# Last modified: Mon 18 Sep 2023 12:22:07 AM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -74,7 +74,7 @@ According to the L<documentation|https://docs.raku.org/language/pod>,
 
 =begin defn
 
-    Every Pod6 document has to begin with 'begin pod' and end with 'end pod'.
+    Every Pod6 document has to begin with '=begin pod' and end with '=end pod'.
 
 =end defn
 
@@ -291,8 +291,12 @@ This subroutine will remove all the Pod6 code from a semi-literate file
 
 =end pod
 
+multi tangle () is export {
+    ;
+} # end of multi tangle () is export
+
 #TODO multi sub to accept Str & IO::PatGh
-sub tangle (
+multi tangle (
 
 =begin pod
 
