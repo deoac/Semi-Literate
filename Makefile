@@ -62,56 +62,56 @@ view:
 	@open README.html
 
 temporary:
-	@chmod -R a+w lib/
-	@echo -n "> Uninstalling Semi::Literate..."
-	@-zef uninstall Semi::Literate &> /dev/null
-	@echo "\e[32mOK\e[0m"
-	@echo -n "> pod-tangling Literate.sl..."
-	@pod-tangle source/Literate.sl > lib/Semi/Literate.rakumod
-	@chmod -R a-w lib/
-	@echo "\e[32mOK\e[0m"
+	@chmod -R a+w lib/; \
+	echo -n "> Uninstalling Semi::Literate..."; \
+	-zef uninstall Semi::Literate &> /dev/null; \
+	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
+	echo -n "> pod-tangling Literate.sl..."; \; \; \
+	pod-tangle source/Literate.sl > lib/Semi/Literate.rakumod; \
+	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
+	chmod -R a-w lib/
 
 lib/Semi/Literate.rakumod: source/Literate.sl
-	@chmod -R a+w lib/
-	@echo -n "> Compiling the Semi::Literate module..."
-	@sl-tangle source/Literate.sl  > lib/Semi/Literate.rakumod
-	@chmod -R a-w lib/
-	@echo "\e[32mOK\e[0m"
+	@chmod -R a+w lib/; \
+	echo -n "> Compiling the Semi::Literate module..."; \
+	sl-tangle source/Literate.sl  > lib/Semi/Literate.rakumod; \
+	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
+	chmod -R a-w lib/
 
 bin/sl-tangle: source/sl-tangle.sl $(RAKU_MODULE_TARGET)
-	@chmod -R a+w bin/
-	@echo -n "> Creating the sl-tangle executable..."
-	@pod-tangle source/sl-tangle.sl > bin/sl-tangle
-	@chmod -R a-w,a+x bin/
-	@echo "\e[32mOK\e[0m"
+	@chmod -R a+w bin/; \
+	echo -n "> Creating the sl-tangle executable..."; \
+	pod-tangle source/sl-tangle.sl > bin/sl-tangle; \
+	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
+	chmod -R a-w,a+x bin/
 
 bin/sl-weave: source/sl-weave.sl  $(RAKU_MODULE_TARGET)
-	@chmod -R a+w bin/
-	@echo -n "> Creating the sl-weave executable..."
-	@bin/sl-tangle source/sl-weave.sl  > bin/sl-weave
-	@chmod -R a-w,a+x bin/
-	@echo "\e[32mOK\e[0m"
+	@chmod -R a+w bin/; \
+	echo -n "> Creating the sl-weave executable..."; \
+	bin/sl-tangle source/sl-weave.sl  > bin/sl-weave; \
+	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
+	chmod -R a-w,a+x bin/
 
 
 $(RAKU_MODULE_TARGET): lib/Semi/Literate.rakumod
-	@echo -n "> Installing the newly created module with zef..."
-	@zef install --force-build --force-install --force-test . >/dev/null
-	@echo "\e[32mOK\e[0m"
+	@echo -n "> Installing the newly created module with zef..."; \
+	zef install --force-build --force-install --force-test . >/dev/null; \
+	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"
 
 $(TANGLE_BINARY_TARGET): bin/sl-tangle $(RAKU_MODULE_TARGET)
-	@echo -n "> Installing the newly created tangle executable with zef..."
-	@zef install --force-build --force-install --force-test . >/dev/null
-	@echo "\e[32mOK\e[0m"
+	@echo -n "> Installing the newly created tangle executable with zef..."; \
+	zef install --force-build --force-install --force-test . >/dev/null; \
+	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"
 
 $(WEAVE_BINARY_TARGET): bin/sl-weave $(RAKU_MODULE_TARGET)
-	@echo -n "> Installing the newly created weave executable with zef..."
-	@zef install --force-build --force-install --force-test . >/dev/null
-	@echo "\e[32mOK\e[0m"
+	@echo -n "> Installing the newly created weave executable with zef..."; \
+	zef install --force-build --force-install --force-test . >/dev/null; \
+	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"
 
 install-all: $(RAKU_MODULE_TARGET) bin/sl-tangle bin/sl-weave
-	@echo -n "> Installing the module and the executables with zef..."
-	@zef install --force-build --force-install --force-test . >/dev/null
-	@echo "\e[32mOK\e[0m"
+	@echo -n "> Installing the module and the executables with zef..."; \
+	zef install --force-build --force-install --force-test . >/dev/null; \
+	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"
 
 test:
 	@echo -n "> Running the tests..."
