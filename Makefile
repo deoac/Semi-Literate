@@ -50,7 +50,7 @@ pod: 		 $(POD_TARGETS)
 tex: 		 $(TEX_TARGETS)
 text: 		 $(TEXT_TARGETS)
 
-temp: 		 temporary module executables
+temp: 		 write temporary lock
 debug:       touch_sources all view
 
 touch_sources:
@@ -62,14 +62,18 @@ view:
 	@open README.html
 
 temporary:
-	@chmod -R a+w lib/; \
-	echo -n "> Uninstalling Semi::Literate..."; \
+	@echo -n "> Uninstalling Semi::Literate..."; \
 	-zef uninstall Semi::Literate &> /dev/null; \
 	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
-	echo -n "> pod-tangling Literate.sl..."; \; \; \
+	echo -n "> pod-tangling Literate.sl..."; \
 	pod-tangle source/Literate.sl > lib/Semi/Literate.rakumod; \
 	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
-	chmod -R a-w lib/
+	echo -n "> pod-tangling sl-tangle.sl..."; \
+	pod-tangle source/sl-tangle.sl > bin/sl-tangle; \
+	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
+	echo -n "> pod-tangling sl-weave.sl..."; \
+	pod-tangle source/sl-weave.sl > bin/sl-weave; \
+	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
 
 lib/Semi/Literate.rakumod: source/Literate.sl
 	@chmod -R a+w lib/; \
