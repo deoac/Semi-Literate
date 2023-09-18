@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Sun 17 Sep 2023 11:58:28 PM EDT
+# Last modified: Mon 18 Sep 2023 12:12:41 AM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -74,7 +74,7 @@ According to the L<documentation|https://docs.raku.org/language/pod>,
 
 =begin defn
 
-    Every Pod6 document has to begin with C<=begin pod> and end with C<=end> pod.
+    Every Pod6 document has to begin with 'begin pod' and end with 'end pod'.
 
 =end defn
 
