@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Mon 18 Sep 2023 12:22:07 AM EDT
+# Last modified: Mon 18 Sep 2023 12:43:41 AM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -291,11 +291,13 @@ This subroutine will remove all the Pod6 code from a semi-literate file
 
 =end pod
 
-multi tangle () is export {
-    ;
+# begin-no-weave
+multi tangle (Str $input-file!) is export {
+    # get the filehandle of the input file and call the other multi tangle()
+    tangle $input-file.IO;
 } # end of multi tangle () is export
+# end-no-weave
 
-#TODO multi sub to accept Str & IO::PatGh
 multi tangle (
 
 =begin pod
@@ -304,7 +306,7 @@ The subroutine has a single parameter, which is the input filename. The
 filename is required.  Typically, this parameter is obtained from the command
 line or passed from the subroutine C<MAIN>.
 =end pod
-    Str $input-file!,
+    IO::Path $input-file!,
 =begin pod
 
 The subroutine will return a C<Str>, which will be a working Raku program.
@@ -316,7 +318,7 @@ The subroutine will return a C<Str>, which will be a working Raku program.
 First we will get the entire Semi-Literate C<.sl> file...
 =end pod
 
-    my Str $source = $input-file.IO.slurp;
+    my Str $source = $input-file.slurp;
 
 =begin pod
 =comment 1
