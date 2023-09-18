@@ -68,7 +68,15 @@ temporary:
 	@echo "\e[32mOK\e[0m"
 	@echo -n "> pod-tangling Literate.sl..."
 	@pod-tangle source/Literate.sl > lib/Semi/Literate.rakumod
+	@echo "\e[32mOK\e[0m"
 	@chmod -R a-w lib/
+	@chmod -R a+w bin/
+	@echo -n "> pod-tangling sl-tangle.sl..."
+	@pod-tangle source/sl-tangle.sl > bin/sl-tangle
+	@echo "\e[32mOK\e[0m"
+	@echo -n "> pod-tangling sl-weave.sl..."
+	@pod-tangle source/sl-weave.sl > bin/sl-weave
+	@chmod -R a-w bin/
 	@echo "\e[32mOK\e[0m"
 
 lib/Semi/Literate.rakumod: source/Literate.sl
@@ -81,14 +89,14 @@ lib/Semi/Literate.rakumod: source/Literate.sl
 bin/sl-tangle: source/sl-tangle.sl $(RAKU_MODULE_TARGET)
 	@chmod -R a+w bin/
 	@echo -n "> Creating the sl-tangle executable..."
-	@pod-tangle source/sl-tangle.sl > bin/sl-tangle
+	@bin/sl-tangle source/sl-tangle.sl >bin/sl-tangle
 	@chmod -R a-w,a+x bin/
 	@echo "\e[32mOK\e[0m"
 
 bin/sl-weave: source/sl-weave.sl  $(RAKU_MODULE_TARGET)
 	@chmod -R a+w bin/
 	@echo -n "> Creating the sl-weave executable..."
-	@bin/sl-tangle source/sl-weave.sl  > bin/sl-weave
+	@bin/sl-tangle source/sl-weave.sl >bin/sl-weave
 	@chmod -R a-w,a+x bin/
 	@echo "\e[32mOK\e[0m"
 
