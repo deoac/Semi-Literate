@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Sat 16 Sep 2023 10:17:12 PM EDT
+# Last modified: Sun 17 Sep 2023 11:58:28 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -381,7 +381,6 @@ and obtain a list of submatches (that's what the C<caps> method does) ...
 Add all the C<Code> sections.
 =end pod
 
-        #TODO simplify this
         when .key eq 'code' {
             .value;
         } # end of when .key eq 'code'
@@ -538,25 +537,25 @@ line and return True
 Otherwise return True
 =end pod
 
-    my token full-line-comment {
-        $<the-code>=(<leading-ws>)
-        '#'
-        <rest-of-line>
-    } # end of my token full-line-comment
-
-    #TODO this regex is not robust.  It will tag lines with a # in a string,
-    #unless the string delimiter is immediately before the #
-    my regex partial-line-comment {
-        $<the-code>=(<leading-ws> <optional-chars>)  # optional code
-        <!after <opening-quote>>         #
-        '#'                              # comment marker
-        $<the-comment>=<-[#]>*           # the actual comment
-        <ws-till-EOL>
-    } # end of my regex comment
-
     sub remove-comments (Seq $lines --> Seq) {
         #TODO Add a parameter to sub weave()
         #TODO Explain Seq
+
+        my token full-line-comment {
+            $<the-code>=(<leading-ws>)
+            '#'
+            <rest-of-line>
+        } # end of my token full-line-comment
+
+        #TODO this regex is not robust.  It will tag lines with a # in a string,
+        #unless the string delimiter is immediately before the #
+        my regex partial-line-comment {
+            $<the-code>=(<leading-ws> <optional-chars>)  # optional code
+            <!after <opening-quote>>         #
+            '#'                              # comment marker
+            $<the-comment>=<-[#]>*           # the actual comment
+            <ws-till-EOL>
+        } # end of my regex comment
 
         my @retval = ();
         for $lines.List -> $line {
