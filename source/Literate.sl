@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Mon 18 Sep 2023 12:43:41 AM EDT
+# Last modified: Mon 18 Sep 2023 09:27:53 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -294,7 +294,7 @@ This subroutine will remove all the Pod6 code from a semi-literate file
 # begin-no-weave
 multi tangle (Str $input-file!) is export {
     # get the filehandle of the input file and call the other multi tangle()
-    tangle $input-file.IO;
+    samewith $input-file.IO;
 } # end of multi tangle () is export
 # end-no-weave
 
