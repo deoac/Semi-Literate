@@ -1,28 +1,18 @@
-        1| #! /usr/bin/env raku
-        2| 
-        3| # Tangle a Semi-literate file into a working Raku file.
-        4| # © 2023 Shimon Bollinger. All rights reserved.
-        5| # Last modified: Wed 06 Sep 2023 03:47:56 PM EDT
-        6| # Version 0.0.1
-        7| 
-
-
-        8| 
-        9| use Semi::Literate;
-       10| 
-       11| #| The actual program starts here.
-       12| multi MAIN (
-       13|     Str $input-file;
-       14|     Str :o(:$output-file) = '';
-       15| ) {
-       16|     my Str $raku-source = tangle $input-file;
-       17| 
-       18|     my $output-file-handle = $output-file              ??
-       19|                                 open(:w, $output-file) !!
-       20|                                 $*OUT;
-       21| 
-       22|     $output-file-handle.spurt: $raku-source;
-       23| } # end of multi MAIN ( )
+        3| 
+        4| use Semi::Literate;
+        5| 
+        6| multi MAIN (
+        7|     Str $input-file;
+        8|     Str :o(:$output-file) = '';
+        9| ) {
+       10|     my Str $raku-source = tangle $input-file;
+       11| 
+       12|     my $output-file-handle = $output-file              ??
+       13|                                 open(:w, $output-file) !!
+       14|                                 $*OUT;
+       15| 
+       16|     $output-file-handle.spurt: $raku-source;
+       17| } 
 
 
 NAME
@@ -122,6 +112,3 @@ under the same terms as Perl itself. See perlartistic.
 This program is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 FITNESS FOR A PARTICULAR PURPOSE.
-
-       24| 
-
