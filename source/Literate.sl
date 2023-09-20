@@ -328,11 +328,10 @@ and obtain a list of submatches (that's what the C<caps> method does) ...
         when .key eq 'pod' {
             my $num-blank-lines =
                 .value.hash<blank-line-comment><num-blank-lines>;
-            "\n" x $num-blank-lines with $num-blank-lines;
+            "\n" x ($num-blank-lines // 1); #with $num-blank-lines;
         }
 
 =begin pod
-=comment 1
 
 Add all the C<Code> sections.
 =end pod
