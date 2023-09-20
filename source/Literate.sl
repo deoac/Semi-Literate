@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Mon 18 Sep 2023 09:27:53 PM EDT
+# Last modified: Tue 19 Sep 2023 11:11:14 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -15,7 +15,6 @@ use Data::Dump::Tree;
 #end-no-weave
 
 =begin pod
-=comment 1
 
 
 =TITLE An implementation of Semi-Literate programming for Raku with Pod6
@@ -66,7 +65,6 @@ C<TOP> token clearly indicates this.
     } # end of token code
 
 =begin pod
-=comment 1
 
 =head2 The Pod6 delimiters
 
@@ -91,7 +89,6 @@ So let's define those tokens.
     } # end of token begin-pod
 
 =begin pod
-=comment 1
 
 =head3 The C<end-pod> token
 
@@ -106,7 +103,6 @@ The C<end-pod> token is much simpler.
     } # end of token end-pod
 
 =begin pod
-=comment 1
 
 =head2 Replacing Pod6 sections with blank lines
 
@@ -138,7 +134,6 @@ Here's the relevant regex:
     } # end of token blank-line-comment
 
 =begin pod
-=comment 1
 
 =head2 The C<Pod> token
 
@@ -161,7 +156,6 @@ possibility of having no lines in the block.
     } # end of token pod
 
 =begin pod
-=comment 1
 
 =head2 The C<Code> tokens
 
@@ -183,7 +177,6 @@ They are just one or more C<plain-line>s.
     } # end of token woven
 
 =begin pod
-=comment 1
 
 =head3 Non-woven sections
 
@@ -200,7 +193,6 @@ By individual lines or by a delimited block of code.
         ]+
     } # end of token non-woven
 =begin pod
-=comment 1
 
 =head4 One line of code
 
@@ -215,7 +207,6 @@ Simply append C<# no-weave-this-line> at the end of the line!
     } # end of token one-line-no-weave
 
 =begin pod
-=comment 1
 
 
 
@@ -246,7 +237,6 @@ the code you want ignored in the formatted document.
 
 
 =begin pod
-=comment 1
 
 =head3 The C<plain-line> token
 
@@ -272,7 +262,6 @@ Check|https://docs.raku.org/language/regexes\#Regex_Boolean_condition_check>.
     } # end of token plain-line
 
 =begin pod
-=comment 1
 
 And that concludes the grammar for separating C<Pod> from C<Code>!
 
@@ -282,7 +271,6 @@ And that concludes the grammar for separating C<Pod> from C<Code>!
 
 =begin pod
 =comment 2
-
 =head1 The Tangle subroutine
 
 This subroutine will remove all the Pod6 code from a semi-literate file
@@ -313,7 +301,6 @@ The subroutine will return a C<Str>, which will be a working Raku program.
 =end pod
         --> Str ) is export {
 =begin pod
-=comment 1
 
 First we will get the entire Semi-Literate C<.sl> file...
 =end pod
@@ -397,7 +384,6 @@ Add all the C<Code> sections.
         } # end of default
         #end-no-weave
 =begin pod
-=comment 1
 
 ... and we will join all the code sections together...
 =end pod
@@ -406,7 +392,6 @@ Add all the C<Code> sections.
     ).join;
 
 =begin pod
-=comment 1
 =head3 Remove the I<no-weave> delimiters
 
 =end pod
@@ -420,7 +405,6 @@ Add all the C<Code> sections.
                     = "$<Semi::Literate::one-line-no-weave><the-code>\n";
 
 =begin pod
-=comment 1
 =head3 remove blank lines at the end
 
 =end pod
@@ -428,7 +412,6 @@ Add all the C<Code> sections.
     $raku-code ~~ s{\n  <blank-line>* $ } = '';
 
 =begin pod
-=comment 1
 
 And that's the end of the C<tangle> subroutine!
 =end pod
@@ -449,7 +432,6 @@ because it has to include the C<code> sections.
 sub weave (
 
 =begin pod
-=comment 1
 =head2 The parameters of Weave
 
 C<sub weave> will have several parameters.
@@ -463,7 +445,6 @@ C<MAIN>.
 
     Str $input-file!;
 =begin pod
-=comment 1
 =head3 C<$line-numbers>
 
 It can be useful to print line numbers in the code listing.  It currently
@@ -474,8 +455,8 @@ defaults to True.
         #= Should line numbers be added to the embeded code?
 
 =begin pod
-=comment 1
 =head3 C<$verbose>
+
 Use verbose only for debugging
 =end pod
     Bool :v(:$verbose)      = False;
@@ -617,7 +598,6 @@ Otherwise return True
     ).join;
 
 =begin pod
-=comment 1
 =head3 Remove unseemly blank lines
 =end pod
     # The code below will occur wherever non-woven appeared.
@@ -641,7 +621,6 @@ Otherwise return True
     $weave ~~ s:g{ $non-woven-blank-lines | <$full-comment-blank-lines> } = '';
 
 =begin pod
-=comment 1
 
 And that's the end of the C<weave> subroutine!
 =end pod
