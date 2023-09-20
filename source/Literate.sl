@@ -308,55 +308,18 @@ First we will get the entire Semi-Literate C<.sl> file...
     my Str $source = $input-file.slurp;
 
 =begin pod
-=comment 1
-=head2 Clean the source
-
-=head3 Remove unnecessary blank lines
-
-Very often the C<code> section of the Semi-Literate file will have blank lines
-that you don't want to see in the tangled working code.
-For example:
-
-=begin code :lang<raku>
-
-                                                # <== unwanted blank lines
-                                                # <== unwanted blank lines
-    sub foo () {
-        { ... }
-    } # end of sub foo ()
-                                                # <== unwanted blank lines
-                                                # <== unwanted blank lines
-
-=end code
-=end pod
-
-=begin pod
-=comment 1
-
-
-So we'll remove the blank lines immediately outside the beginning and end of
-the Pod6 sections.
-=end pod
-
-    my Str $cleaned-source = $source;
-    $cleaned-source ~~ s:g{    \=end (\N*) \n+}      =  "\=end$0\n";
-    $cleaned-source ~~ s:g{\n+ \=begin (<hws> pod) } = "\n\=begin$0";
-
-=begin pod
-=comment 1
 =head2 The interesting stuff
 
 We parse it using the C<Semi::Literate> grammar
 and obtain a list of submatches (that's what the C<caps> method does) ...
 =end pod
 
-    my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
+    my Pair @submatches = Semi::Literate.parse(clean $source).caps;
 
 #    note "submatches.elems: {@submatches.elems}";
     my Str $raku-code = @submatches.map( {
 
 =begin pod
-=comment 1
 =head3 Replace Pod6 sections with blank lines
 
 =end pod
@@ -475,28 +438,6 @@ First we will get the entire C<.sl> file...
     my Str $source = $input-file.IO.slurp;
 
 =begin pod
-=comment 1
-=head3 Remove blank lines at the begining and end of the code
-
-B<EXPLAIN THIS!>
-
-=end pod
-
-#TODO create a subroutine since this is used in both tangle and weave
-    my Str $cleaned-source = $source;
-    $cleaned-source ~~ s:g{    \=end (\N*) \n+}      =  "\=end$0\n";
-    $cleaned-source ~~ s:g{\n+ \=begin (<hws> pod) } = "\n\=begin$0";
-
-=begin pod
-=comment 1
-=head3 remove blank lines at the end of the code
-
-=end pod
-    # remove blank lines at the end
-    $cleaned-source ~~ s{\n  <blank-line>* $ } = '';
-
-=begin pod
-=comment 1
 
 =head2 Interesting stuff
 
@@ -504,10 +445,9 @@ B<EXPLAIN THIS!>
 and obtain a list of submatches (that's what the C<caps> method does) ...
 =end pod
 
-    my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
+    my Pair @submatches = Semi::Literate.parse(clean $source).caps;
 
 =begin pod
-=comment 1
 
 ...And now begins the interesting part.  We iterate through the submatches and
 insert the C<code> sections into the Pod6...
@@ -630,7 +570,50 @@ And that's the end of the C<weave> subroutine!
 } # end of sub weave (
 
 =begin pod
-=comment 1
+=comment 2
+=head1 Clean the source code of unneccessary blank lines
+=end pod
+
+sub clean (Str $source is copy --> Str) {
+
+=begin pod
+=head2 Remove blank lines at the begining and end of the code
+
+Very often the C<code> section of the Semi-Literate file will have blank lines
+that you don't want to see in the tangled working code.
+For example:
+
+=begin code :lang<raku>
+
+    ...
+    \=end pod
+                                                # <== unwanted blank line
+                                                # <== unwanted blank line
+    sub foo () {
+        { ... }
+    } # end of sub foo ()
+                                                # <== unwanted blank line
+                                                # <== unwanted blank line
+                                                # <== unwanted blank line
+    \=begin pod
+    ...
+=end code
+=end pod
+
+    $source ~~ s:g{    \=end (\N*) \n+}      =  "\=end$0\n";
+    $source ~~ s:g{\n+ \=begin (<hws> pod) } = "\n\=begin$0";
+
+=begin pod
+=head2 Remove blank lines at the end of the code.
+
+=end pod
+    # remove blank lines at the end
+    $source ~~ s{\n  <blank-line>* $ } = '';
+
+    return $source;
+} # end of sub clean-source (Str $source)
+
+=begin pod
 =head1 NAME
 
 C<Semi::Literate> - A semi-literate way to weave and tangle Raku/Pod6 source code.
