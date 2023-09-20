@@ -80,21 +80,21 @@ lib/Semi/Literate.rakumod: source/Literate.sl
 	echo -n "> Compiling the Semi::Literate module..."; \
 	sl-tangle source/Literate.sl  > lib/Semi/Literate.rakumod; \
 	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
-	chmod -R a-w lib/
+
 
 bin/sl-tangle: source/sl-tangle.sl $(RAKU_MODULE_TARGET)
 	@chmod -R a+w bin/; \
 	echo -n "> Creating the sl-tangle executable..."; \
 	pod-tangle source/sl-tangle.sl > bin/sl-tangle; \
 	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
-	chmod -R a-w,a+x bin/
+	chmod -R a+x bin/
 
 bin/sl-weave: source/sl-weave.sl  $(RAKU_MODULE_TARGET)
 	@chmod -R a+w bin/; \
 	echo -n "> Creating the sl-weave executable..."; \
 	bin/sl-tangle source/sl-weave.sl  > bin/sl-weave; \
 	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
-	chmod -R a-w,a+x bin/
+	chmod -R a+x bin/
 
 
 $(RAKU_MODULE_TARGET): lib/Semi/Literate.rakumod
@@ -160,7 +160,7 @@ create_doc_dirs:
 	echo -n "> Creating an HTML document for $<..."; \
 	sl-weave --format=html --/verbose --output-file=$@ $< 2>/dev/null; \
 	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
-	chmod -R a-w $(@D); \
+
 
 ./docs/markdown/%.md: ./source/%.sl
 	@mkdir -p $(@D); \
@@ -168,7 +168,7 @@ create_doc_dirs:
 	echo -n "> Creating a Markdown document for $<..."; \
 	sl-weave --format=markdown --/verbose --output-file=$@ $< 2>/dev/null; \
 	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
-	chmod -R a-w $(@D); \
+
 
 ./docs/pdf/%.pdf: ./source/%.sl
 	@mkdir -p $(@D); \
@@ -176,7 +176,7 @@ create_doc_dirs:
 	echo -n "> Creating a PDF document for $<..."; \
 	sl-weave --format=pdf --/verbose --output-file=$@ $< 2>/dev/null; \
 	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
-	chmod -R a-w $(@D); \
+
 
 ./docs/text/%.txt: ./source/%.sl
 	@mkdir -p $(@D); \
@@ -184,7 +184,7 @@ create_doc_dirs:
 	echo -n "> Creating a text document for $<..."; \
 	sl-weave --format=text --/verbose --output-file=$@ $< 2>/dev/null; \
 	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
-	chmod -R a-w $(@D); \
+
 
 ./docs/man/%.1: ./source/%.sl
 	@-mkdir -p $(@D); \
@@ -192,7 +192,7 @@ create_doc_dirs:
 	echo -n "> Creating a man page for $<..."; \
 	sl-weave --format=Man --/verbose --output-file=$@ $< 2>/dev/null; \
 	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
-	chmod -R a-w $(@D)
+
 
 ./docs/tex/%.tex: ./source/%.sl
 	@mkdir -p $(@D); \
@@ -200,7 +200,7 @@ create_doc_dirs:
 	echo -n "> Creating a TᴇX page for $<..."; \
 	sl-weave --format=Latex --/verbose --output-file=$@ $< 2>/dev/null; \
 	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
-	chmod -R a-w $(@D); \
+
 
 ./docs/pod/%.rakudoc: ./source/%.sl
 	@mkdir -p $(@D); \
@@ -208,7 +208,7 @@ create_doc_dirs:
 	echo -n "> Creating a Pod6 page for $<..."; \
 	sl-weave --format=Pod --/verbose --output-file=$@ $< 2>/dev/null; \
 	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
-	chmod -R a-w $(@D); \
+
 
 write:
 	@chmod a+w **/*
