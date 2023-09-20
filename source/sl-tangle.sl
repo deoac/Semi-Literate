@@ -2,7 +2,7 @@
 
 # Tangle a Semi-literate file into a working Raku file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Wed 06 Sep 2023 03:47:56 PM EDT
+# Last modified: Sat 16 Sep 2023 10:30:05 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -17,7 +17,7 @@ multi MAIN (
     Str $input-file;
     Str :o(:$output-file) = '';
 ) {
-    my Str $raku-source = tangle $input-file;
+    my Str $raku-source = tangle $input-file, :!verbose;
 
     my $output-file-handle = $output-file              ??
                                 open(:w, $output-file) !!
