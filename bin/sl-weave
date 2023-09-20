@@ -10,6 +10,7 @@ use v6.*;
 
 use File::Temp;
 use Semi::Literate;
+
 #| Weave Markdown documentation from Raku code
 sub MAIN($input-file,
          Bool :l(:$line-numbers)  = True;
