@@ -2,56 +2,44 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Sun 10 Sep 2023 01:46:38 PM EDT
+# Last modified: Tue 19 Sep 2023 11:11:14 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
 # always use the latest version of Raku
 use v6.*;
+use Useful::Regexes;
+
 use PrettyDump;
 use Data::Dump::Tree;
 #end-no-weave
 
 =begin pod
-=comment 1
 
 
-=TITLE A grammar to parse a file into C<Pod> and C<Code> sections.
+=TITLE An implementation of Semi-Literate programming for Raku with Pod6
 
 =head1 INTRODUCTION
+=comment 2
 
 I want to create a semi-literate Raku source file with the extension
 C<.sl>. Then, I will I<weave> it to generate a readable file in formats like
 Markdown, PDF, HTML, and more. Additionally, I will I<tangle> it to create source
 code without any Pod6.
 
-=head2 Convenient tokens
-
-Let's create some tokens for convenience.
-
-=end pod
-
-
-#TODO Put these into a Role
-    my token hws            {    <!ww>\h*       } # Horizontal White Space
-    my token leading-ws     { ^^ <hws>          } # Whitespace at start of line
-    my token optional-chars {    \N*?           }
-    my token rest-of-line   {    \N*   [\n | $] } #no-weave-this-line
-    my token ws-till-EOL    {    <hws> [\n | $] } #no-weave-this-line
-    my token blank-line     { ^^ <ws-till-EOL>  } #no-weave-this-line
-
-=begin pod
-=comment 2
 To do this, I need to divide the file into C<Pod> and C<Code> sections by parsing
 it. For this purpose, I will create a dedicated Grammar.
 
+(See L<Useful::Regexes|https://github.com/deoac/Useful-Regexes> for the
+    definitions of the named regexes used here. (C<<hws>> == Horizontal WhiteSpace))
 
 =head1 The Grammar
-
+=comment 2
 =end pod
 
+
 #use Grammar::Tracer;
-grammar Semi::Literate is export {
+grammar Semi::Literate is export does Useful::Regexes {
 
 =begin pod
 
@@ -65,13 +53,18 @@ C<TOP> token clearly indicates this.
     token TOP {
         [
           || <pod>
-          || <woven-code>
-          || <non-woven-code>
+          || <code>
         ]*
     } # end of token TOP
 
+    token code  {
+        [
+          || <non-woven>+
+          || <woven>+
+        ]
+    } # end of token code
+
 =begin pod
-=comment 1
 
 =head2 The Pod6 delimiters
 
@@ -79,7 +72,7 @@ According to the L<documentation|https://docs.raku.org/language/pod>,
 
 =begin defn
 
-    Every Pod6 document has to begin with =begin pod and end with =end pod.
+    Every Pod6 document has to begin with '=begin pod' and end with '=end pod'.
 
 =end defn
 
@@ -96,7 +89,6 @@ So let's define those tokens.
     } # end of token begin-pod
 
 =begin pod
-=comment 1
 
 =head3 The C<end-pod> token
 
@@ -104,24 +96,33 @@ The C<end-pod> token is much simpler.
 
 =end pod
 
-    token end-pod { <leading-ws> '=' end <hws> pod <ws-till-EOL> }
+    token end-pod  {
+        <leading-ws>
+        '=' end <hws> pod
+        <ws-till-EOL>
+    } # end of token end-pod
 
 =begin pod
-=comment 1
 
-=head3 Replacing Pod6 sections with blank lines
+=head2 Replacing Pod6 sections with blank lines
 
-Most programming applications do not focus on the structure of the executable
-file, which is not meant to be easily read by humans.  Our tangle would replace
-all the Pod6 blocks with a single C<\n>.  That can clump code together that is
-easier read if there were one or more blank lines.
-
-However, we can provide the option for users to specify the number of empty
+When we I<tangle> the semi-literate code, all the Pod6 will be removed.  This
+would leave a lot of blank lines in the Raku code.  So we'll clean it up.
+We provide the option for users to specify the number of empty
 lines that should replace a C<pod> block. To do this, simply add a Pod6 comment
 immediately after the C<=begin  pod> statement.  The comment can say anything
 you like, but must end with a digit specifying the number of blank lines with
 which to replace the Pod6 section.
 
+=begin code :lang<raku>
+
+    =begin pod
+    =comment I want this pod block replaced by only one line 1
+    ...
+    =end pod
+
+=end code
+Here's the relevant regex:
 =end pod
 
     token num-blank-line-comment {
@@ -133,7 +134,6 @@ which to replace the Pod6 section.
     } # end of token num-blank-line-comment
 
 =begin pod
-=comment 1
 
 =head2 The C<Pod> token
 
@@ -156,14 +156,11 @@ possibility of having no lines in the block.
     } # end of token pod
 
 =begin pod
-=comment 1
 
 =head2 The C<Code> tokens
 
 The C<Code> sections are similarly easily defined.  There are two types of
-C<Code> sections, depending on whether they will appear in the woven code. See
-L<below> for why some code would not be included in the woven
-code.
+C<Code> sections, depending on whether they will appear in the woven code.
 
 =head3 Woven sections
 
@@ -173,7 +170,7 @@ They are just one or more C<plain-line>s.
 =end pod
 
 
-    token woven-code  {
+    token woven  {
         [
             || <comment> { note $/.Str }
             || <plain-line>
@@ -181,47 +178,46 @@ They are just one or more C<plain-line>s.
     } # end of token woven-code
 
 =begin pod
-=comment 1
 
 =head3 Non-woven sections
 
-Sometimes there will be code you do not want woven into the document, such
-as boilerplate code like C<use v6.d;>.  You have two options to mark such
-code.  By individual lines or by delimited blocks of code.
+Sometimes there will be code you do not want woven into the documentation, such
+as boilerplate code like C<use v6.d;>.  You have two options to mark such code.
+By individual lines or by a delimited block of code.
+
 =end pod
 
-    token non-woven-code {
+    token non-woven {
         [
           || <one-line-no-weave>
           || <delimited-no-weave>
         ]+
     } # end of token non-woven
 =begin pod
-=comment 1
 
 =head4 One line of code
 
-Simply append C<# begin-no-weave> at the end of the line!
+Simply append C<# no-weave-this-line> at the end of the line!
 
 =end pod
 
-    token one-line-no-weave {
-        ^^ \N*?
+    regex one-line-no-weave {
+        $<the-code>=(<leading-ws> <optional-chars>)
         '#' <hws> 'no-weave-this-line'
         <ws-till-EOL>
     } # end of token one-line-no-weave
 
 =begin pod
-=comment 1
 
 
 
 =head4 Delimited blocks of code
 
-Simply add comments C<# begin-no-weave> and C<#end-no-weave> before and after the
-code you want ignored in the formatted document.
+Simply add comments C<# begin-no-weave> and C<#end-no-weave> before and after
+the code you want ignored in the formatted document.
 
 =end pod
+
     token begin-no-weave {
         <leading-ws>                    # optional leading whitespace
         '#' <hws> 'begin-no-weave'  # the delimiter itself (# begin-no-weave)
@@ -235,9 +231,9 @@ code you want ignored in the formatted document.
     } # end of token <end--no-weave>
 
     token delimited-no-weave {
-        <begin-no-weave>
-            <plain-line>*
-        <end-no-weave>
+        <.begin-no-weave>
+            <.plain-line>*
+        <.end-no-weave>
     } # end of token delimited-no-weave
 
     token code-comments {
@@ -248,7 +244,6 @@ code you want ignored in the formatted document.
 
 
 =begin pod
-=comment 1
 
 =head3 The C<plain-line> token
 
@@ -263,18 +258,17 @@ Check|https://docs.raku.org/language/regexes\#Regex_Boolean_condition_check>.
     token plain-line {
         :my $*EXCEPTION = False;
         [
-          ||  <begin-pod>         { $*EXCEPTION = True }
-          ||  <end-pod>           { $*EXCEPTION = True }
-          ||  <begin-no-weave>    { $*EXCEPTION = True }
-          ||  <end-no-weave>      { $*EXCEPTION = True }
-          ||  <one-line-no-weave> { $*EXCEPTION = True }
-          || $<plain-line> = [^^ <rest-of-line>]
+          ||  <.begin-pod>         { $*EXCEPTION = True }
+          ||  <.end-pod>           { $*EXCEPTION = True }
+          ||  <.begin-no-weave>    { $*EXCEPTION = True }
+          ||  <.end-no-weave>      { $*EXCEPTION = True }
+          ||  <.one-line-no-weave> { $*EXCEPTION = True }
+          || [^^ <rest-of-line>]
         ]
         <?{ !$*EXCEPTION }>
     } # end of token plain-line
 
 =begin pod
-=comment 1
 
 And that concludes the grammar for separating C<Pod> from C<Code>!
 
@@ -284,7 +278,6 @@ And that concludes the grammar for separating C<Pod> from C<Code>!
 
 =begin pod
 =comment 2
-
 =head1 The Tangle subroutine
 
 This subroutine will remove all the Pod6 code from a semi-literate file
@@ -293,8 +286,14 @@ This subroutine will remove all the Pod6 code from a semi-literate file
 
 =end pod
 
-#TODO multi sub to accept Str & IO::PatGh
-sub tangle (
+# begin-no-weave
+multi tangle (Str $input-file!) is export {
+    # get the filehandle of the input file and call the other multi tangle()
+    samewith $input-file.IO;
+} # end of multi tangle () is export
+# end-no-weave
+
+multi tangle (
 
 =begin pod
 
@@ -302,80 +301,32 @@ The subroutine has a single parameter, which is the input filename. The
 filename is required.  Typically, this parameter is obtained from the command
 line or passed from the subroutine C<MAIN>.
 =end pod
-    Str $input-file!,
+    IO::Path $input-file!,
 =begin pod
 
 The subroutine will return a C<Str>, which will be a working Raku program.
 =end pod
         --> Str ) is export {
 =begin pod
-=comment 1
 
 First we will get the entire Semi-Literate C<.sl> file...
 =end pod
 
-    my Str $source = $input-file.IO.slurp;
+    my Str $source = $input-file.slurp;
 
 =begin pod
-=comment 1
-=head2 Clean the source
-
-=head3 Remove unnecessary blank lines
-
-Very often the C<code> section of the Semi-Literate file will have blank lines
-that you don't want to see in the tangled working code.
-For example:
-
-=begin code :lang<raku>
-
-                                                # <== unwanted blank lines
-                                                # <== unwanted blank lines
-    sub foo () {
-        { ... }
-    } # end of sub foo ()
-                                                # <== unwanted blank lines
-                                                # <== unwanted blank lines
-
-=end code
-=end pod
-
-=begin pod
-=comment 1
-
-
-So we'll remove the blank lines immediately outside the beginning and end of
-the Pod6 sections.
-=end pod
-
-    my Str $cleaned-source = $source;
-    $cleaned-source ~~ s:g{\=end (\N*)\n+} =   "\=end$0\n";
-    $cleaned-source ~~ s:g{\n+\=begin (<hws> pod) [<hws> \d]?} = "\n\=begin$0";
-
-=begin pod
-=comment 1
 =head2 The interesting stuff
 
 We parse it using the C<Semi::Literate> grammar
 and obtain a list of submatches (that's what the C<caps> method does) ...
 =end pod
 
-    my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
-
-=begin pod
-=comment 1
-
-...and iterate through the submatches and keep only the C<code> sections...
-=end pod
+    my Pair @submatches = Semi::Literate.parse(clean $source).caps;
 
 #    note "submatches.elems: {@submatches.elems}";
     my Str $raku-code = @submatches.map( {
-#        note .key;
-        when .key eq 'woven-code'|'non-woven-code' {
-            .value;
-        }
 
 =begin pod
-=comment 1
 =head3 Replace Pod6 sections with blank lines
 
 =end pod
@@ -383,15 +334,25 @@ and obtain a list of submatches (that's what the C<caps> method does) ...
 
         when .key eq 'pod' {
             my $num-blank-lines =
-                .value.hash<num-blank-line-comment><num-blank-lines>;
-            "\n" x $num-blank-lines with $num-blank-lines;
+                .value.hash<blank-line-comment><num-blank-lines>;
+            "\n" x ($num-blank-lines // 1); #with $num-blank-lines;
         }
 
+=begin pod
+
+Add all the C<Code> sections.
+=end pod
+
+        when .key eq 'code' {
+            .value;
+        } # end of when .key eq 'code'
+
         # begin-no-weave
-        default { die "Tangle: should never get here. .key == {.key}" }
+        default { die "Tangle: should never get here.
+                    .key ==> {.key} .{.key}.keys => {.{.key}.keys}";
+        } # end of default
         #end-no-weave
 =begin pod
-=comment 1
 
 ... and we will join all the code sections together...
 =end pod
@@ -400,28 +361,26 @@ and obtain a list of submatches (that's what the C<caps> method does) ...
     ).join;
 
 =begin pod
-=comment 1
 =head3 Remove the I<no-weave> delimiters
 
 =end pod
 
-    $raku-code ~~ s:g{ <leading-ws> '#' <hws> 'begin-no-weave'     <rest-of-line> }
-        = '';
-    $raku-code ~~ s:g{ <leading-ws> '#' <hws> 'no-weave-this-line' <rest-of-line> }
-        = "$0\n";
-    $raku-code ~~ s:g{ <leading-ws> '#' <hws> 'end-no-weave'       <rest-of-line> }
-        = '';
+    $raku-code ~~ s:g{
+                        | <Semi::Literate::begin-no-weave>
+                        | <Semi::Literate::end-no-weave>
+                  } = '';
+
+    $raku-code ~~ s:g{ <Semi::Literate::one-line-no-weave> }
+                    = "$<Semi::Literate::one-line-no-weave><the-code>\n";
 
 =begin pod
-=comment 1
 =head3 remove blank lines at the end
 
 =end pod
-
+    # remove blank lines at the end
     $raku-code ~~ s{\n  <blank-line>* $ } = '';
 
 =begin pod
-=comment 1
 
 And that's the end of the C<tangle> subroutine!
 =end pod
@@ -442,7 +401,6 @@ because it has to include the C<code> sections.
 sub weave (
 
 =begin pod
-=comment 1
 =head2 The parameters of Weave
 
 C<sub weave> will have several parameters.
@@ -456,29 +414,21 @@ C<MAIN>.
 
     Str $input-file!;
 =begin pod
-=comment 1
-=head3 C<$format>
-
-The output of the weave can (currently) be Markdown, Text, or HTML.  It
-defaults to Markdown. The variable is case-insensitive, so 'markdown' also
-works.
-=end pod
-
-    Str :f(:$format) is copy = 'markdown';
-        #= The output format for the woven file.
-
-=begin pod
-=comment 1
 =head3 C<$line-numbers>
 
 It can be useful to print line numbers in the code listing.  It currently
 defaults to True.
 =end pod
 
-    Bool :l(:$line-numbers)  = True;
+    Bool :l(:$line-numbers) = True;
         #= Should line numbers be added to the embeded code?
 
+=begin pod
+=head3 C<$verbose>
 
+Use verbose only for debugging
+=end pod
+    Bool :v(:$verbose)      = False;
 =begin pod
 C<sub weave> returns a Str.
 =end pod
@@ -494,19 +444,6 @@ First we will get the entire C<.sl> file...
     my Str $source = $input-file.IO.slurp;
 
 =begin pod
-=comment 1
-=head3 Remove blank lines at the begining and end of the code
-
-B<EXPLAIN THIS!>
-
-=end pod
-
-    my Str $cleaned-source = $source;
-    $cleaned-source ~~ s:g{\=end (\N*)\n+} =   "\=end$0\n";
-    $cleaned-source ~~ s:g{\n+\=begin (<hws> pod) [<hws> \d]?} = "\n\=begin$0";
-
-=begin pod
-=comment 1
 
 =head2 Interesting stuff
 
@@ -514,43 +451,89 @@ B<EXPLAIN THIS!>
 and obtain a list of submatches (that's what the C<caps> method does) ...
 =end pod
 
-    my Pair @submatches = Semi::Literate.parse($cleaned-source).caps;
+    my Pair @submatches = Semi::Literate.parse(clean $source).caps;
 
 =begin pod
-=comment 1
 
 ...And now begins the interesting part.  We iterate through the submatches and
 insert the C<code> sections into the Pod6...
 =end pod
 
 
-#    note "weave submatches.elems: {@submatches.elems}";
-#    note "submatches keys: {@submatches».keys}";
+=begin pod
+This function checks if the line of code is a full line comment. If so,
+return False, so nothing will be printed for this line.
+
+If it's a line of code with a comment at the end, remove the comment from the
+line and return True
+
+Otherwise return True
+=end pod
+
+    sub remove-comments (Seq $lines --> Seq) {
+        #TODO Add a parameter to sub weave()
+        #TODO Explain Seq
+
+        my token full-line-comment {
+            $<the-code>=(<leading-ws>)
+            '#'
+            <rest-of-line>
+        } # end of my token full-line-comment
+
+        #TODO this regex is not robust.  It will tag lines with a # in a string,
+        #unless the string delimiter is immediately before the #
+        my regex partial-line-comment {
+            $<the-code>=(<leading-ws> <optional-chars>)  # optional code
+            <!after <opening-quote>>         #
+            '#'                              # comment marker
+            $<the-comment>=<-[#]>*           # the actual comment
+            <ws-till-EOL>
+        } # end of my regex comment
+
+        my @retval = ();
+        for $lines.List -> $line {
+            given $line {
+                # don't print full line comments
+                when /<full-line-comment>/ {; #`[[do nothing]] }
+
+                # remove comments that are at the end of a line.
+                # The code will almost always end with a ';' or a '}'.
+                when /<partial-line-comment>/ {
+                    @retval.push: $<partial-line-comment><the-code>;
+                }
+
+                default
+                    { @retval.push: $line; }
+            } # end of given $line
+        } # end of for $lines -> $line
+
+        return @retval.Seq;
+    } # end of sub remove-comments {Pair $p is rw}
+
     my Str $weave = @submatches.map( {
         when .key eq 'pod' {
             .value
-        } # end of when .key
+        } # end of when .key eq 'pod'
 
-        when .key eq 'woven-code' {qq:to/EOCB/; }
+        when .key eq 'code' {
+            { qq:to/EOCB/ if .<code><woven>; }
             \=begin pod
             \=begin code :lang<raku>
-             { my $fmt = ($line-numbers ?? "%3s| " !! '') ~ "%s\n";
-                .value
-                .lines
-                .map($line-numbers
-                        ?? {"%4s| %s\n".sprintf($line-number++, $_) }
-                        !! {     "%s\n".sprintf(                $_) }
-                    )
-                .chomp # get rid of the last \n
+             {
+                $_<code><woven>
+                ==> lines()
+                ==> remove-comments()
+                ==> map(
+                        $line-numbers
+                            ?? {"%4s| %s\n".sprintf($line-number++, $_) }
+                            !! {     "%s\n".sprintf(                $_) }
+                )
+                ==> chomp() # get rid of the last \n
              }
             \=end code
             \=end pod
             EOCB
-
-        when .key eq 'non-woven-code' {
-          ''; # do nothing
-          #TODO don't insert a newline here.
-        } # end of when .key eq 'non-woven-code'
+        } # end of when .key eq 'code'
 
         # begin-no-weave
         default {
@@ -560,24 +543,82 @@ insert the C<code> sections into the Pod6...
     ).join;
 
 =begin pod
-=comment 1
-=head3 remove blank lines at the end
-
+=head3 Remove unseemly blank lines
 =end pod
+    # The code below will occur wherever non-woven appeared.
+    # We'll need to remove it from the woven Pod6.  Otherwise, it
+    # creates an unseemly blank line.
+    my Str $non-woven-blank-lines = qq:to/EOQ/;
+        \=end code
+        \=end pod
+        \=begin pod
+        \=begin code :lang<raku>
+        EOQ
 
-    $weave ~~ s{\n  <blank-line>* $ } = '';
+    my Regex $full-comment-blank-lines = rx[
+        '=begin pod'              <ws-till-EOL>
+        '=begin code :lang<raku>' <ws-till-EOL>
+        [<leading-ws> \d+ | '|'?  <ws-till-EOL>]*
+        '=end code'               <ws-till-EOL>
+        '=end pod'                <ws-till-EOL>
+    ];
+
+    $weave ~~ s:g{ $non-woven-blank-lines | <$full-comment-blank-lines> } = '';
 
 =begin pod
-=comment 1
 
-And that's the end of the C<tangle> subroutine!
+And that's the end of the C<weave> subroutine!
 =end pod
 
+    "deleteme.rakudoc".IO.spurt($weave) if $verbose; # no-weave-this-line
     return $weave
 } # end of sub weave (
 
 =begin pod
-=comment 1
+=comment 2
+=head1 Clean the source code of unneccessary blank lines
+=end pod
+
+sub clean (Str $source is copy --> Str) {
+
+=begin pod
+=head2 Remove blank lines at the begining and end of the code
+
+Very often the C<code> section of the Semi-Literate file will have blank lines
+that you don't want to see in the tangled working code.
+For example:
+
+=begin code :lang<raku>
+
+    ...
+    \=end pod
+                                                # <== unwanted blank line
+                                                # <== unwanted blank line
+    sub foo () {
+        { ... }
+    } # end of sub foo ()
+                                                # <== unwanted blank line
+                                                # <== unwanted blank line
+                                                # <== unwanted blank line
+    \=begin pod
+    ...
+=end code
+=end pod
+
+    $source ~~ s:g{    \=end (\N*) \n+}      =  "\=end$0\n";
+    $source ~~ s:g{\n+ \=begin (<hws> pod) } = "\n\=begin$0";
+
+=begin pod
+=head2 Remove blank lines at the end of the code.
+
+=end pod
+    # remove blank lines at the end
+    $source ~~ s{\n  <blank-line>* $ } = '';
+
+    return $source;
+} # end of sub clean-source (Str $source)
+
+=begin pod
 =head1 NAME
 
 C<Semi::Literate> - A semi-literate way to weave and tangle Raku/Pod6 source code.
@@ -598,10 +639,20 @@ use Semi::Literate;
 =end code
 =head1 DESCRIPTION
 
-C<Semi::Literate> is based on Daniel Sockwell's Pod::Literate module
+=head2 Influences
+
+C<Semi::Literate> is based on Daniel Sockwell's
+L<Pod::Literate|https://www.codesections.com/blog/weaving-raku/>.
+
+Also influenced by zyedidia's <Literate|https://zyedidia.github.io/literate/>
+program. Especially the idea of not weaving some portions of the code.
 
 A full description of the module and its features.
 May include numerous subsections (i.e. =head2, =head2, etc.)
+
+=head1 DEPENDENCIES
+
+    Useful::Regexes
 
 =head1 BUGS AND LIMITATIONS
 

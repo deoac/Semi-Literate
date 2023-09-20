@@ -2,22 +2,22 @@
 
 # Weave a Semi-literate file into Text, Markdown, HTML, etc.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Wed 06 Sep 2023 03:28:29 PM EDT
+# Last modified: Sat 16 Sep 2023 09:29:42 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
-use v6.d;
+# always use the latest version of Raku
+use v6.*;
+# end-no-weave
 
 use File::Temp;
 use Semi::Literate;
-#end-no-weave
 
 =begin pod
 =TITLE Weave a semi-literate program into Text, Markdown, etc. format
 
 
 =end pod
-
 
 #| Weave Markdown documentation from Raku code
 sub MAIN($input-file,
@@ -30,8 +30,7 @@ sub MAIN($input-file,
          Bool :v(:$verbose) = True;
             #= verbose will print diagnostics and debug prints to $*ERR
     ) {
-    my Str $extension;
-    my Str @options;
+    my Str  @options;
     my Bool $no-output-file = False;
 
     note "Input Format =>  $format" if $verbose;
@@ -39,37 +38,52 @@ sub MAIN($input-file,
     given $format {
         when  /:i ^ markdown | md $ / {
             $format    = 'MarkDown2';
-            $extension = 'md';
         };
         when  /:i ^ [[plain][\-|_]?]? t[e]?xt $ / {
             $format    = 'Text';
-            $extension = 'txt';
         }
         when  /:i ^ [s]?htm[l]? $/ {
             $format    = 'HTML2';
-            $extension = 'html';
         } # end of when  /:i html 2? $/
-
         when /:i ^ pdf $ / {
-            $format = 'PDF';
-            $extension = '.pdf';
-            @options = "--save-as=$output-file" if $output-file;
+            $format         = 'PDF';
+            @options        = "--save-as=$output-file" if $output-file;
             $no-output-file = True;
         }
-
         when /:i ^ pdf[\-|_]?lite  $ / {
-            $format = 'PDF::Lite';
-            $extension = '.pdf';
-            @options = "--save-as=$output-file" if $output-file;
+            $format         = 'PDF::Lite';
+            @options        = "--save-as=$output-file" if $output-file;
             $no-output-file = True;
         }
+        when /:i ^ pod 6? $/ {
+            $format    = 'Pod6';
+        } # end of when /:i ^ pod 6? $/
+        when /:i ^ [la]? tex $/ {
+            $format    = 'Latex';
+        } # end of when /:i ^ pod 6? $/
+        when /:i man [page]? $/ {
+            print "\n\e[33mPod::To::Man may not support pod comment blocks...\e[0m";
+            $format    = 'Man';
+        } # end of when /:i ^ pod 6? $/
 
         default {
-            $extension = $format;
+            ; # some other format
         } # end of default
 
-
     } # end of given $output-format
+    my Str $woven = weave($input-file, :$line-numbers);
+
+    my $output-file-handle = $output-file              ??
+                                open(:w, $output-file) !!
+                                $*OUT
+                            unless $no-output-file;
+
+    if $format eq 'Pod6' {
+        $output-file-handle.spurt: $woven;
+        return;
+    } # end of if $format = 'Pod6'
+
+    # Format the Pod6 file appropriatly
     note "Weave Format =>  $format" if $verbose;
     my Str $f = "Pod::To::$format";
     try require ::($f);
@@ -77,16 +91,10 @@ sub MAIN($input-file,
         die "$format is not a supported output format"
     } # end of if ::("Pod::To::$_") ~~ Failure
 
-    my Str $woven = weave($input-file, :$format, :$line-numbers);
-
-    my ($pod-file, $fh) = tempfile(suffix =>  '.p6');
+    my ($pod-file, $fh) = tempfile(suffix =>  '.rakudoc', :!unlink);
+    note "Temp file: $pod-file" if $verbose;
 
     $pod-file.IO.spurt: $woven;
-
-    my $output-file-handle = $output-file              ??
-                                open(:w, $output-file) !!
-                                $*OUT
-                            unless $no-output-file;
 
     run $*EXECUTABLE,
         "--doc=$format",
