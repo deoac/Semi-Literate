@@ -54,11 +54,11 @@ temp: 		 write temporary lock
 debug:       touch_sources all view
 
 touch_sources:
-	@touch source/Literate.sl source/sl-tangle.sl source/sl-weave.sl
-	@-del_docs &>/dev/null
+	@touch source/*
+	@-del docs &>/dev/null
 
 view:
-#	@open README.md
+	@open README.md
 	@open README.html
 
 temporary:
