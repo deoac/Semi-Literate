@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Wed 20 Sep 2023 08:02:56 PM EDT
+# Last modified: Wed 20 Sep 2023 08:15:29 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -172,7 +172,6 @@ They are just one or more C<plain-line>s.
 
     token woven  {
         [
-            || <comment> { note $/.Str }
             || <plain-line>
         ]+
     } # end of token woven-code
@@ -235,13 +234,6 @@ the code you want ignored in the formatted document.
             <.plain-line>*
         <.end-no-weave>
     } # end of token delimited-no-weave
-
-    token code-comments {
-            <leading-ws>
-            '#' <rest-of-line>
-        <!{ / <begin-no-weave> | <end-no-weave> / }>
-    } # end of token code-comments
-
 
 =begin pod
 
