@@ -50,7 +50,7 @@ pod: 		 $(POD_TARGETS)
 tex: 		 $(TEX_TARGETS)
 text: 		 $(TEXT_TARGETS)
 
-temp: 		 write temporary lock
+temp: 		 write del_docs temporary
 debug:       touch_sources all view
 
 touch_sources:
