@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Fri 22 Sep 2023 07:58:41 PM EDT
+# Last modified: Fri 22 Sep 2023 08:04:21 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -218,13 +218,13 @@ the code you want ignored in the formatted document.
 =end pod
 
     token begin-no-weave {
-        <leading-ws>                    # optional leading whitespace
+        <leading-ws>                # optional leading whitespace
         '#' <hws> 'begin-no-weave'  # the delimiter itself (# begin-no-weave)
         <ws-till-EOL>               # optional trailing whitespace or comment
     } # end of token <begin-no-weave>
 
     token end-no-weave {
-        <leading-ws>                    # optional leading whitespace
+        <leading-ws>                # optional leading whitespace
         '#' <hws> 'end-no-weave'    # the delimiter itself (#end-no-weave)
         <ws-till-EOL>               # optional trailing whitespace or comment
     } # end of token <end--no-weave>
