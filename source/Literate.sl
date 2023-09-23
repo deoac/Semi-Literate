@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Fri 22 Sep 2023 08:04:21 PM EDT
+# Last modified: Fri 22 Sep 2023 10:47:41 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -22,16 +22,17 @@ use Data::Dump::Tree;
 =head1 INTRODUCTION
 =comment 2
 
+=comment TODO Talk about the history of Literate Programming
+
 I want to create a semi-literate Raku source file with the extension
-C<.sl>. Then, I will I<weave> it to generate a readable file in formats like
-Markdown, PDF, HTML, and more. Additionally, I will I<tangle> it to create source
-code without any Pod6.
+C<.sl>. Then, you can I<weave> it to generate a readable file in formats like
+Markdown, PDF, HTML, and more. Additionally, you can I<tangle> it to create
+source code without any Pod6.
 
-To do this, I need to divide the file into C<Pod> and C<Code> sections by parsing
-it. For this purpose, I will create a dedicated Grammar.
-
-(See L<Useful::Regexes|https://github.com/deoac/Useful-Regexes> for the
-    definitions of the named regexes used here. (C<<hws>> == Horizontal WhiteSpace))
+To do this, I need to parse the file into C<Pod> and C<Code> sections with
+a dedicated grammar.  N<(See
+L<Useful::Regexes|https://github.com/deoac/Useful-Regexes> for the definitions
+of the named regexes used here. (e.g. C< <hws> > == Horizontal WhiteSpace))>
 
 =head1 The Grammar
 =comment 2
@@ -43,10 +44,8 @@ grammar Semi::Literate is export does Useful::Regexes {
 
 =begin pod
 
-Our file will exclusively consist of C<Pod> or C<Code> sections, and nothing
-else. The C<Code> sections are of two types, a) code that is woven into the
-documentation, and b) code that is not woven into the documentation.  The
-C<TOP> token clearly indicates this.
+Our Raku file will exclusively consist of C<Pod> or C<Code> sections, and nothing
+else.
 
 =end pod
 
@@ -57,94 +56,14 @@ C<TOP> token clearly indicates this.
         ]*
     } # end of token TOP
 
-    token code  {
-        [
-          || <non-woven>+
-          || <woven>+
-        ]
-    } # end of token code
-
-=begin pod
-
-=head2 The Pod6 delimiters
-
-According to the L<documentation|https://docs.raku.org/language/pod>,
-
-=begin defn
-
-    Every Pod6 document has to begin with '=begin pod' and end with '=end pod'.
-
-=end defn
-
-So let's define those tokens.
-=head3 The C<begin-pod> token
-
-=end pod
-
-
-    token begin-pod {
-        <leading-ws>
-        '=' begin <hws> pod
-        <ws-till-EOL>
-    } # end of token begin-pod
-
-=begin pod
-
-=head3 The C<end-pod> token
-
-The C<end-pod> token is much simpler.
-
-=end pod
-
-    token end-pod  {
-        <leading-ws>
-        '=' end <hws> pod
-        <ws-till-EOL>
-    } # end of token end-pod
-
-=begin pod
-
-=head2 Replacing Pod6 sections with blank lines
-
-When we I<tangle> the semi-literate code, all the Pod6 will be removed.  This
-would leave a lot of blank lines in the Raku code.  So we'll clean it up.
-We provide the option for users to specify the number of empty
-lines that should replace a C<pod> block. To do this, simply add a Pod6 comment
-immediately after the C<=begin  pod> statement.  The comment can say anything
-you like, but must end with a digit specifying the number of blank lines with
-which to replace the Pod6 section.
-
-=begin code :lang<raku>
-
-    =begin pod
-    =comment I want this pod block replaced by only one line 1
-    ...
-    =end pod
-
-=end code
-Here's the relevant regex:
-=end pod
-
-    token num-blank-line-comment {
-        <leading-ws>
-        '=' comment
-        <optional-chars>
-        $<num-blank-lines> = (\d+)?
-        <ws-till-EOL>
-    } # end of token num-blank-line-comment
-
 =begin pod
 
 =head2 The C<Pod> token
 
-Within the delimiters, all lines are considered documentation. We will refer to
-these lines as C<plain-lines>. Additionally, it is possible to have nested
-C<Pod> sections. This allows for a hierarchical organization of
-documentation, allowing for more structured and detailed explanations.
-
-It is also permissible for the block to be empty. Therefore, we will use the
-'zero-or-more' quantifier on the lines of documentation, allowing for the
-possibility of having no lines in the block.
+A Pod6 block is delimited by C<=begin pod> and C<=end pod>.  The body of the
+Pod6 block can be empty, can be another Pod6 block, or can consist of
+a series of C<plain-line>s.  We will use the 'zero-or-more' quantifier on the
+body of the Pod6 block, allowing for the possibility of an empty block.
 
 =end pod
 
@@ -157,10 +76,109 @@ possibility of having no lines in the block.
 
 =begin pod
 
+=head3 The Pod6 delimiters
+
+According to the L<documentation|https://docs.raku.org/language/pod>:
+
+=comment The line "Every Pod6 document..." must not be reformated as
+a paragraph.  If you do, only the first line will be the definition
+term.
+
+=begin defn
+Every Pod6 document has to begin with '=begin pod' and end with '=end pod'.  Everything between these two delimiters will be processed and used to generate documentation.
+
+=end defn
+
+So let's define those tokens.
+=head4 The C<begin-pod> token
+
+=end pod
+
+
+    token begin-pod {
+        <leading-ws>
+        '=' begin <hws> pod
+        <ws-till-EOL>
+    } # end of token begin-pod
+
+=begin pod
+
+=head4 The C<end-pod> token
+
+The C<end-pod> token is similar.
+
+=end pod
+
+    token end-pod  {
+        <leading-ws>
+        '=' end <hws> pod
+        <ws-till-EOL>
+    } # end of token end-pod
+
+=begin pod
+
+=head3 The C<num-blank-line-comment> token
+
+I<Replacing Pod6 sections with blank lines>
+
+When we I<tangle> the semi-literate code, all the Pod6 will be removed.  This
+would leave a lot of blank lines in the Raku code.  So we'll clean it
+up. N<Unlike other Literate Programming systems, we want our tangled code to
+be readable.>
+
+By default, we'll replace each Pod6 block with a single blank line. However,
+You can specify the number of blank lines that should replace a Pod6 block. To
+do this, simply add a C<=comment> immediately after the C<=begin  pod>
+statement.  The comment can say anything you like, but must end with a digit
+specifying the number of blank lines with which to replace the Pod6
+section. Zero is a valid number, for this purpose.
+
+For example:
+
+=begin code :lang<raku>
+
+    =begin pod
+    =comment I want this pod block replaced by two blank lines 2
+    ...
+    =end pod
+
+=end code
+Here's the relevant token, where we capture the number of blank lines in the
+C<$<num-blank-line-comment><num-blank-lines>> variable.
+=end pod
+
+    token num-blank-line-comment {
+        <leading-ws>
+        '=' comment
+        <optional-chars>
+        $<num-blank-lines> = (\d+)?
+        <ws-till-EOL>
+    } # end of token num-blank-line-comment
+
+=begin pod
+
 =head2 The C<Code> tokens
 
-The C<Code> sections are similarly easily defined.  There are two types of
-C<Code> sections, depending on whether they will appear in the woven code.
+The C<Code> sections are of two types, a) code that is woven into the
+documentation, and b) code that is not woven into the documentation.  For
+example, you may not want boilerplate code, such as C<use v6.d;>, to be woven
+into the documentation.
+
+Note the quantifier C<+> is used on each of the types of C<Code> sections,
+rather than on the C<Code> token itself.  Otherwise C<woven> and C<non-woven>
+code blocks would not be separated.
+
+=end pod
+
+    token code  {
+        [
+          || <non-woven>+
+          || <woven>+
+        ]
+    } # end of token code
+
+
+=begin pod
 
 =head3 Woven sections
 
@@ -171,32 +189,32 @@ They are just one or more C<plain-line>s.
 
 
     token woven  {
-        [
-            || <plain-line>
-        ]+
+        <plain-line>+
     } # end of token woven-code
 
 =begin pod
 
 =head3 Non-woven sections
 
-Sometimes there will be code you do not want woven into the documentation, such
-as boilerplate code like C<use v6.d;>.  You have two options to mark such code.
+You have two options to mark code as non-woven.
 By individual lines or by a delimited block of code.
 
 =end pod
 
     token non-woven {
         [
-          || <one-line-no-weave>
           || <delimited-no-weave>
+          || <one-line-no-weave>
         ]+
     } # end of token non-woven
 =begin pod
 
-=head4 One line of code
+=head4 One line of unwoven code
 
 Simply append C<# no-weave-this-line> at the end of the line!
+
+Note we have to save the code in a variable C<$<the-code>>. As we'll see later,
+we'll need to use it when we remove the C<no-weave-this-line> comment.
 
 =end pod
 
@@ -210,10 +228,21 @@ Simply append C<# no-weave-this-line> at the end of the line!
 
 
 
-=head4 Delimited blocks of code
+=head4 Delimited blocks of unwoven code
 
 Simply add comments C<# begin-no-weave> and C<#end-no-weave> before and after
 the code you want ignored in the formatted document.
+
+=end pod
+
+    token delimited-no-weave {
+        <.begin-no-weave>
+            <.plain-line>*
+        <.end-no-weave>
+    } # end of token delimited-no-weave
+=begin pod
+
+The delimiters are defined similarly to the Pod6 delimiters.
 
 =end pod
 
@@ -229,19 +258,15 @@ the code you want ignored in the formatted document.
         <ws-till-EOL>               # optional trailing whitespace or comment
     } # end of token <end--no-weave>
 
-    token delimited-no-weave {
-        <.begin-no-weave>
-            <.plain-line>*
-        <.end-no-weave>
-    } # end of token delimited-no-weave
 
 =begin pod
 
 =head3 The C<plain-line> token
 
 The C<plain-line> token is, really, any line at all...
-... except for one subtlety.  It can't be one of the begin/end delimiters.
-We can specify that with a L<Regex Boolean Condition
+
+... except for one subtlety.  It can't be one of the Pod6 or no-weave
+delimiters.  We can enforce that with a L<Regex Boolean Condition
 Check|https://docs.raku.org/language/regexes\#Regex_Boolean_condition_check>.
 
 
