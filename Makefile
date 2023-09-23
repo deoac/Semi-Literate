@@ -57,7 +57,7 @@ touch_sources:
 	@touch source/*
 	@-del docs &>/dev/null
 
-view:
+view: html markdown
 	@open README.md
 	@open README.html
 
