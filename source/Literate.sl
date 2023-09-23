@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Wed 20 Sep 2023 08:15:29 PM EDT
+# Last modified: Fri 22 Sep 2023 07:58:41 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -240,7 +240,7 @@ the code you want ignored in the formatted document.
 =head3 The C<plain-line> token
 
 The C<plain-line> token is, really, any line at all...
-... except for one subtlety.  They it can't be one of the begin/end delimiters.
+... except for one subtlety.  It can't be one of the begin/end delimiters.
 We can specify that with a L<Regex Boolean Condition
 Check|https://docs.raku.org/language/regexes\#Regex_Boolean_condition_check>.
 
