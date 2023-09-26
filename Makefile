@@ -211,11 +211,11 @@ create_doc_dirs:
 
 
 write:
-	@chmod a+w **/*
+	@-chmod a+w **/*
 
 lock:
-	@chmod a-w **/*
+	@-chmod a-w **/*
 
 del_docs:
-	@chmod a+w **/*
-	@rm -rf docs
+	@-chmod a+w **/*
+	@-rm -rf docs
