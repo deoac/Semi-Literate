@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Fri 22 Sep 2023 10:47:41 PM EDT
+# Last modified: Mon 25 Sep 2023 08:09:57 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -584,7 +584,10 @@ Otherwise return True
         '=end pod'                <ws-till-EOL>
     ];
 
-    $weave ~~ s:g{ $non-woven-blank-lines | <$full-comment-blank-lines> } = '';
+    $weave ~~ s:g{
+        | $non-woven-blank-lines
+#        | <$full-comment-blank-lines>
+    } = '';
 
 =begin pod
 
