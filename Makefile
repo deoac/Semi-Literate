@@ -57,7 +57,7 @@ touch_sources:
 	@touch source/*
 	@-del docs &>/dev/null
 
-view: html markdown
+view: $(RAKU_MODULE_TARGET) html markdown
 	@open README.md
 	@open README.html
 
