@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Mon 25 Sep 2023 08:09:57 PM EDT
+# Last modified: Tue 26 Sep 2023 10:59:52 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -515,19 +515,18 @@ Otherwise return True
         for $lines.List -> $line {
             given $line {
                 # don't print full line comments
-                when /<full-line-comment>/ {; #`[[do nothing]] }
+                when /<full-line-comment>/ {note "{(now)}: FLC! $line"; #`[[do nothing]] }
 
                 # remove comments that are at the end of a line.
-                # The code will almost always end with a ';' or a '}'.
                 when /<partial-line-comment>/ {
                     @retval.push: $<partial-line-comment><the-code>;
                 }
 
-                default
-                    { @retval.push: $line; }
+                default { @retval.push: $line; }
             } # end of given $line
         } # end of for $lines -> $line
 
+        note "{(now)} remove-comments: {@retval.elems}: ", @retval;
         return @retval.Seq;
     } # end of sub remove-comments {Pair $p is rw}
 
@@ -545,9 +544,13 @@ Otherwise return True
                 ==> lines()
                 ==> remove-comments()
                 ==> map(
+#                    $_.elems &&
+                    (note  "{(now)} .key eq code: {$_.elems}: -$_-") &&
+                        # don't print blank lines
+                    ($_ !~~ /<leading-ws> <ws-till-EOL>/ ) &&
                         $line-numbers
-                            ?? {"%4s| %s\n".sprintf($line-number++, $_) }
-                            !! {     "%s\n".sprintf(                $_) }
+                                ?? {"%4s| %s\n".sprintf($line-number++, $_) }
+                                !! {     "%s\n".sprintf(                $_) }
                 )
                 ==> chomp() # get rid of the last \n
              }
@@ -577,11 +580,11 @@ Otherwise return True
         EOQ
 
     my Regex $full-comment-blank-lines = rx[
-        '=begin pod'              <ws-till-EOL>
-        '=begin code :lang<raku>' <ws-till-EOL>
-        [<leading-ws> \d+ | '|'?  <ws-till-EOL>]*
-        '=end code'               <ws-till-EOL>
-        '=end pod'                <ws-till-EOL>
+        '=begin pod'               <ws-till-EOL>
+        '=begin code :lang<raku>'  <ws-till-EOL>
+        [<leading-ws> [[\d+]? \|]? <ws-till-EOL>]*
+        '=end code'                <ws-till-EOL>
+        '=end pod'                 <ws-till-EOL>
     ];
 
     $weave ~~ s:g{
