@@ -62,8 +62,8 @@ view: $(RAKU_MODULE_TARGET) html markdown
 	@open README.html
 
 temporary:
-	@echo -n "> Uninstalling Semi::Literate..."; \
-	-zef uninstall Semi::Literate &> /dev/null; \
+	@-echo -n "> Uninstalling Semi::Literate..."; \
+	zef uninstall Semi::Literate &> /dev/null; \
 	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
 	echo -n "> pod-tangling Literate.sl..."; \
 	pod-tangle source/Literate.sl > lib/Semi/Literate.rakumod; \
