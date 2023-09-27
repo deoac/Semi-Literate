@@ -2,7 +2,7 @@
 
 # Get the Pod vs. Code structure of a Raku/Pod6 file.
 # © 2023 Shimon Bollinger. All rights reserved.
-# Last modified: Tue 26 Sep 2023 10:59:52 PM EDT
+# Last modified: Wed 27 Sep 2023 02:22:18 PM EDT
 # Version 0.0.1
 
 # begin-no-weave
@@ -496,26 +496,35 @@ Otherwise return True
         #TODO Explain Seq
 
         my token full-line-comment {
-            $<the-code>=(<leading-ws>)
+            (<leading-ws>)
             '#'
             <rest-of-line>
         } # end of my token full-line-comment
 
-        #TODO this regex is not robust.  It will tag lines with a # in a string,
-        #unless the string delimiter is immediately before the #
+        #TODO this regex is not robust.
+        # If the '#' is in a quoted string, it will be removed.
+        # Unless the string delimiter is immediately before the '#'
         my regex partial-line-comment {
-            $<the-code>=(<leading-ws> <optional-chars>)  # optional code
-            <!after <opening-quote>>         #
-            '#'                              # comment marker
-            $<the-comment>=<-[#]>*           # the actual comment
+            $<the-code>=(<leading-ws> <required-chars>)
+            <!after <opening-quote>>
+            '#'
+            $<the-comment>=<-[#]>*
             <ws-till-EOL>
         } # end of my regex comment
 
+        state Bool $at-start = True;
         my @retval = ();
         for $lines.List -> $line {
             given $line {
+                when /<blank-line>/ {
+                    @retval.push($line)
+                    # If we're at the start of the file,
+                    # don't push blank lines to the retval.
+                        unless $at-start;
+                }
+
                 # don't print full line comments
-                when /<full-line-comment>/ {note "{(now)}: FLC! $line"; #`[[do nothing]] }
+                when /<full-line-comment>/ {#`[[do nothing]] }
 
                 # remove comments that are at the end of a line.
                 when /<partial-line-comment>/ {
@@ -526,7 +535,9 @@ Otherwise return True
             } # end of given $line
         } # end of for $lines -> $line
 
-        note "{(now)} remove-comments: {@retval.elems}: ", @retval;
+        # After the first time through,
+        # we're no longer at the start of the file.
+        $at-start = False;
         return @retval.Seq;
     } # end of sub remove-comments {Pair $p is rw}
 
@@ -544,15 +555,10 @@ Otherwise return True
                 ==> lines()
                 ==> remove-comments()
                 ==> map(
-#                    $_.elems &&
-                    (note  "{(now)} .key eq code: {$_.elems}: -$_-") &&
-                        # don't print blank lines
-                    ($_ !~~ /<leading-ws> <ws-till-EOL>/ ) &&
-                        $line-numbers
-                                ?? {"%4s| %s\n".sprintf($line-number++, $_) }
-                                !! {     "%s\n".sprintf(                $_) }
+                    $line-numbers
+                        ?? {"%4s| %s\n".sprintf($line-number++, $_) }
+                        !! {     "%s\n".sprintf(                $_) }
                 )
-                ==> chomp() # get rid of the last \n
              }
             \=end code
             \=end pod
@@ -568,9 +574,12 @@ Otherwise return True
 
 =begin pod
 =head3 Remove unseemly blank lines
+
+#TODO Explain this regexes
 =end pod
+
     # The code below will occur wherever non-woven appeared.
-    # We'll need to remove it from the woven Pod6.  Otherwise, it
+    # We need to remove it from the woven Pod6.  Otherwise, it
     # creates an unseemly blank line.
     my Str $non-woven-blank-lines = qq:to/EOQ/;
         \=end code
@@ -579,25 +588,14 @@ Otherwise return True
         \=begin code :lang<raku>
         EOQ
 
-    my Regex $full-comment-blank-lines = rx[
-        '=begin pod'               <ws-till-EOL>
-        '=begin code :lang<raku>'  <ws-till-EOL>
-        [<leading-ws> [[\d+]? \|]? <ws-till-EOL>]*
-        '=end code'                <ws-till-EOL>
-        '=end pod'                 <ws-till-EOL>
-    ];
-
-    $weave ~~ s:g{
-        | $non-woven-blank-lines
-#        | <$full-comment-blank-lines>
-    } = '';
+    $weave ~~ s:g{ $non-woven-blank-lines } = '';
 
 =begin pod
 
 And that's the end of the C<weave> subroutine!
 =end pod
 
-    "deleteme.rakudoc".IO.spurt($weave) if $verbose; # no-weave-this-line
+    spurt "deleteme.rakudoc", $weave if $verbose; # no-weave-this-line
     return $weave
 } # end of sub weave (
 
