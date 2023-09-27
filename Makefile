@@ -62,8 +62,8 @@ view: $(RAKU_MODULE_TARGET) html markdown
 	@open README.html
 
 temporary:
-	@echo -n "> Uninstalling Semi::Literate..."; \
-	-zef uninstall Semi::Literate &> /dev/null; \
+	@-echo -n "> Uninstalling Semi::Literate..."; \
+	zef uninstall Semi::Literate &> /dev/null; \
 	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
 	echo -n "> pod-tangling Literate.sl..."; \
 	pod-tangle source/Literate.sl > lib/Semi/Literate.rakumod; \
@@ -76,21 +76,21 @@ temporary:
 	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
 
 lib/Semi/Literate.rakumod: source/Literate.sl
-	@chmod -R a+w lib/; \
+	@chmod -R a+w lib/ 2>/dev/null; \
 	echo -n "> Compiling the Semi::Literate module..."; \
 	sl-tangle source/Literate.sl  > lib/Semi/Literate.rakumod; \
 	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
 
 
 bin/sl-tangle: source/sl-tangle.sl $(RAKU_MODULE_TARGET)
-	@chmod -R a+w bin/; \
+	@chmod -R a+w bin/ 2>/dev/null; \
 	echo -n "> Creating the sl-tangle executable..."; \
 	pod-tangle source/sl-tangle.sl > bin/sl-tangle; \
 	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
 	chmod -R a+x bin/
 
 bin/sl-weave: source/sl-weave.sl  $(RAKU_MODULE_TARGET)
-	@chmod -R a+w bin/; \
+	@chmod -R a+w bin/ 2>/dev/null; \
 	echo -n "> Creating the sl-weave executable..."; \
 	bin/sl-tangle source/sl-weave.sl  > bin/sl-weave; \
 	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
@@ -99,22 +99,22 @@ bin/sl-weave: source/sl-weave.sl  $(RAKU_MODULE_TARGET)
 
 $(RAKU_MODULE_TARGET): lib/Semi/Literate.rakumod
 	@echo -n "> Installing the newly created module with zef..."; \
-	zef install --force-build --force-install --force-test . >/dev/null; \
+	zef install --force-build --force-install --force-test . 2>/dev/null; \
 	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"
 
 $(TANGLE_BINARY_TARGET): bin/sl-tangle $(RAKU_MODULE_TARGET)
 	@echo -n "> Installing the newly created tangle executable with zef..."; \
-	zef install --force-build --force-install --force-test . >/dev/null; \
+	zef install --force-build --force-install --force-test . 2>/dev/null; \
 	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"
 
 $(WEAVE_BINARY_TARGET): bin/sl-weave $(RAKU_MODULE_TARGET)
 	@echo -n "> Installing the newly created weave executable with zef..."; \
-	zef install --force-build --force-install --force-test . >/dev/null; \
+	zef install --force-build --force-install --force-test . 2>/dev/null; \
 	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"
 
 install-all: $(RAKU_MODULE_TARGET) bin/sl-tangle bin/sl-weave
 	@echo -n "> Installing the module and the executables with zef..."; \
-	zef install --force-build --force-install --force-test . >/dev/null; \
+	zef install --force-build --force-install --force-test . 2>/dev/null; \
 	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"
 
 test:
@@ -140,7 +140,7 @@ sanity_tests:
 
 clean:
 	@echo "> Deleting the intermediate files..."
-	@rm -rf deleteme.*
+	@rm -rf deleteme.*  2>/dev/null
 	@echo -n "> Setting permissions..."
 	@chmod -R a+x,a-w bin/; chmod -R a-w docs/; chmod -R a-w lib/
 	@echo "\e[32mOK\e[0m"
@@ -156,7 +156,7 @@ create_doc_dirs:
 
 ./docs/html/%.html: ./source/%.sl
 	@mkdir -p $(@D); \
-	chmod -R a+w $(@D); \
+	chmod -R a+w $(@D) 2>/dev/null; \
 	echo -n "> Creating an HTML document for $<..."; \
 	sl-weave --format=html --/verbose --output-file=$@ $< 2>/dev/null; \
 	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
@@ -164,7 +164,7 @@ create_doc_dirs:
 
 ./docs/markdown/%.md: ./source/%.sl
 	@mkdir -p $(@D); \
-	chmod -R a+w $(@D); \
+	chmod -R a+w $(@D) 2>/dev/null; \
 	echo -n "> Creating a Markdown document for $<..."; \
 	sl-weave --format=markdown --/verbose --output-file=$@ $< 2>/dev/null; \
 	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
@@ -172,7 +172,7 @@ create_doc_dirs:
 
 ./docs/pdf/%.pdf: ./source/%.sl
 	@mkdir -p $(@D); \
-	chmod -R a+w $(@D); \
+	chmod -R a+w $(@D) 2>/dev/null; \
 	echo -n "> Creating a PDF document for $<..."; \
 	sl-weave --format=pdf --/verbose --output-file=$@ $< 2>/dev/null; \
 	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
@@ -180,7 +180,7 @@ create_doc_dirs:
 
 ./docs/text/%.txt: ./source/%.sl
 	@mkdir -p $(@D); \
-	chmod -R a+w $(@D); \
+	chmod -R a+w $(@D) 2>/dev/null; \
 	echo -n "> Creating a text document for $<..."; \
 	sl-weave --format=text --/verbose --output-file=$@ $< 2>/dev/null; \
 	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
@@ -188,7 +188,7 @@ create_doc_dirs:
 
 ./docs/man/%.1: ./source/%.sl
 	@-mkdir -p $(@D); \
-	chmod -R a+w $(@D); \
+	chmod -R a+w $(@D) 2>/dev/null; \
 	echo -n "> Creating a man page for $<..."; \
 	sl-weave --format=Man --/verbose --output-file=$@ $< 2>/dev/null; \
 	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
@@ -196,7 +196,7 @@ create_doc_dirs:
 
 ./docs/tex/%.tex: ./source/%.sl
 	@mkdir -p $(@D); \
-	chmod -R a+w $(@D); \
+	chmod -R a+w $(@D) 2>/dev/null; \
 	echo -n "> Creating a TᴇX page for $<..."; \
 	sl-weave --format=Latex --/verbose --output-file=$@ $< 2>/dev/null; \
 	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
@@ -204,18 +204,18 @@ create_doc_dirs:
 
 ./docs/pod/%.rakudoc: ./source/%.sl
 	@mkdir -p $(@D); \
-	chmod -R a+w $(@D); \
+	chmod -R a+w $(@D) 2>/dev/null; \
 	echo -n "> Creating a Pod6 page for $<..."; \
 	sl-weave --format=Pod --/verbose --output-file=$@ $< 2>/dev/null; \
 	if [ $$? -eq 0 ]; then echo -n "\e[32mOK"; else echo -n "\e[31mNot OK"; fi; echo "\e[0m"; \
 
 
 write:
-	@chmod a+w **/*
+	@-chmod a+w **/* 2>/dev/null
 
 lock:
-	@chmod a-w **/*
+	@-chmod a-w **/* 2>/dev/null
 
 del_docs:
-	@chmod a+w **/*
-	@rm -rf docs
+	@-chmod a+w **/* 2>/dev/null
+	@-rm -rf docs    2>/dev/null
